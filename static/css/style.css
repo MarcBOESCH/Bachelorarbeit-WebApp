@@ -1,0 +1,22 @@
+body {
+    background-color: #f4f6f9;
+    color: #212529;
+}
+
+.score-card {
+    border: none;
+    border-radius: 1rem;
+}
+
+#score-a,
+#score-b {
+    min-height: 90px;
+}
+
+.card {
+    border-radius: 1rem;
+}
+
+button {
+    min-width: 70px;
+}
