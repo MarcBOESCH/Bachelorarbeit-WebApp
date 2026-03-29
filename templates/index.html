@@ -19,17 +19,16 @@
             <div class="col-md-6">
                 <div class="card shadow-sm h-100 score-card">
                     <div class="card-body text-center">
-                        <h2 class="card-title mb-3">Team A</h2>
-                        <div id="score-a" class="display-2 fw-bold mb-4">0</div>
+                        <h2 class="card-title mb-3">{{ game.team_name_a }}</h2>
+                        <div id="score-a" class="display-2 fw-bold mb-4">{{ game.score_a }}</div>
 
-                        <div class="d-flex flex-wrap gap-2 justify-content-center mb-3">
-                            <button class="btn btn-primary score-btn" data-team="A" data-points="1">+1</button>
-                            <button class="btn btn-primary score-btn" data-team="A" data-points="10">+10</button>
+                        <div class="d-flex flex-column gap-2 justify-content-center align-items-center mb-3">
                             <button class="btn btn-primary score-btn" data-team="A" data-points="20">+20</button>
                             <button class="btn btn-primary score-btn" data-team="A" data-points="50">+50</button>
+                            <button class="btn btn-primary score-btn" data-team="A" data-points="100">+100</button>
+                            <button class="btn btn-primary score-btn" data-team="A" data-points="150">+150</button>
+                            <button class="btn btn-primary score-btn" data-team="A" data-points="200">+200</button>
                         </div>
-
-                        <button class="btn btn-outline-secondary subtract-btn" data-team="A">-1</button>
                     </div>
                 </div>
             </div>
@@ -37,18 +36,35 @@
             <div class="col-md-6">
                 <div class="card shadow-sm h-100 score-card">
                     <div class="card-body text-center">
-                        <h2 class="card-title mb-3">Team B</h2>
-                        <div id="score-b" class="display-2 fw-bold mb-4">0</div>
+                        <h2 class="card-title mb-3">{{ game.team_name_b }}</h2>
+                        <div id="score-b" class="display-2 fw-bold mb-4">{{ game.score_b }}</div>
 
-                        <div class="d-flex flex-wrap gap-2 justify-content-center mb-3">
-                            <button class="btn btn-danger score-btn" data-team="B" data-points="1">+1</button>
-                            <button class="btn btn-danger score-btn" data-team="B" data-points="10">+10</button>
-                            <button class="btn btn-danger score-btn" data-team="B" data-points="20">+20</button>
-                            <button class="btn btn-danger score-btn" data-team="B" data-points="50">+50</button>
+                        <div class="d-flex flex-column gap-2 justify-content-center align-items-center mb-3">
+                            <button class="btn btn-primary score-btn" data-team="B" data-points="20">+20</button>
+                            <button class="btn btn-primary score-btn" data-team="B" data-points="50">+50</button>
+                            <button class="btn btn-primary score-btn" data-team="B" data-points="100">+100</button>
+                            <button class="btn btn-primary score-btn" data-team="B" data-points="150">+150</button>
+                            <button class="btn btn-primary score-btn" data-team="B" data-points="200">+200</button>
                         </div>
-
-                        <button class="btn btn-outline-secondary subtract-btn" data-team="B">-1</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4 g-4">
+            <div class="col-md-6">
+                <label for="manual-score-a" class="form-label">Manuelle Punkte {{ game.team_name_a }}</label>
+                <div class="d-flex gap-2">
+                    <input id="manual-score-a" type="number" class="form-control" min="1" placeholder="z. B. 87 oder 257">
+                    <button id="manual-btn-a" class="btn btn-outline-dark">Eintragen</button>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="manual-score-b" class="form-label">Manuelle Punkte {{ game.team_name_b }}</label>
+                <div class="d-flex gap-2">
+                    <input id="manual-score-b" type="number" class="form-control" min="1" placeholder="z. B. 70 oder 257">
+                    <button id="manual-btn-b" class="btn btn-outline-dark">Eintragen</button>
                 </div>
             </div>
         </div>
@@ -57,30 +73,51 @@
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-md-4 mb-3 mb-md-0">
-                        <h5>Team A</h5>
-                        <p id="summary-a" class="fs-4 fw-semibold mb-0">0</p>
+                        <h5>{{ game.team_name_a }}</h5>
+                        <p id="summary-a" class="fs-4 fw-semibold mb-0">{{ game.score_a }}</p>
                     </div>
                     <div class="col-md-4 mb-3 mb-md-0">
                         <h5>Punktedifferenz</h5>
-                        <p id="point-diff" class="fs-4 fw-semibold mb-0">0</p>
+                        <p id="point-diff" class="fs-4 fw-semibold mb-0">{{ game.score_a - game.score_b }}</p>
                     </div>
                     <div class="col-md-4">
-                        <h5>Team B</h5>
-                        <p id="summary-b" class="fs-4 fw-semibold mb-0">0</p>
+                        <h5>{{ game.team_name_b }}</h5>
+                        <p id="summary-b" class="fs-4 fw-semibold mb-0">{{ game.score_b }}</p>
                     </div>
                 </div>
 
                 <div class="text-center mt-4">
-                    <p class="mb-3">
+                    <p class="mb-2">
                         Führend:
-                        <span id="leader" class="fw-bold">-</span>
+                        <span id="leader" class="fw-bold">
+                            {% if game.score_a > game.score_b %}
+                                {{ game.team_name_a }}
+                            {% elif game.score_b > game.score_a %}
+                                {{ game.team_name_b }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </span>
                     </p>
-                    <button id="reset-btn" class="btn btn-warning">Punkte zurücksetzen</button>
+
+                    <p class="mb-3">
+                        Gewinner:
+                        <span id="winner" class="fw-bold">
+                            {{ game.winner if game.winner else "-" }}
+                        </span>
+                    </p>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <button id="undo-btn" class="btn btn-secondary">Letzten Schritt rückgängig</button>
+                        <button id="reset-btn" class="btn btn-warning">Punkte zurücksetzen</button>
+                        <button id="new-game-btn" class="btn btn-primary">Neues Spiel</button>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="http://127.0.0.1:35729/livereload.js?snipver=1"></script>
 </body>
 </html>
