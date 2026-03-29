@@ -1,3 +1,5 @@
+let matchFinished = false;
+
 async function sendAction(payload) {
     try {
         const response = await fetch("/action", {
@@ -16,6 +18,7 @@ async function sendAction(payload) {
         }
 
         updateUI(data);
+        await checkMatchFinishedAndSave(data);
         return data;
     } catch (error) {
         console.error("Fehler bei der Anfrage:", error);
@@ -154,6 +157,54 @@ function getSelectedPlayers() {
     };
 }
 
+function validateSelectedPlayers() {
+    const selected = getSelectedPlayers();
+
+    const playerIds = [
+        selected.teamAPlayer1,
+        selected.teamAPlayer2,
+        selected.teamBPlayer1,
+        selected.teamBPlayer2
+    ];
+
+    if (playerIds.some(id => !id)) {
+        return {
+            valid: false,
+            error: "Bitte für beide Teams jeweils zwei Spieler auswählen."
+        };
+    }
+
+    const uniqueIds = new Set(playerIds);
+
+    if (uniqueIds.size !== 4) {
+        return {
+            valid: false,
+            error: "Ein Spieler darf nicht mehrfach im selben Match ausgewählt werden."
+        };
+    }
+
+    return {
+        valid: true,
+        error: null
+    };
+}
+
+async function checkMatchFinishedAndSave(game) {
+    if (!game || matchFinished) return;
+
+    const scoreA = game.score_a ?? 0;
+    const scoreB = game.score_b ?? 0;
+    const maxPoints = game.max_points ?? 1000;
+
+    const hasWinner =
+        (scoreA >= maxPoints && scoreA > scoreB) ||
+        (scoreB >= maxPoints && scoreB > scoreA);
+
+    if (!hasWinner) return;
+
+    await saveFinishedMatch(game);
+}
+
 function updateUI(game) {
     const scoreA = game.score_a ?? 0;
     const scoreB = game.score_b ?? 0;
@@ -221,6 +272,8 @@ async function handleReset() {
         action: "new_game"
     });
 
+    matchFinished = false;
+    setMatchInputsDisabled(false);
     clearManualInputs();
     hideMatchStatusMessage();
 }
@@ -292,6 +345,96 @@ function hideMatchStatusMessage() {
     messageBox.textContent = "";
     messageBox.classList.add("d-none");
 }
+
+async function saveFinishedMatch(game) {
+    const validation = validateSelectedPlayers();
+
+    if (!validation.valid) {
+        alert(validation.error);
+        return false;
+    }
+
+    const selectedPlayers = getSelectedPlayers();
+
+    try {
+        const response = await fetch("/matches", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                score_team_a: game.score_a,
+                score_team_b: game.score_b,
+                winner_team: game.score_a > game.score_b ? "A" : "B",
+                players: [
+                    {
+                        player_id: Number(selectedPlayers.teamAPlayer1),
+                        team: "A",
+                        team_slot: 1
+                    },
+                    {
+                        player_id: Number(selectedPlayers.teamAPlayer2),
+                        team: "A",
+                        team_slot: 2
+                    },
+                    {
+                        player_id: Number(selectedPlayers.teamBPlayer1),
+                        team: "B",
+                        team_slot: 1
+                    },
+                    {
+                        player_id: Number(selectedPlayers.teamBPlayer2),
+                        team: "B",
+                        team_slot: 2
+                    }
+                ]
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Fehler beim Speichern des Matches.");
+            return false;
+        }
+
+        const winnerName = game.score_a > game.score_b ? "Team A" : "Team B";
+        showMatchStatusMessage(`${winnerName} hat gewonnen. Das Match wurde erfolgreich gespeichert.`);
+
+        matchFinished = true;
+        setMatchInputsDisabled(true);
+
+        return true;
+    } catch (error) {
+        console.error("Fehler beim Speichern des Matches:", error);
+        alert("Das Match konnte nicht gespeichert werden.");
+        return false;
+    }
+}
+
+function setMatchInputsDisabled(disabled) {
+    document.querySelectorAll(".score-btn").forEach(button => {
+        button.disabled = disabled;
+    });
+
+    document.getElementById("undo-btn").disabled = disabled;
+
+    const manualInputIds = [
+        "manual-score-a",
+        "manual-score-b",
+        "manual-btn-a",
+        "manual-btn-b"
+    ];
+
+    manualInputIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.disabled = disabled;
+        }
+    });
+}
+
+
 
 function init() {
     initScoreButtons();
