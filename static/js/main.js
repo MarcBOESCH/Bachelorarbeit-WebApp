@@ -51,17 +51,21 @@ function renderPlayers(players) {
 async function loadPlayers() {
     try {
         const response = await fetch("/players");
-        const players = await response.json();
 
         if (!response.ok) {
-            alert("Fehler beim Laden der Spieler.");
+            const text = await response.text();
+            console.error("Fehlerhafte Antwort /players:", response.status, text);
+            alert(`Fehler beim Laden der Spieler (${response.status}).`);
             return;
         }
 
+        const players = await response.json();
+
         renderPlayers(players);
+        renderPlayerSelectOptions(players);
     } catch (error) {
         console.error("Fehler beim Laden der Spieler:", error);
-        alert("Verbindung zum Server fehlgeschlagen.");
+        alert("Spieler konnten nicht geladen werden. Details in der Konsole.");
     }
 }
 
@@ -111,6 +115,43 @@ function initPlayerSection() {
             createPlayer();
         }
     });
+}
+
+function renderPlayerSelectOptions(players) {
+    const selectIds = [
+        "team-a-player-1",
+        "team-a-player-2",
+        "team-b-player-1",
+        "team-b-player-2"
+    ];
+
+    selectIds.forEach(selectId => {
+        const select = document.getElementById(selectId);
+
+        if (!select) return;
+
+        const currentValue = select.value;
+
+        select.innerHTML = '<option value="">Bitte Spieler wählen</option>';
+
+        players.forEach(player => {
+            const option = document.createElement("option");
+            option.value = player.id;
+            option.textContent = player.name;
+            select.appendChild(option);
+        });
+
+        select.value = currentValue;
+    });
+}
+
+function getSelectedPlayers() {
+    return {
+        teamAPlayer1: document.getElementById("team-a-player-1").value,
+        teamAPlayer2: document.getElementById("team-a-player-2").value,
+        teamBPlayer1: document.getElementById("team-b-player-1").value,
+        teamBPlayer2: document.getElementById("team-b-player-2").value
+    };
 }
 
 function updateUI(game) {
