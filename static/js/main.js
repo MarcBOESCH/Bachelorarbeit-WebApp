@@ -222,6 +222,7 @@ async function handleReset() {
     });
 
     clearManualInputs();
+    hideMatchStatusMessage();
 }
 
 function initScoreButtons() {
@@ -272,6 +273,24 @@ function initUndoButton() {
 function initResetButton() {
     const resetBtn = document.getElementById("reset-btn");
     resetBtn.addEventListener("click", handleReset);
+}
+
+function showMatchStatusMessage(message) {
+    const messageBox = document.getElementById("match-status-message");
+
+    if (!messageBox) return;
+
+    messageBox.textContent = message;
+    messageBox.classList.remove("d-none");
+}
+
+function hideMatchStatusMessage() {
+    const messageBox = document.getElementById("match-status-message");
+
+    if (!messageBox) return;
+
+    messageBox.textContent = "";
+    messageBox.classList.add("d-none");
 }
 
 function init() {
