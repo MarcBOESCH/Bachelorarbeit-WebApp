@@ -24,6 +24,95 @@ async function sendAction(payload) {
     }
 }
 
+function renderPlayers(players) {
+    const playerList = document.getElementById("player-list");
+    playerList.innerHTML = "";
+
+    if (!players || players.length === 0) {
+        playerList.innerHTML = `
+            <li class="list-group-item text-muted">
+                Noch keine Spieler vorhanden.
+            </li>
+        `;
+        return;
+    }
+
+    players.forEach(player => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.innerHTML = `
+            <span>${player.name}</span>
+            <span class="badge text-bg-secondary">ID: ${player.id}</span>
+        `;
+        playerList.appendChild(li);
+    });
+}
+
+async function loadPlayers() {
+    try {
+        const response = await fetch("/players");
+        const players = await response.json();
+
+        if (!response.ok) {
+            alert("Fehler beim Laden der Spieler.");
+            return;
+        }
+
+        renderPlayers(players);
+    } catch (error) {
+        console.error("Fehler beim Laden der Spieler:", error);
+        alert("Verbindung zum Server fehlgeschlagen.");
+    }
+}
+
+async function createPlayer() {
+    const input = document.getElementById("player-name");
+    const name = input.value.trim();
+
+    if (name === "") {
+        alert("Bitte einen Spielernamen eingeben.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/players", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name: name })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Fehler beim Erstellen des Spielers.");
+            return;
+        }
+
+        input.value = "";
+        await loadPlayers();
+    } catch (error) {
+        console.error("Fehler beim Erstellen des Spielers:", error);
+        alert("Verbindung zum Server fehlgeschlagen.");
+    }
+}
+
+function initPlayerSection() {
+    const createPlayerBtn = document.getElementById("create-player-btn");
+    const playerNameInput = document.getElementById("player-name");
+
+    if (!createPlayerBtn || !playerNameInput) return;
+
+    createPlayerBtn.addEventListener("click", createPlayer);
+
+    playerNameInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            createPlayer();
+        }
+    });
+}
+
 function updateUI(game) {
     const scoreA = game.score_a ?? 0;
     const scoreB = game.score_b ?? 0;
@@ -150,6 +239,8 @@ function init() {
     initManualEnterKey();
     initUndoButton();
     initResetButton();
+    initPlayerSection();
+    loadPlayers();
 }
 
 document.addEventListener("DOMContentLoaded", init);
