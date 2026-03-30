@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from services.match_service import create_match, get_all_matches
+from services.game_service import get_game_state, lock_saved_match
 
 match_bp = Blueprint("matches", __name__)
 
@@ -20,6 +21,9 @@ def create_match_route():
 
     if not success:
         return jsonify({"error": error}), 400
+
+    game = get_game_state()
+    lock_saved_match(game)
 
     return jsonify({
         "message": "Match erfolgreich gespeichert.",

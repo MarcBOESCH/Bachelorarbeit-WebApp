@@ -21,7 +21,8 @@ def create_new_game_state():
         "history": [],
         "undo_a": [],
         "undo_b": [],
-        "winner": None
+        "winner": None,
+        "match_saved": False
     }
 
 
@@ -53,6 +54,9 @@ def reset_game():
 
 
 def add_points(game, team, action):
+    if is_match_locked(game):
+        return False, "Das Match wurde bereits gespeichert und kann nicht weiter verändert werden."
+
     if team not in VALID_TEAMS:
         return False, "Ungültiges Team"
 
@@ -81,6 +85,8 @@ def add_manual_points(game, team, value):
     - 1 bis 157: gewähltes Team erhält value,
       anderes Team erhält 157 - value
     """
+    if is_match_locked(game):
+        return False, "Das Match wurde bereits gespeichert und kann nicht weiter verändert werden."
 
     if team not in VALID_TEAMS:
         return False, "Ungültiges Team"
@@ -116,6 +122,9 @@ def add_manual_points(game, team, value):
 
 
 def undo_last_action(game):
+    if is_match_locked(game):
+        return False, "Ein bereits gespeichertes Match kann nicht mehr rückgängig gemacht werden."
+
     if not game["history"]:
         return False, "Keine Aktion zum Rückgängig machen"
 
@@ -142,3 +151,12 @@ def undo_last_action(game):
 
     save_game_state(game)
     return True, None
+
+def is_match_locked(game):
+    return game.get("match_saved", False)
+
+
+def lock_saved_match(game):
+    game["match_saved"] = True
+    save_game_state(game)
+
