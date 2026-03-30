@@ -466,6 +466,17 @@ async function loadMatches() {
     }
 }
 
+function formatPlayerNames(players) {
+    if (!players || players.length === 0) {
+        return "-";
+    }
+
+    return players
+        .sort((a, b) => a.team_slot - b.team_slot)
+        .map(player => player.name)
+        .join(", ");
+}
+
 function renderMatchHistory(matches) {
     const emptyState = document.getElementById("match-history-empty");
     const wrapper = document.getElementById("match-history-wrapper");
@@ -487,14 +498,20 @@ function renderMatchHistory(matches) {
     matches.forEach(match => {
         const row = document.createElement("tr");
 
+        const teamAPlayers = formatPlayerNames(match.team_a_players);
+        const teamBPlayers = formatPlayerNames(match.team_b_players);
+        const scoreText = `${match.score_team_a} : ${match.score_team_b}`;
+        const winnerText = match.winner_team === "A" ? "Team A" : "Team B";
+
         row.innerHTML = `
-            <td>${match.id}</td>
-            <td>${formatMatchDate(match.played_at)}</td>
-            <td>${match.score_team_a}</td>
-            <td>${match.score_team_b}</td>
-            <td>${match.point_diff}</td>
-            <td>${match.winner_team}</td>
-        `;
+        <td>${match.id}</td>
+        <td>${formatMatchDate(match.played_at)}</td>
+        <td>${teamAPlayers}</td>
+        <td>${teamBPlayers}</td>
+        <td>${scoreText}</td>
+        <td>${match.point_diff}</td>
+        <td>${winnerText}</td>
+    `;
 
         tbody.appendChild(row);
     });
@@ -511,4 +528,3 @@ function init() {
     loadMatches();
 }
 
-document.addEventListener("DOMContentLoaded", init);

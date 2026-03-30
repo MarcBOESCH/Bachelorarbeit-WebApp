@@ -36,15 +36,36 @@ def create_match_route():
 def get_matches():
     matches = get_all_matches()
 
-    return jsonify([
-        {
+    result = []
+
+    for match in matches:
+        team_a_players = []
+        team_b_players = []
+
+        sorted_players = sorted(match.players, key=lambda p_entry: (p_entry.team, p_entry.team_slot))
+
+        for entry in sorted_players:
+            player_data = {
+                "id": entry.player.id,
+                "name": entry.player.name,
+                "team_slot": entry.team_slot
+            }
+
+            if entry.team == "A":
+                team_a_players.append(player_data)
+            elif entry.team == "B":
+                team_b_players.append(player_data)
+
+        result.append({
             "id": match.id,
             "played_at": match.played_at.isoformat(),
             "score_team_a": match.score_team_a,
             "score_team_b": match.score_team_b,
             "point_diff": match.point_diff,
-            "winner_team": match.winner_team
-        }
-        for match in matches
-    ])
+            "winner_team": match.winner_team,
+            "team_a_players": team_a_players,
+            "team_b_players": team_b_players
+        })
+
+    return jsonify(result)
 
