@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from services.player_service import create_player, get_all_players
+from services.player_stats_service import get_player_stats
 
 player_bp = Blueprint("players", __name__)
 
@@ -39,3 +40,8 @@ def get_players():
         }
         for player in players
     ])
+
+@player_bp.route("/player-stats", methods=["GET"])
+def get_player_stats_route():
+    stats = get_player_stats()
+    return jsonify(stats)

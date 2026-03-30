@@ -404,6 +404,7 @@ async function saveFinishedMatch(game) {
         matchFinished = true;
         setMatchInputsDisabled(true);
         await loadMatches();
+        await loadPlayerStats();
 
         return true;
     } catch (error) {
@@ -517,6 +518,58 @@ function renderMatchHistory(matches) {
     });
 }
 
+function renderPlayerStats(stats) {
+    const emptyState = document.getElementById("player-stats-empty");
+    const wrapper = document.getElementById("player-stats-wrapper");
+    const tbody = document.getElementById("player-stats-body");
+
+    if (!emptyState || !wrapper || !tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!stats || stats.length === 0) {
+        emptyState.classList.remove("d-none");
+        wrapper.classList.add("d-none");
+        return;
+    }
+
+    emptyState.classList.add("d-none");
+    wrapper.classList.remove("d-none");
+
+    stats.forEach(player => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${player.name}</td>
+            <td>${player.matches_played}</td>
+            <td>${player.wins}</td>
+            <td>${player.losses}</td>
+            <td>${player.win_rate} %</td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+async function loadPlayerStats() {
+    try {
+        const response = await fetch("/player-stats");
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("Fehlerhafte Antwort /player-stats:", response.status, text);
+            alert(`Fehler beim Laden der Spielerstatistiken (${response.status}).`);
+            return;
+        }
+
+        const stats = await response.json();
+        renderPlayerStats(stats);
+    } catch (error) {
+        console.error("Fehler beim Laden der Spielerstatistiken:", error);
+        alert("Spielerstatistiken konnten nicht geladen werden.");
+    }
+}
+
 function init() {
     initScoreButtons();
     initManualButtons();
@@ -526,6 +579,7 @@ function init() {
     initPlayerSection();
     loadPlayers();
     loadMatches();
+    loadPlayerStats();
 }
 
 init();
