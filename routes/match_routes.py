@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from services.match_service import create_match
+from services.match_service import create_match, get_all_matches
 
 match_bp = Blueprint("matches", __name__)
 
@@ -31,3 +31,20 @@ def create_match_route():
             "winner_team": match.winner_team
         }
     }), 201
+
+@match_bp.route("/matches", methods=["GET"])
+def get_matches():
+    matches = get_all_matches()
+
+    return jsonify([
+        {
+            "id": match.id,
+            "played_at": match.played_at.isoformat(),
+            "score_team_a": match.score_team_a,
+            "score_team_b": match.score_team_b,
+            "point_diff": match.point_diff,
+            "winner_team": match.winner_team
+        }
+        for match in matches
+    ])
+

@@ -80,3 +80,6 @@ def create_match(score_team_a, score_team_b, players):
     db.session.commit()
 
     return True, None, match
+
+def get_all_matches():
+    return Match.query.order_by(Match.played_at.desc()).all()

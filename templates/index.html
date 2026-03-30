@@ -191,6 +191,32 @@
                 </div>
             </div>
         </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h2 class="h4 mb-3">Matchhistorie</h2>
+
+                <div id="match-history-empty" class="text-muted">
+                    Noch keine Matches gespeichert.
+                </div>
+
+                <div class="table-responsive d-none" id="match-history-wrapper">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Zeitpunkt</th>
+                                <th>Team A</th>
+                                <th>Team B</th>
+                                <th>Diff.</th>
+                                <th>Sieger</th>
+                            </tr>
+                        </thead>
+                        <tbody id="match-history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

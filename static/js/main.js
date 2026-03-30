@@ -403,6 +403,7 @@ async function saveFinishedMatch(game) {
 
         matchFinished = true;
         setMatchInputsDisabled(true);
+        await loadMatches();
 
         return true;
     } catch (error) {
@@ -434,7 +435,70 @@ function setMatchInputsDisabled(disabled) {
     });
 }
 
+function formatMatchDate(isoString) {
+    const date = new Date(isoString);
 
+    return date.toLocaleString("de-AT", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+async function loadMatches() {
+    try {
+        const response = await fetch("/matches");
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("Fehlerhafte Antwort /matches:", response.status, text);
+            alert(`Fehler beim Laden der Matchhistorie (${response.status}).`);
+            return;
+        }
+
+        const matches = await response.json();
+        renderMatchHistory(matches);
+    } catch (error) {
+        console.error("Fehler beim Laden der Matchhistorie:", error);
+        alert("Matchhistorie konnte nicht geladen werden.");
+    }
+}
+
+function renderMatchHistory(matches) {
+    const emptyState = document.getElementById("match-history-empty");
+    const wrapper = document.getElementById("match-history-wrapper");
+    const tbody = document.getElementById("match-history-body");
+
+    if (!emptyState || !wrapper || !tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!matches || matches.length === 0) {
+        emptyState.classList.remove("d-none");
+        wrapper.classList.add("d-none");
+        return;
+    }
+
+    emptyState.classList.add("d-none");
+    wrapper.classList.remove("d-none");
+
+    matches.forEach(match => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${match.id}</td>
+            <td>${formatMatchDate(match.played_at)}</td>
+            <td>${match.score_team_a}</td>
+            <td>${match.score_team_b}</td>
+            <td>${match.point_diff}</td>
+            <td>${match.winner_team}</td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
 
 function init() {
     initScoreButtons();
@@ -444,6 +508,7 @@ function init() {
     initResetButton();
     initPlayerSection();
     loadPlayers();
+    loadMatches();
 }
 
 document.addEventListener("DOMContentLoaded", init);
