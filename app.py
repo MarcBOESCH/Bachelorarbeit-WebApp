@@ -17,6 +17,11 @@ def create_app():
     db.init_app(app)
     register_blueprints(app)
 
+    print("\n=== REGISTERED ROUTES ===")
+    for rule in app.url_map.iter_rules():
+        print(rule)
+    print("=========================\n")
+
     with app.app_context():
         import models
         db.create_all()

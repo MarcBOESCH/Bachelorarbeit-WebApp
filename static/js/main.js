@@ -528,3 +528,4 @@ function init() {
     loadMatches();
 }
 
+init();
