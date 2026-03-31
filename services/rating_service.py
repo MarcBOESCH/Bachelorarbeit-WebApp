@@ -1,12 +1,102 @@
 import datetime
+from glicko2 import Player as Glicko2Player
 
 from extensions import db
 from models.match import Match
-from models.player import Player
 from models.rating import PlayerRating
 from models.match_rating_status import MatchRatingStatus
 
 SUPPORTED_SYSTEMS = {"elo", "glicko2", "trueskill"}
+
+def build_glicko2_player(rating_entry):
+    return Glicko2Player(
+        rating=rating_entry.rating,
+        rd=rating_entry.rating_deviation,
+        vol=rating_entry.volatility
+    )
+
+
+def calculate_team_average_glicko2_values(team_entries):
+    avg_rating = sum(entry["rating_entry"].rating for entry in team_entries) / len(team_entries)
+    avg_rd = sum(entry["rating_entry"].rating_deviation for entry in team_entries) / len(team_entries)
+    avg_vol = sum(entry["rating_entry"].volatility for entry in team_entries) / len(team_entries)
+
+    return avg_rating, avg_rd, avg_vol
+
+
+def process_glicko2_match(match):
+    team_a, team_b = split_match_ratings_by_team(match, "glicko2")
+
+    if len(team_a) != 2 or len(team_b) != 2:
+        raise ValueError("Ein Glicko-2-Match muss genau 2 Spieler pro Team haben.")
+
+    team_a_rating, team_a_rd, team_a_vol = calculate_team_average_glicko2_values(team_a)
+    team_b_rating, team_b_rd, team_b_vol = calculate_team_average_glicko2_values(team_b)
+
+    team_a_player = Glicko2Player(
+        rating=team_a_rating,
+        rd=team_a_rd,
+        vol=team_a_vol
+    )
+    team_b_player = Glicko2Player(
+        rating=team_b_rating,
+        rd=team_b_rd,
+        vol=team_b_vol
+    )
+
+    if match.winner_team == "A":
+        team_a_result = 1
+        team_b_result = 0
+    else:
+        team_a_result = 0
+        team_b_result = 1
+
+    team_a_player.update_player(
+        [team_b_player.rating],
+        [team_b_player.rd],
+        [team_a_result]
+    )
+    team_b_player.update_player(
+        [team_a_player.rating],
+        [team_a_player.rd],
+        [team_b_result]
+    )
+
+    delta_a_rating = team_a_player.rating - team_a_rating
+    delta_b_rating = team_b_player.rating - team_b_rating
+
+    delta_a_rd = team_a_player.rd - team_a_rd
+    delta_b_rd = team_b_player.rd - team_b_rd
+
+    delta_a_vol = team_a_player.vol - team_a_vol
+    delta_b_vol = team_b_player.vol - team_b_vol
+
+    for entry in team_a:
+        rating = entry["rating_entry"]
+        rating.rating += delta_a_rating
+        rating.rating_deviation += delta_a_rd
+        rating.volatility += delta_a_vol
+        rating.matches_played += 1
+
+    for entry in team_b:
+        rating = entry["rating_entry"]
+        rating.rating += delta_b_rating
+        rating.rating_deviation += delta_b_rd
+        rating.volatility += delta_b_vol
+        rating.matches_played += 1
+
+    mark_match_as_processed_for_system(match, "glicko2")
+    db.session.commit()
+
+    return {
+        "match_id": match.id,
+        "winner_team": match.winner_team,
+        "team_a_rating_before": round(team_a_rating, 2),
+        "team_b_rating_before": round(team_b_rating, 2),
+        "team_a_rating_after": round(team_a_player.rating, 2),
+        "team_b_rating_after": round(team_b_player.rating, 2)
+    }
+
 
 
 def get_or_create_player_rating(player_id, system_name):
@@ -124,6 +214,9 @@ def mark_match_as_processed_for_system(match, system_name):
 def process_match_for_system(match, system_name):
     if system_name == "elo":
         return process_elo_match(match)
+
+    if system_name == "glicko2":
+        return process_glicko2_match(match)
 
     raise ValueError(f"Für das System '{system_name}' ist noch keine Verarbeitung implementiert.")
 
