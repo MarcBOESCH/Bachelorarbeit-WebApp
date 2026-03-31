@@ -390,6 +390,44 @@
             </div>
         </div>
 
+        <div class="row g-4 mt-1">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <h2 class="h4 mb-0">Evaluationsdetails</h2>
+
+                            <select id="evaluation-detail-system-select" class="form-select" style="max-width: 220px;">
+                                <option value="elo">Elo</option>
+                                <option value="glicko2">Glicko-2</option>
+                                <option value="trueskill">TrueSkill</option>
+                            </select>
+                        </div>
+
+                        <div id="evaluation-details-empty" class="text-muted">
+                            Noch keine Evaluationsdetails vorhanden.
+                        </div>
+
+                        <div class="table-responsive d-none" id="evaluation-details-wrapper">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Match-ID</th>
+                                        <th>Prognose</th>
+                                        <th>Tatsächlich</th>
+                                        <th>Conf. A</th>
+                                        <th>Conf. B</th>
+                                        <th>Ergebnis</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="evaluation-details-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

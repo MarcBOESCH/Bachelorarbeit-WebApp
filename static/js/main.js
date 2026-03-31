@@ -1,4 +1,5 @@
 let matchFinished = false;
+let currentEvaluationDetailSystem = "elo";
 
 async function sendAction(payload) {
     try {
@@ -812,7 +813,13 @@ async function processRatingsForSystem(systemName) {
 
         await loadRatingsForSystem(systemName);
         await loadEvaluationForSystem(systemName);
+
+        if (systemName === currentEvaluationDetailSystem) {
+            await loadEvaluationDetails(systemName);
+        }
+
         alert(`${systemName}-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`);
+
     } catch (error) {
         console.error(`Fehler bei der ${systemName}-Verarbeitung:`, error);
         alert(`${systemName}-Ratings konnten nicht verarbeitet werden.`);
@@ -917,6 +924,76 @@ async function loadAllEvaluations() {
     await loadEvaluationForSystem("trueskill");
 }
 
+function renderEvaluationDetails(data) {
+    const emptyState = document.getElementById("evaluation-details-empty");
+    const wrapper = document.getElementById("evaluation-details-wrapper");
+    const tbody = document.getElementById("evaluation-details-body");
+
+    if (!emptyState || !wrapper || !tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!data || !data.details || data.details.length === 0) {
+        emptyState.classList.remove("d-none");
+        wrapper.classList.add("d-none");
+        return;
+    }
+
+    emptyState.classList.add("d-none");
+    wrapper.classList.remove("d-none");
+
+    data.details.forEach(detail => {
+        const row = document.createElement("tr");
+
+        const predictedWinner = detail.predicted_winner === "A" ? "Team A" : "Team B";
+        const actualWinner = detail.actual_winner === "A" ? "Team A" : "Team B";
+        const resultText = detail.correct ? "Korrekt" : "Falsch";
+
+        row.innerHTML = `
+            <td>${detail.match_id}</td>
+            <td>${predictedWinner}</td>
+            <td>${actualWinner}</td>
+            <td>${detail.confidence_a}</td>
+            <td>${detail.confidence_b}</td>
+            <td>${resultText}</td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+async function loadEvaluationDetails(systemName = currentEvaluationDetailSystem) {
+    try {
+        const response = await fetch(`/evaluation/${systemName}`);
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error(`Fehlerhafte Antwort /evaluation/${systemName}:`, response.status, text);
+            alert(`Fehler beim Laden der Evaluationsdetails für ${systemName} (${response.status}).`);
+            return;
+        }
+
+        const data = await response.json();
+        renderEvaluationDetails(data);
+    } catch (error) {
+        console.error(`Fehler beim Laden der Evaluationsdetails für ${systemName}:`, error);
+        alert(`Evaluationsdetails für ${systemName} konnten nicht geladen werden.`);
+    }
+}
+
+function initEvaluationDetailsSection() {
+    const select = document.getElementById("evaluation-detail-system-select");
+
+    if (!select) return;
+
+    currentEvaluationDetailSystem = select.value;
+
+    select.addEventListener("change", async event => {
+        currentEvaluationDetailSystem = event.target.value;
+        await loadEvaluationDetails(currentEvaluationDetailSystem);
+    });
+}
+
 function init() {
     initScoreButtons();
     initManualButtons();
@@ -926,11 +1003,13 @@ function init() {
     initPlayerSection();
     initPlayerActionEvents();
     initRatingsSection();
+    initEvaluationDetailsSection();
     loadPlayers();
     loadMatches();
     loadPlayerStats();
     loadAllRatings();
     loadAllEvaluations();
+    loadEvaluationDetails();
 }
 
 init();
