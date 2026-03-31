@@ -682,10 +682,48 @@ async function loadPlayerStats() {
     }
 }
 
-function renderEloRatings(ratings) {
-    const emptyState = document.getElementById("elo-ratings-empty");
-    const wrapper = document.getElementById("elo-ratings-wrapper");
-    const tbody = document.getElementById("elo-ratings-body");
+function getRatingConfig(systemName) {
+    const config = {
+        elo: {
+            emptyId: "elo-ratings-empty",
+            wrapperId: "elo-ratings-wrapper",
+            bodyId: "elo-ratings-body"
+        },
+        glicko2: {
+            emptyId: "glicko2-ratings-empty",
+            wrapperId: "glicko2-ratings-wrapper",
+            bodyId: "glicko2-ratings-body"
+        },
+        trueskill: {
+            emptyId: "trueskill-ratings-empty",
+            wrapperId: "trueskill-ratings-wrapper",
+            bodyId: "trueskill-ratings-body"
+        }
+    };
+
+    return config[systemName] || null;
+}
+
+function getSortableRatingValue(player, systemName) {
+    if (systemName === "elo" || systemName === "glicko2") {
+        return player.rating ?? -999999;
+    }
+
+    if (systemName === "trueskill") {
+        return player.mu ?? -999999;
+    }
+
+    return -999999;
+}
+
+function renderRatingsForSystem(systemName, ratings) {
+    const config = getRatingConfig(systemName);
+
+    if (!config) return;
+
+    const emptyState = document.getElementById(config.emptyId);
+    const wrapper = document.getElementById(config.wrapperId);
+    const tbody = document.getElementById(config.bodyId);
 
     if (!emptyState || !wrapper || !tbody) return;
 
@@ -700,66 +738,102 @@ function renderEloRatings(ratings) {
     emptyState.classList.add("d-none");
     wrapper.classList.remove("d-none");
 
-    ratings.forEach((player, index) => {
+    const sortedRatings = [...ratings].sort((a, b) => {
+        return getSortableRatingValue(b, systemName) - getSortableRatingValue(a, systemName);
+    });
+
+    sortedRatings.forEach((player, index) => {
         const row = document.createElement("tr");
 
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${player.player_name}</td>
-            <td>${player.rating ?? "-"}</td>
-            <td>${player.matches_played}</td>
-        `;
+        if (systemName === "elo") {
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${player.player_name}</td>
+                <td>${player.rating ?? "-"}</td>
+                <td>${player.matches_played}</td>
+            `;
+        } else if (systemName === "glicko2") {
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${player.player_name}</td>
+                <td>${player.rating ?? "-"}</td>
+                <td>${player.rating_deviation ?? "-"}</td>
+            `;
+        } else if (systemName === "trueskill") {
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${player.player_name}</td>
+                <td>${player.mu ?? "-"}</td>
+                <td>${player.sigma ?? "-"}</td>
+            `;
+        }
 
         tbody.appendChild(row);
     });
 }
 
-async function loadEloRatings() {
+async function loadRatingsForSystem(systemName) {
     try {
-        const response = await fetch("/ratings/elo");
+        const response = await fetch(`/ratings/${systemName}`);
 
         if (!response.ok) {
             const text = await response.text();
-            console.error("Fehlerhafte Antwort /ratings/elo:", response.status, text);
-            alert(`Fehler beim Laden der Elo-Ratings (${response.status}).`);
+            console.error(`Fehlerhafte Antwort /ratings/${systemName}:`, response.status, text);
+            alert(`Fehler beim Laden der ${systemName}-Ratings (${response.status}).`);
             return;
         }
 
         const data = await response.json();
-        renderEloRatings(data.ratings);
+        renderRatingsForSystem(systemName, data.ratings);
     } catch (error) {
-        console.error("Fehler beim Laden der Elo-Ratings:", error);
-        alert("Elo-Ratings konnten nicht geladen werden.");
+        console.error(`Fehler beim Laden der ${systemName}-Ratings:`, error);
+        alert(`${systemName}-Ratings konnten nicht geladen werden.`);
     }
 }
 
-async function processEloRatings() {
+async function loadAllRatings() {
+    await loadRatingsForSystem("elo");
+    await loadRatingsForSystem("glicko2");
+    await loadRatingsForSystem("trueskill");
+}
+
+async function processRatingsForSystem(systemName) {
     try {
-        const response = await fetch("/ratings/process/elo", {
+        const response = await fetch(`/ratings/process/${systemName}`, {
             method: "POST"
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || "Fehler bei der Elo-Verarbeitung.");
+            alert(data.error || `Fehler bei der ${systemName}-Verarbeitung.`);
             return;
         }
 
-        await loadEloRatings();
-        alert(`Elo-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`);
+        await loadRatingsForSystem(systemName);
+        alert(`${systemName}-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`);
     } catch (error) {
-        console.error("Fehler bei der Elo-Verarbeitung:", error);
-        alert("Elo-Ratings konnten nicht verarbeitet werden.");
+        console.error(`Fehler bei der ${systemName}-Verarbeitung:`, error);
+        alert(`${systemName}-Ratings konnten nicht verarbeitet werden.`);
     }
 }
 
-function initEloSection() {
+function initRatingsSection() {
     const processEloBtn = document.getElementById("process-elo-btn");
+    const processGlicko2Btn = document.getElementById("process-glicko2-btn");
+    const processTrueSkillBtn = document.getElementById("process-trueskill-btn");
 
-    if (!processEloBtn) return;
+    if (processEloBtn) {
+        processEloBtn.addEventListener("click", () => processRatingsForSystem("elo"));
+    }
 
-    processEloBtn.addEventListener("click", processEloRatings);
+    if (processGlicko2Btn) {
+        processGlicko2Btn.addEventListener("click", () => processRatingsForSystem("glicko2"));
+    }
+
+    if (processTrueSkillBtn) {
+        processTrueSkillBtn.addEventListener("click", () => processRatingsForSystem("trueskill"));
+    }
 }
 
 function init() {
@@ -769,11 +843,12 @@ function init() {
     initUndoButton();
     initResetButton();
     initPlayerSection();
+    initPlayerActionEvents();
+    initRatingsSection();
     loadPlayers();
     loadMatches();
     loadPlayerStats();
-    initPlayerActionEvents();
-    initEloSection();
+    loadAllRatings();
 }
 
 init();

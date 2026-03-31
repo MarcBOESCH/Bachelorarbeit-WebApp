@@ -245,31 +245,97 @@
             </div>
         </div>
 
-        <div class="card shadow-sm mt-4">
-            <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                    <h2 class="h4 mb-0">Elo-Ratings</h2>
-                    <button id="process-elo-btn" class="btn btn-dark" type="button">
-                        Elo verarbeiten
-                    </button>
-                </div>
+        <div class="row g-4 mt-1">
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                            <h2 class="h4 mb-0">Elo</h2>
+                            <button id="process-elo-btn" class="btn btn-dark btn-sm" type="button">
+                                Verarbeiten
+                            </button>
+                        </div>
 
-                <div id="elo-ratings-empty" class="text-muted">
-                    Noch keine Elo-Ratings vorhanden.
-                </div>
+                        <div id="elo-ratings-empty" class="text-muted">
+                            Noch keine Elo-Ratings vorhanden.
+                        </div>
 
-                <div class="table-responsive d-none" id="elo-ratings-wrapper">
-                    <table class="table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Rang</th>
-                                <th>Spieler</th>
-                                <th>Elo</th>
-                                <th>Elo-Matches</th>
-                            </tr>
-                        </thead>
-                        <tbody id="elo-ratings-body"></tbody>
-                    </table>
+                        <div class="table-responsive d-none" id="elo-ratings-wrapper">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Rang</th>
+                                        <th>Spieler</th>
+                                        <th>Elo</th>
+                                        <th>Matches</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="elo-ratings-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                            <h2 class="h4 mb-0">Glicko-2</h2>
+                            <button id="process-glicko2-btn" class="btn btn-dark btn-sm" type="button">
+                                Verarbeiten
+                            </button>
+                        </div>
+
+                        <div id="glicko2-ratings-empty" class="text-muted">
+                            Noch keine Glicko-2-Ratings vorhanden.
+                        </div>
+
+                        <div class="table-responsive d-none" id="glicko2-ratings-wrapper">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Rang</th>
+                                        <th>Spieler</th>
+                                        <th>Rating</th>
+                                        <th>RD</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="glicko2-ratings-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                            <h2 class="h4 mb-0">TrueSkill</h2>
+                            <button id="process-trueskill-btn" class="btn btn-dark btn-sm" type="button">
+                                Verarbeiten
+                            </button>
+                        </div>
+
+                        <div id="trueskill-ratings-empty" class="text-muted">
+                            Noch keine TrueSkill-Ratings vorhanden.
+                        </div>
+
+                        <div class="table-responsive d-none" id="trueskill-ratings-wrapper">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Rang</th>
+                                        <th>Spieler</th>
+                                        <th>Mu</th>
+                                        <th>Sigma</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trueskill-ratings-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
