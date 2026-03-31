@@ -17,9 +17,9 @@ main_bp = Blueprint("main", __name__)
 
 # Startseite mit aktuellem Spielstand
 @main_bp.route("/")
-def index():
+def match_page():
     game = get_game_state()
-    return render_template("index.html", game=game)
+    return render_template("match.html", game=game)
 
 
 # Zentrale API-Route für alle Spielaktionen aus dem Frontend

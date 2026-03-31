@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Match - Jass App{% endblock %}
+
+{% block content %}
+            <div class="text-center mb-5">
+                <h1 class="fw-bold">Jass Scoring App</h1>
+                <p class="text-muted mb-0">Punkte zählen für ein laufendes Match</p>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Spielerverwaltung</h2>
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label for="player-name" class="form-label">Neuen Spieler anlegen</label>
+                            <input
+                                id="player-name"
+                                type="text"
+                                class="form-control"
+                                placeholder="z. B. Marc"
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <button id="create-player-btn" class="btn btn-dark w-100">
+                                Spieler anlegen
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="h5">Vorhandene Spieler</h3>
+                        <ul id="player-list" class="list-group mt-3">
+                            <li class="list-group-item text-muted">Noch keine Spieler vorhanden.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Match-Aufstellung</h2>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Team A</h3>
+
+                            <div class="mb-3">
+                                <label for="team-a-player-1" class="form-label">Spieler 1</label>
+                                <select id="team-a-player-1" class="form-select">
+                                    <option value="">Bitte Spieler wählen</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="team-a-player-2" class="form-label">Spieler 2</label>
+                                <select id="team-a-player-2" class="form-select">
+                                    <option value="">Bitte Spieler wählen</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Team B</h3>
+
+                            <div class="mb-3">
+                                <label for="team-b-player-1" class="form-label">Spieler 1</label>
+                                <select id="team-b-player-1" class="form-select">
+                                    <option value="">Bitte Spieler wählen</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="team-b-player-2" class="form-label">Spieler 2</label>
+                                <select id="team-b-player-2" class="form-select">
+                                    <option value="">Bitte Spieler wählen</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 score-card">
+                        <div class="card-body text-center">
+                            <h2 class="card-title mb-3">{{ game.team_name_a }}</h2>
+                            <div id="score-a" class="display-2 fw-bold mb-4">{{ game.score_a }}</div>
+
+                            <div class="d-flex flex-column gap-2 justify-content-center align-items-center mb-3">
+                                <button class="btn btn-primary score-btn" data-team="A" data-points="20">+20</button>
+                                <button class="btn btn-primary score-btn" data-team="A" data-points="50">+50</button>
+                                <button class="btn btn-primary score-btn" data-team="A" data-points="100">+100</button>
+                                <button class="btn btn-primary score-btn" data-team="A" data-points="150">+150</button>
+                                <button class="btn btn-primary score-btn" data-team="A" data-points="200">+200</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 score-card">
+                        <div class="card-body text-center">
+                            <h2 class="card-title mb-3">{{ game.team_name_b }}</h2>
+                            <div id="score-b" class="display-2 fw-bold mb-4">{{ game.score_b }}</div>
+
+                            <div class="d-flex flex-column gap-2 justify-content-center align-items-center mb-3">
+                                <button class="btn btn-primary score-btn" data-team="B" data-points="20">+20</button>
+                                <button class="btn btn-primary score-btn" data-team="B" data-points="50">+50</button>
+                                <button class="btn btn-primary score-btn" data-team="B" data-points="100">+100</button>
+                                <button class="btn btn-primary score-btn" data-team="B" data-points="150">+150</button>
+                                <button class="btn btn-primary score-btn" data-team="B" data-points="200">+200</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4 g-4">
+                <div class="col-md-6">
+                    <label for="manual-score-a" class="form-label">Manuelle Punkte {{ game.team_name_a }}</label>
+                    <div class="d-flex gap-2">
+                        <input id="manual-score-a" type="number" class="form-control" min="1" placeholder="z. B. 87 oder 257">
+                        <button id="manual-btn-a" class="btn btn-outline-dark">Eintragen</button>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="manual-score-b" class="form-label">Manuelle Punkte {{ game.team_name_b }}</label>
+                    <div class="d-flex gap-2">
+                        <input id="manual-score-b" type="number" class="form-control" min="1" placeholder="z. B. 70 oder 257">
+                        <button id="manual-btn-b" class="btn btn-outline-dark">Eintragen</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <h5>{{ game.team_name_a }}</h5>
+                            <p id="summary-a" class="fs-4 fw-semibold mb-0">{{ game.score_a }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <h5>Punktedifferenz</h5>
+                            <p id="point-diff" class="fs-4 fw-semibold mb-0">{{ game.score_a - game.score_b }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>{{ game.team_name_b }}</h5>
+                            <p id="summary-b" class="fs-4 fw-semibold mb-0">{{ game.score_b }}</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="mb-2">
+                            Führend:
+                            <span id="leader" class="fw-bold">
+                                {% if game.score_a > game.score_b %}
+                                    {{ game.team_name_a }}
+                                {% elif game.score_b > game.score_a %}
+                                    {{ game.team_name_b }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </p>
+
+                        <p class="mb-3">
+                            Gewinner:
+                            <span id="winner" class="fw-bold">
+                                {{ game.winner if game.winner else "-" }}
+                            </span>
+                        </p>
+
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <button id="undo-btn" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+                            <button id="reset-btn" class="btn btn-warning">Neues Spiel</button>
+                        </div>
+
+                        <div id="match-status-message" class="alert alert-success mt-3 d-none" role="alert"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Matchhistorie</h2>
+
+                    <div id="match-history-empty" class="text-muted">
+                        Noch keine Matches gespeichert.
+                    </div>
+
+                    <div class="table-responsive d-none" id="match-history-wrapper">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Zeitpunkt</th>
+                                    <th>Team A</th>
+                                    <th>Team B</th>
+                                    <th>Score</th>
+                                    <th>Diff.</th>
+                                    <th>Sieger</th>
+                                </tr>
+                            </thead>
+                            <tbody id="match-history-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Spielerstatistiken</h2>
+
+                    <div id="player-stats-empty" class="text-muted">
+                        Noch keine Spielerstatistiken verfügbar.
+                    </div>
+
+                    <div class="table-responsive d-none" id="player-stats-wrapper">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Spieler</th>
+                                    <th>Matches</th>
+                                    <th>Siege</th>
+                                    <th>Niederlagen</th>
+                                    <th>Siegquote</th>
+                                    <th>Ø Punktediff.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="player-stats-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                <h2 class="h4 mb-0">Elo</h2>
+                                <button id="process-elo-btn" class="btn btn-dark btn-sm" type="button">
+                                    Verarbeiten
+                                </button>
+                            </div>
+
+                            <div id="elo-ratings-empty" class="text-muted">
+                                Noch keine Elo-Ratings vorhanden.
+                            </div>
+
+                            <div class="table-responsive d-none" id="elo-ratings-wrapper">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Rang</th>
+                                            <th>Spieler</th>
+                                            <th>Elo</th>
+                                            <th>Matches</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="elo-ratings-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                <h2 class="h4 mb-0">Glicko-2</h2>
+                                <button id="process-glicko2-btn" class="btn btn-dark btn-sm" type="button">
+                                    Verarbeiten
+                                </button>
+                            </div>
+
+                            <div id="glicko2-ratings-empty" class="text-muted">
+                                Noch keine Glicko-2-Ratings vorhanden.
+                            </div>
+
+                            <div class="table-responsive d-none" id="glicko2-ratings-wrapper">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Rang</th>
+                                            <th>Spieler</th>
+                                            <th>Rating</th>
+                                            <th>RD</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="glicko2-ratings-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                <h2 class="h4 mb-0">TrueSkill</h2>
+                                <button id="process-trueskill-btn" class="btn btn-dark btn-sm" type="button">
+                                    Verarbeiten
+                                </button>
+                            </div>
+
+                            <div id="trueskill-ratings-empty" class="text-muted">
+                                Noch keine TrueSkill-Ratings vorhanden.
+                            </div>
+
+                            <div class="table-responsive d-none" id="trueskill-ratings-wrapper">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Rang</th>
+                                            <th>Spieler</th>
+                                            <th>Mu</th>
+                                            <th>Sigma</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="trueskill-ratings-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">Elo Evaluation</h2>
+                            <div id="evaluation-elo-empty" class="text-muted">
+                                Noch keine Evaluationsdaten vorhanden.
+                            </div>
+                            <div id="evaluation-elo-content" class="d-none">
+                                <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-accuracy">-</span>%</p>
+                                <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-correct">-</span></p>
+                                <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-total">-</span></p>
+                                <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-elo-brier">-</span></p>
+                                <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-elo-logloss">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">Glicko-2 Evaluation</h2>
+                            <div id="evaluation-glicko2-empty" class="text-muted">
+                                Noch keine Evaluationsdaten vorhanden.
+                            </div>
+                            <div id="evaluation-glicko2-content" class="d-none">
+                                <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-glicko2-accuracy">-</span>%</p>
+                                <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-glicko2-correct">-</span></p>
+                                <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-glicko2-total">-</span></p>
+                                <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-glicko2-brier">-</span></p>
+                                <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-glicko2-logloss">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">TrueSkill Evaluation</h2>
+                            <div id="evaluation-trueskill-empty" class="text-muted">
+                                Noch keine Evaluationsdaten vorhanden.
+                            </div>
+                            <div id="evaluation-trueskill-content" class="d-none">
+                                <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-trueskill-accuracy">-</span>%</p>
+                                <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-trueskill-correct">-</span></p>
+                                <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-trueskill-total">-</span></p>
+                                <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-trueskill-brier">-</span></p>
+                                <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-trueskill-logloss">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <h2 class="h4 mb-0">Evaluationsdetails</h2>
+
+                                <select id="evaluation-detail-system-select" class="form-select" style="max-width: 220px;">
+                                    <option value="elo">Elo</option>
+                                    <option value="glicko2">Glicko-2</option>
+                                    <option value="trueskill">TrueSkill</option>
+                                </select>
+                            </div>
+
+                            <div id="evaluation-details-empty" class="text-muted">
+                                Noch keine Evaluationsdetails vorhanden.
+                            </div>
+
+                            <div class="table-responsive d-none" id="evaluation-details-wrapper">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Match-ID</th>
+                                            <th>Prognose</th>
+                                            <th>Tatsächlich</th>
+                                            <th>Confidence A</th>
+                                            <th>Confidence B</th>
+                                            <th>Brier-Score</th>
+                                            <th>Log-Loss</th>
+                                            <th>Ergebnis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="evaluation-details-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+{% endblock %}
