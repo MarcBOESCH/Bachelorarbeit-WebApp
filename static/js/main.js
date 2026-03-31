@@ -851,21 +851,24 @@ function getEvaluationConfig(systemName) {
             contentId: "evaluation-elo-content",
             accuracyId: "evaluation-elo-accuracy",
             correctId: "evaluation-elo-correct",
-            totalId: "evaluation-elo-total"
+            totalId: "evaluation-elo-total",
+            brierId: "evaluation-elo-brier"
         },
         glicko2: {
             emptyId: "evaluation-glicko2-empty",
             contentId: "evaluation-glicko2-content",
             accuracyId: "evaluation-glicko2-accuracy",
             correctId: "evaluation-glicko2-correct",
-            totalId: "evaluation-glicko2-total"
+            totalId: "evaluation-glicko2-total",
+            brierId: "evaluation-glicko2-brier"
         },
         trueskill: {
             emptyId: "evaluation-trueskill-empty",
             contentId: "evaluation-trueskill-content",
             accuracyId: "evaluation-trueskill-accuracy",
             correctId: "evaluation-trueskill-correct",
-            totalId: "evaluation-trueskill-total"
+            totalId: "evaluation-trueskill-total",
+            brierId: "evaluation-trueskill-brier"
         }
     };
 
@@ -882,8 +885,9 @@ function renderEvaluation(systemName, data) {
     const accuracy = document.getElementById(config.accuracyId);
     const correct = document.getElementById(config.correctId);
     const total = document.getElementById(config.totalId);
+    const brier = document.getElementById(config.brierId);
 
-    if (!emptyState || !content || !accuracy || !correct || !total) return;
+    if (!emptyState || !content || !accuracy || !correct || !total || !brier) return;
 
     if (!data || !data.total_predictions || data.total_predictions === 0) {
         emptyState.classList.remove("d-none");
@@ -897,6 +901,7 @@ function renderEvaluation(systemName, data) {
     accuracy.textContent = data.accuracy;
     correct.textContent = data.correct_predictions;
     total.textContent = data.total_predictions;
+    brier.textContent = data.brier_score;
 }
 
 async function loadEvaluationForSystem(systemName) {
@@ -955,6 +960,7 @@ function renderEvaluationDetails(data) {
             <td>${actualWinner}</td>
             <td>${detail.confidence_a}</td>
             <td>${detail.confidence_b}</td>
+            <td>${detail.brier_score}</td>
             <td>${resultText}</td>
         `;
 

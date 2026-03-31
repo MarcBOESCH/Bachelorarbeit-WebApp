@@ -37,6 +37,7 @@ def evaluate_elo_predictions():
     correct_predictions = 0
     total_predictions = 0
     prediction_details = []
+    total_brier_score = 0.0
 
     for match in matches:
         team_a_entries, team_b_entries = build_match_teams(match)
@@ -56,6 +57,11 @@ def evaluate_elo_predictions():
 
         predicted_winner = "A" if expected_a >= expected_b else "B"
         actual_winner = match.winner_team
+
+        actual_a_binary = 1.0 if actual_winner == "A" else 0.0
+        brier_score = (expected_a - actual_a_binary) ** 2
+        total_brier_score += brier_score
+
         is_correct = predicted_winner == actual_winner
 
         total_predictions += 1
@@ -68,6 +74,7 @@ def evaluate_elo_predictions():
             "actual_winner": actual_winner,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
+            "brier_score": round(brier_score, 6),
             "correct": is_correct
         })
 
@@ -85,12 +92,14 @@ def evaluate_elo_predictions():
             player_ratings[entry.player_id] += delta_b
 
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
+    average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
 
     return {
         "system_name": "elo",
         "total_predictions": total_predictions,
         "correct_predictions": correct_predictions,
         "accuracy": accuracy,
+        "brier_score": average_brier_score,
         "details": prediction_details
     }
 
@@ -102,6 +111,7 @@ def evaluate_glicko2_predictions():
     correct_predictions = 0
     total_predictions = 0
     prediction_details = []
+    total_brier_score = 0.0
 
     for match in matches:
         team_a_entries, team_b_entries = build_match_teams(match)
@@ -127,6 +137,10 @@ def evaluate_glicko2_predictions():
         actual_winner = match.winner_team
         is_correct = predicted_winner == actual_winner
 
+        actual_a_binary = 1.0 if actual_winner == "A" else 0.0
+        brier_score = (expected_a - actual_a_binary) ** 2
+        total_brier_score += brier_score
+
         total_predictions += 1
         if is_correct:
             correct_predictions += 1
@@ -137,6 +151,7 @@ def evaluate_glicko2_predictions():
             "actual_winner": actual_winner,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
+            "brier_score": round(brier_score, 6),
             "correct": is_correct
         })
 
@@ -172,12 +187,14 @@ def evaluate_glicko2_predictions():
             player_states[entry.player_id]["vol"] += delta_b_vol
 
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
+    average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
 
     return {
         "system_name": "glicko2",
         "total_predictions": total_predictions,
         "correct_predictions": correct_predictions,
         "accuracy": accuracy,
+        "brier_score": average_brier_score,
         "details": prediction_details
     }
 
@@ -189,6 +206,7 @@ def evaluate_trueskill_predictions():
     correct_predictions = 0
     total_predictions = 0
     prediction_details = []
+    total_brier_score = 0.0
 
     for match in matches:
         team_a_entries, team_b_entries = build_match_teams(match)
@@ -210,6 +228,10 @@ def evaluate_trueskill_predictions():
         actual_winner = match.winner_team
         is_correct = predicted_winner == actual_winner
 
+        actual_a_binary = 1.0 if actual_winner == "A" else 0.0
+        brier_score = (expected_a - actual_a_binary) ** 2
+        total_brier_score += brier_score
+
         total_predictions += 1
         if is_correct:
             correct_predictions += 1
@@ -220,6 +242,7 @@ def evaluate_trueskill_predictions():
             "actual_winner": actual_winner,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
+            "brier_score": round(brier_score, 6),
             "correct": is_correct
         })
 
@@ -240,12 +263,14 @@ def evaluate_trueskill_predictions():
             player_states[entry.player_id] = new_rating
 
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
+    average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
 
     return {
         "system_name": "trueskill",
         "total_predictions": total_predictions,
         "correct_predictions": correct_predictions,
         "accuracy": accuracy,
+        "brier_score": average_brier_score,
         "details": prediction_details
     }
 
