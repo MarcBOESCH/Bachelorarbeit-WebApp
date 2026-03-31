@@ -682,6 +682,86 @@ async function loadPlayerStats() {
     }
 }
 
+function renderEloRatings(ratings) {
+    const emptyState = document.getElementById("elo-ratings-empty");
+    const wrapper = document.getElementById("elo-ratings-wrapper");
+    const tbody = document.getElementById("elo-ratings-body");
+
+    if (!emptyState || !wrapper || !tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!ratings || ratings.length === 0) {
+        emptyState.classList.remove("d-none");
+        wrapper.classList.add("d-none");
+        return;
+    }
+
+    emptyState.classList.add("d-none");
+    wrapper.classList.remove("d-none");
+
+    ratings.forEach((player, index) => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${player.player_name}</td>
+            <td>${player.rating ?? "-"}</td>
+            <td>${player.matches_played}</td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+async function loadEloRatings() {
+    try {
+        const response = await fetch("/ratings/elo");
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("Fehlerhafte Antwort /ratings/elo:", response.status, text);
+            alert(`Fehler beim Laden der Elo-Ratings (${response.status}).`);
+            return;
+        }
+
+        const data = await response.json();
+        renderEloRatings(data.ratings);
+    } catch (error) {
+        console.error("Fehler beim Laden der Elo-Ratings:", error);
+        alert("Elo-Ratings konnten nicht geladen werden.");
+    }
+}
+
+async function processEloRatings() {
+    try {
+        const response = await fetch("/ratings/process/elo", {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Fehler bei der Elo-Verarbeitung.");
+            return;
+        }
+
+        await loadEloRatings();
+        alert(`Elo-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`);
+    } catch (error) {
+        console.error("Fehler bei der Elo-Verarbeitung:", error);
+        alert("Elo-Ratings konnten nicht verarbeitet werden.");
+    }
+}
+
+function initEloSection() {
+    const processEloBtn = document.getElementById("process-elo-btn");
+
+    if (!processEloBtn) return;
+
+    processEloBtn.addEventListener("click", processEloRatings);
+}
+
 function init() {
     initScoreButtons();
     initManualButtons();
@@ -693,6 +773,7 @@ function init() {
     loadMatches();
     loadPlayerStats();
     initPlayerActionEvents();
+    initEloSection();
 }
 
 init();

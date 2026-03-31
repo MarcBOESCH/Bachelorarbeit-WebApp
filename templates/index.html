@@ -245,6 +245,35 @@
             </div>
         </div>
 
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h4 mb-0">Elo-Ratings</h2>
+                    <button id="process-elo-btn" class="btn btn-dark" type="button">
+                        Elo verarbeiten
+                    </button>
+                </div>
+
+                <div id="elo-ratings-empty" class="text-muted">
+                    Noch keine Elo-Ratings vorhanden.
+                </div>
+
+                <div class="table-responsive d-none" id="elo-ratings-wrapper">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Spieler</th>
+                                <th>Elo</th>
+                                <th>Elo-Matches</th>
+                            </tr>
+                        </thead>
+                        <tbody id="elo-ratings-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

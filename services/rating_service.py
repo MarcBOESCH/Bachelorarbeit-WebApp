@@ -211,3 +211,28 @@ def get_match_player_ratings(match, system_name):
         })
 
     return ratings
+
+def get_player_ratings_for_system(system_name):
+    if system_name not in SUPPORTED_SYSTEMS:
+        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+
+    rating_entries = PlayerRating.query.filter_by(system_name=system_name).all()
+
+    result = []
+
+    for entry in rating_entries:
+        result.append({
+            "player_id": entry.player_id,
+            "player_name": entry.player.name,
+            "system_name": entry.system_name,
+            "rating": round(entry.rating, 2) if entry.rating is not None else None,
+            "matches_played": entry.matches_played,
+            "rating_deviation": round(entry.rating_deviation, 2) if entry.rating_deviation is not None else None,
+            "volatility": round(entry.volatility, 4) if entry.volatility is not None else None,
+            "mu": round(entry.mu, 4) if entry.mu is not None else None,
+            "sigma": round(entry.sigma, 4) if entry.sigma is not None else None
+        })
+
+    result.sort(key=lambda item: item["rating"] if item["rating"] is not None else -999999, reverse=True)
+
+    return result
