@@ -1,12 +1,76 @@
 import datetime
-from glicko2 import Player as Glicko2Player
+import trueskill
 
+from glicko2 import Player as Glicko2Player
 from extensions import db
 from models.match import Match
 from models.rating import PlayerRating
 from models.match_rating_status import MatchRatingStatus
 
 SUPPORTED_SYSTEMS = {"elo", "glicko2", "trueskill"}
+
+TRUESKILL_ENV = trueskill.TrueSkill(
+    mu=25.0,
+    sigma=8.333,
+    beta=4.167,
+    tau=0.083,
+    draw_probability=0.0
+)
+
+
+def build_trueskill_rating(rating_entry):
+    return TRUESKILL_ENV.create_rating(
+        mu=rating_entry.mu,
+        sigma=rating_entry.sigma
+    )
+
+
+def process_trueskill_match(match):
+    team_a, team_b = split_match_ratings_by_team(match, "trueskill")
+
+    if len(team_a) != 2 or len(team_b) != 2:
+        raise ValueError("Ein TrueSkill-Match muss genau 2 Spieler pro Team haben.")
+
+    team_a_ratings = [
+        build_trueskill_rating(entry["rating_entry"])
+        for entry in team_a
+    ]
+    team_b_ratings = [
+        build_trueskill_rating(entry["rating_entry"])
+        for entry in team_b
+    ]
+
+    if match.winner_team == "A":
+        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
+    else:
+        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[1, 0])
+
+    new_team_a_ratings, new_team_b_ratings = rated_teams
+
+    for entry, new_rating in zip(team_a, new_team_a_ratings):
+        rating = entry["rating_entry"]
+        rating.mu = new_rating.mu
+        rating.sigma = new_rating.sigma
+        rating.matches_played += 1
+
+    for entry, new_rating in zip(team_b, new_team_b_ratings):
+        rating = entry["rating_entry"]
+        rating.mu = new_rating.mu
+        rating.sigma = new_rating.sigma
+        rating.matches_played += 1
+
+    mark_match_as_processed_for_system(match, "trueskill")
+    db.session.commit()
+
+    return {
+        "match_id": match.id,
+        "winner_team": match.winner_team,
+        "team_a_mu_before": [round(r.mu, 4) for r in team_a_ratings],
+        "team_b_mu_before": [round(r.mu, 4) for r in team_b_ratings],
+        "team_a_mu_after": [round(r.mu, 4) for r in new_team_a_ratings],
+        "team_b_mu_after": [round(r.mu, 4) for r in new_team_b_ratings]
+    }
+
 
 def build_glicko2_player(rating_entry):
     return Glicko2Player(
@@ -217,6 +281,9 @@ def process_match_for_system(match, system_name):
 
     if system_name == "glicko2":
         return process_glicko2_match(match)
+
+    if system_name == "trueskill":
+        return process_trueskill_match(match)
 
     raise ValueError(f"Für das System '{system_name}' ist noch keine Verarbeitung implementiert.")
 
