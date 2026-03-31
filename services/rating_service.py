@@ -121,6 +121,27 @@ def mark_match_as_processed_for_system(match, system_name):
     status_entry.processed_at = datetime.datetime.now()
 
 
+def process_match_for_system(match, system_name):
+    if system_name == "elo":
+        return process_elo_match(match)
+
+    raise ValueError(f"Für das System '{system_name}' ist noch keine Verarbeitung implementiert.")
+
+
+def process_all_unprocessed_matches_for_system(system_name):
+    if system_name not in SUPPORTED_SYSTEMS:
+        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+
+    matches = get_unprocessed_matches_for_system(system_name)
+    results = []
+
+    for match in matches:
+        result = process_match_for_system(match, system_name)
+        results.append(result)
+
+    return results
+
+
 def process_elo_match(match, k_factor=32):
     team_a, team_b = split_match_ratings_by_team(match, "elo")
 
