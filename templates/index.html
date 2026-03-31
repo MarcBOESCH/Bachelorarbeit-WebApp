@@ -340,6 +340,56 @@
             </div>
         </div>
 
+        <div class="row g-4 mt-1">
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h4 mb-3">Elo Evaluation</h2>
+                        <div id="evaluation-elo-empty" class="text-muted">
+                            Noch keine Evaluationsdaten vorhanden.
+                        </div>
+                        <div id="evaluation-elo-content" class="d-none">
+                            <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-accuracy">-</span>%</p>
+                            <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-correct">-</span></p>
+                            <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-total">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h4 mb-3">Glicko-2 Evaluation</h2>
+                        <div id="evaluation-glicko2-empty" class="text-muted">
+                            Noch keine Evaluationsdaten vorhanden.
+                        </div>
+                        <div id="evaluation-glicko2-content" class="d-none">
+                            <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-glicko2-accuracy">-</span>%</p>
+                            <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-glicko2-correct">-</span></p>
+                            <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-glicko2-total">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h4 mb-3">TrueSkill Evaluation</h2>
+                        <div id="evaluation-trueskill-empty" class="text-muted">
+                            Noch keine Evaluationsdaten vorhanden.
+                        </div>
+                        <div id="evaluation-trueskill-content" class="d-none">
+                            <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-trueskill-accuracy">-</span>%</p>
+                            <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-trueskill-correct">-</span></p>
+                            <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-trueskill-total">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

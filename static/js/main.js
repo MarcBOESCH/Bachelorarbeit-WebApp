@@ -811,6 +811,7 @@ async function processRatingsForSystem(systemName) {
         }
 
         await loadRatingsForSystem(systemName);
+        await loadEvaluationForSystem(systemName);
         alert(`${systemName}-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`);
     } catch (error) {
         console.error(`Fehler bei der ${systemName}-Verarbeitung:`, error);
@@ -836,6 +837,86 @@ function initRatingsSection() {
     }
 }
 
+function getEvaluationConfig(systemName) {
+    const config = {
+        elo: {
+            emptyId: "evaluation-elo-empty",
+            contentId: "evaluation-elo-content",
+            accuracyId: "evaluation-elo-accuracy",
+            correctId: "evaluation-elo-correct",
+            totalId: "evaluation-elo-total"
+        },
+        glicko2: {
+            emptyId: "evaluation-glicko2-empty",
+            contentId: "evaluation-glicko2-content",
+            accuracyId: "evaluation-glicko2-accuracy",
+            correctId: "evaluation-glicko2-correct",
+            totalId: "evaluation-glicko2-total"
+        },
+        trueskill: {
+            emptyId: "evaluation-trueskill-empty",
+            contentId: "evaluation-trueskill-content",
+            accuracyId: "evaluation-trueskill-accuracy",
+            correctId: "evaluation-trueskill-correct",
+            totalId: "evaluation-trueskill-total"
+        }
+    };
+
+    return config[systemName] || null;
+}
+
+function renderEvaluation(systemName, data) {
+    const config = getEvaluationConfig(systemName);
+
+    if (!config) return;
+
+    const emptyState = document.getElementById(config.emptyId);
+    const content = document.getElementById(config.contentId);
+    const accuracy = document.getElementById(config.accuracyId);
+    const correct = document.getElementById(config.correctId);
+    const total = document.getElementById(config.totalId);
+
+    if (!emptyState || !content || !accuracy || !correct || !total) return;
+
+    if (!data || !data.total_predictions || data.total_predictions === 0) {
+        emptyState.classList.remove("d-none");
+        content.classList.add("d-none");
+        return;
+    }
+
+    emptyState.classList.add("d-none");
+    content.classList.remove("d-none");
+
+    accuracy.textContent = data.accuracy;
+    correct.textContent = data.correct_predictions;
+    total.textContent = data.total_predictions;
+}
+
+async function loadEvaluationForSystem(systemName) {
+    try {
+        const response = await fetch(`/evaluation/${systemName}`);
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error(`Fehlerhafte Antwort /evaluation/${systemName}:`, response.status, text);
+            alert(`Fehler beim Laden der Evaluation für ${systemName} (${response.status}).`);
+            return;
+        }
+
+        const data = await response.json();
+        renderEvaluation(systemName, data);
+    } catch (error) {
+        console.error(`Fehler beim Laden der Evaluation für ${systemName}:`, error);
+        alert(`Evaluation für ${systemName} konnte nicht geladen werden.`);
+    }
+}
+
+async function loadAllEvaluations() {
+    await loadEvaluationForSystem("elo");
+    await loadEvaluationForSystem("glicko2");
+    await loadEvaluationForSystem("trueskill");
+}
+
 function init() {
     initScoreButtons();
     initManualButtons();
@@ -849,6 +930,7 @@ function init() {
     loadMatches();
     loadPlayerStats();
     loadAllRatings();
+    loadAllEvaluations();
 }
 
 init();
