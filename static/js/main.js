@@ -852,7 +852,8 @@ function getEvaluationConfig(systemName) {
             accuracyId: "evaluation-elo-accuracy",
             correctId: "evaluation-elo-correct",
             totalId: "evaluation-elo-total",
-            brierId: "evaluation-elo-brier"
+            brierId: "evaluation-elo-brier",
+            logLossId: "evaluation-elo-logloss",
         },
         glicko2: {
             emptyId: "evaluation-glicko2-empty",
@@ -860,7 +861,8 @@ function getEvaluationConfig(systemName) {
             accuracyId: "evaluation-glicko2-accuracy",
             correctId: "evaluation-glicko2-correct",
             totalId: "evaluation-glicko2-total",
-            brierId: "evaluation-glicko2-brier"
+            brierId: "evaluation-glicko2-brier",
+            logLossId: "evaluation-glicko2-logloss"
         },
         trueskill: {
             emptyId: "evaluation-trueskill-empty",
@@ -868,7 +870,8 @@ function getEvaluationConfig(systemName) {
             accuracyId: "evaluation-trueskill-accuracy",
             correctId: "evaluation-trueskill-correct",
             totalId: "evaluation-trueskill-total",
-            brierId: "evaluation-trueskill-brier"
+            brierId: "evaluation-trueskill-brier",
+            logLossId: "evaluation-trueskill-logloss"
         }
     };
 
@@ -886,8 +889,9 @@ function renderEvaluation(systemName, data) {
     const correct = document.getElementById(config.correctId);
     const total = document.getElementById(config.totalId);
     const brier = document.getElementById(config.brierId);
+    const logLoss = document.getElementById(config.logLossId);
 
-    if (!emptyState || !content || !accuracy || !correct || !total || !brier) return;
+    if (!emptyState || !content || !accuracy || !correct || !total || !brier || !logLoss) return;
 
     if (!data || !data.total_predictions || data.total_predictions === 0) {
         emptyState.classList.remove("d-none");
@@ -902,6 +906,7 @@ function renderEvaluation(systemName, data) {
     correct.textContent = data.correct_predictions;
     total.textContent = data.total_predictions;
     brier.textContent = data.brier_score;
+    logLoss.textContent = data.log_loss
 }
 
 async function loadEvaluationForSystem(systemName) {
@@ -961,6 +966,7 @@ function renderEvaluationDetails(data) {
             <td>${detail.confidence_a}</td>
             <td>${detail.confidence_b}</td>
             <td>${detail.brier_score}</td>
+            <td>${detail.log_loss}</td>
             <td>${resultText}</td>
         `;
 

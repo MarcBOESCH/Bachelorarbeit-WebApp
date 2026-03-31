@@ -1,6 +1,9 @@
+import trueskill
+import math
+
 from models.match import Match
 from glicko2 import Player as Glicko2Player
-import trueskill
+
 
 SUPPORTED_EVALUATION_SYSTEMS = {"elo", "glicko2", "trueskill"}
 
@@ -11,6 +14,10 @@ TRUESKILL_ENV = trueskill.TrueSkill(
     tau=0.083,
     draw_probability=0.0
 )
+
+def calculate_log_loss(probability, actual_outcome):
+    clipped_probability = min(max(probability, 1e-6), 1 - 1e-6)
+    return -(actual_outcome * math.log(clipped_probability) + (1 - actual_outcome) * math.log(1 - clipped_probability))
 
 
 def calculate_elo_expected_score(team_a_rating, team_b_rating):
@@ -38,6 +45,7 @@ def evaluate_elo_predictions():
     total_predictions = 0
     prediction_details = []
     total_brier_score = 0.0
+    total_log_loss = 0.0
 
     for match in matches:
         team_a_entries, team_b_entries = build_match_teams(match)
@@ -62,6 +70,9 @@ def evaluate_elo_predictions():
         brier_score = (expected_a - actual_a_binary) ** 2
         total_brier_score += brier_score
 
+        log_loss = calculate_log_loss(expected_a, actual_a_binary)
+        total_log_loss += log_loss
+
         is_correct = predicted_winner == actual_winner
 
         total_predictions += 1
@@ -75,6 +86,7 @@ def evaluate_elo_predictions():
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
+            "log_loss": round(log_loss, 6),
             "correct": is_correct
         })
 
@@ -93,6 +105,7 @@ def evaluate_elo_predictions():
 
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
     average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
+    average_log_loss = round(total_log_loss / total_predictions, 6) if total_predictions > 0 else 0.0
 
     return {
         "system_name": "elo",
@@ -100,6 +113,7 @@ def evaluate_elo_predictions():
         "correct_predictions": correct_predictions,
         "accuracy": accuracy,
         "brier_score": average_brier_score,
+        "log_loss": average_log_loss,
         "details": prediction_details
     }
 
@@ -112,6 +126,7 @@ def evaluate_glicko2_predictions():
     total_predictions = 0
     prediction_details = []
     total_brier_score = 0.0
+    total_log_loss = 0.0
 
     for match in matches:
         team_a_entries, team_b_entries = build_match_teams(match)
@@ -141,6 +156,9 @@ def evaluate_glicko2_predictions():
         brier_score = (expected_a - actual_a_binary) ** 2
         total_brier_score += brier_score
 
+        log_loss = calculate_log_loss(expected_a, actual_a_binary)
+        total_log_loss += log_loss
+
         total_predictions += 1
         if is_correct:
             correct_predictions += 1
@@ -152,6 +170,7 @@ def evaluate_glicko2_predictions():
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
+            "log_loss": round(log_loss, 6),
             "correct": is_correct
         })
 
@@ -188,6 +207,7 @@ def evaluate_glicko2_predictions():
 
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
     average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
+    average_log_loss = round(total_log_loss / total_predictions, 6) if total_predictions > 0 else 0.0
 
     return {
         "system_name": "glicko2",
@@ -195,6 +215,7 @@ def evaluate_glicko2_predictions():
         "correct_predictions": correct_predictions,
         "accuracy": accuracy,
         "brier_score": average_brier_score,
+        "log_loss": average_log_loss,
         "details": prediction_details
     }
 
@@ -207,6 +228,7 @@ def evaluate_trueskill_predictions():
     total_predictions = 0
     prediction_details = []
     total_brier_score = 0.0
+    total_log_loss = 0.0
 
     for match in matches:
         team_a_entries, team_b_entries = build_match_teams(match)
@@ -232,6 +254,9 @@ def evaluate_trueskill_predictions():
         brier_score = (expected_a - actual_a_binary) ** 2
         total_brier_score += brier_score
 
+        log_loss = calculate_log_loss(expected_a, actual_a_binary)
+        total_log_loss += log_loss
+
         total_predictions += 1
         if is_correct:
             correct_predictions += 1
@@ -243,6 +268,7 @@ def evaluate_trueskill_predictions():
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
+            "log_loss": round(log_loss, 6),
             "correct": is_correct
         })
 
@@ -264,6 +290,7 @@ def evaluate_trueskill_predictions():
 
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
     average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
+    average_log_loss = round(total_log_loss / total_predictions, 6) if total_predictions > 0 else 0.0
 
     return {
         "system_name": "trueskill",
@@ -271,6 +298,7 @@ def evaluate_trueskill_predictions():
         "correct_predictions": correct_predictions,
         "accuracy": accuracy,
         "brier_score": average_brier_score,
+        "log_loss": average_log_loss,
         "details": prediction_details
     }
 
