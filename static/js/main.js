@@ -44,10 +44,58 @@ function renderPlayers(players) {
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
         li.innerHTML = `
-            <span>${player.name}</span>
-            <span class="badge text-bg-secondary">ID: ${player.id}</span>
+            <div class="d-flex justify-content-between align-items-center gap-3 w-100">
+                <div>
+                    <span>${player.name}</span>
+                    <span class="badge text-bg-secondary ms-2">ID: ${player.id}</span>
+                </div>
+        
+                <div class="d-flex gap-2">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary edit-player-btn"
+                        data-player-id="${player.id}"
+                        data-player-name="${player.name}"
+                    >
+                        Bearbeiten
+                    </button>
+        
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger delete-player-btn"
+                        data-player-id="${player.id}"
+                        data-player-name="${player.name}"
+                    >
+                        Löschen
+                    </button>
+                </div>
+            </div>
         `;
         playerList.appendChild(li);
+    });
+}
+
+function initPlayerActionEvents() {
+    const playerList = document.getElementById("player-list");
+
+    if (!playerList) return;
+
+    playerList.addEventListener("click", event => {
+        const editButton = event.target.closest(".edit-player-btn");
+        const deleteButton = event.target.closest(".delete-player-btn");
+
+        if (editButton) {
+            const playerId = Number(editButton.dataset.playerId);
+            const playerName = editButton.dataset.playerName;
+            handleEditPlayer(playerId, playerName);
+            return;
+        }
+
+        if (deleteButton) {
+            const playerId = Number(deleteButton.dataset.playerId);
+            const playerName = deleteButton.dataset.playerName;
+            handleDeletePlayer(playerId, playerName);
+        }
     });
 }
 
@@ -102,6 +150,69 @@ async function createPlayer() {
     } catch (error) {
         console.error("Fehler beim Erstellen des Spielers:", error);
         alert("Verbindung zum Server fehlgeschlagen.");
+    }
+}
+
+async function handleEditPlayer(playerId, currentName) {
+    const newName = prompt("Neuen Namen eingeben:", currentName);
+
+    if (newName === null) return;
+
+    const trimmedName = newName.trim();
+
+    if (trimmedName === "") {
+        alert("Der Name darf nicht leer sein.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/players/${playerId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name: trimmedName })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Fehler beim Aktualisieren des Spielers.");
+            return;
+        }
+
+        await loadPlayers();
+        await loadPlayerStats();
+        await loadMatches();
+    } catch (error) {
+        console.error("Fehler beim Bearbeiten des Spielers:", error);
+        alert("Spieler konnte nicht bearbeitet werden.");
+    }
+}
+
+
+async function handleDeletePlayer(playerId, playerName) {
+    const confirmed = confirm(`Willst du den Spieler "${playerName}" wirklich löschen?`);
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/players/${playerId}`, {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Fehler beim Löschen des Spielers.");
+            return;
+        }
+
+        await loadPlayers();
+        await loadPlayerStats();
+    } catch (error) {
+        console.error("Fehler beim Löschen des Spielers:", error);
+        alert("Spieler konnte nicht gelöscht werden.");
     }
 }
 
@@ -545,6 +656,7 @@ function renderPlayerStats(stats) {
             <td>${player.wins}</td>
             <td>${player.losses}</td>
             <td>${player.win_rate} %</td>
+            <td>${player.avg_point_diff}</td>
         `;
 
         tbody.appendChild(row);
@@ -580,6 +692,7 @@ function init() {
     loadPlayers();
     loadMatches();
     loadPlayerStats();
+    initPlayerActionEvents();
 }
 
 init();

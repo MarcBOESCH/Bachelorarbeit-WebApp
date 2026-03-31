@@ -27,5 +27,43 @@ def create_player(name):
     return True, None, player
 
 
+def update_player(player_id, new_name):
+    player = Player.query.get(player_id)
+
+    if not player:
+        return False, "Spieler wurde nicht gefunden.", None
+
+    if not isinstance(new_name, str):
+        return False, "Name muss ein Text sein.", None
+
+    cleaned_name = new_name.strip()
+
+    if not cleaned_name:
+        return False, "Name darf nicht leer sein.", None
+
+    existing_player = Player.query.filter_by(name=cleaned_name).first()
+    if existing_player and existing_player.id != player.id:
+        return False, "Ein anderer Spieler mit diesem Namen existiert bereits.", None
+
+    player.name = cleaned_name
+    db.session.commit()
+
+    return True, None, player
+
+
+def delete_player(player_id):
+    player = Player.query.get(player_id)
+
+    if not player:
+        return False, "Spieler wurde nicht gefunden."
+
+    if player.match_entries:
+        return False, "Spieler kann nicht gelöscht werden, da er bereits in Matches verwendet wurde."
+
+    db.session.delete(player)
+    db.session.commit()
+
+    return True, None
+
 def get_all_players():
     return Player.query.order_by(Player.name.asc()).all()
