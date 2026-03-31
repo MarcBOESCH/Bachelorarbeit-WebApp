@@ -16,6 +16,12 @@ class Match(db.Model):
 
     rating_processed = db.Column(db.Boolean, default=False, nullable=False)
 
+    rating_status_entries = db.relationship(
+        "MatchRatingStatus",
+        back_populates="match",
+        cascade="all, delete-orphan"
+    )
+
     players = db.relationship(
         "MatchPlayer",
         back_populates="match",
