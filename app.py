@@ -36,5 +36,5 @@ if __name__ == "__main__":
     server = Server(app.wsgi_app)
     server.watch("templates/*.html")
     server.watch("static/css/*.css")
-    server.watch("static/js/*.js")
+    server.watch("static/js/*/*js")
     server.serve(port=5000, host="127.0.0.1", debug=False)

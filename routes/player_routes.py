@@ -1,11 +1,16 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 
 from services.player_service import create_player, get_all_players, update_player, delete_player
 
-player_bp = Blueprint("players", __name__)
+players_page_bp = Blueprint("players", __name__)
 
 
-@player_bp.route("/players", methods=["POST"])
+@players_page_bp.route("/players")
+def players_page():
+    return render_template("players.html", players=get_all_players())
+
+
+@players_page_bp.route("/api/players", methods=["POST"])
 def create_player_route():
     data = request.get_json()
 
@@ -27,7 +32,8 @@ def create_player_route():
         }
     }), 201
 
-@player_bp.route("/players/<int:player_id>", methods=["PUT"])
+
+@players_page_bp.route("/api/players/<int:player_id>", methods=["PUT"])
 def update_player_route(player_id):
     data = request.get_json()
 
@@ -50,7 +56,7 @@ def update_player_route(player_id):
     })
 
 
-@player_bp.route("/players/<int:player_id>", methods=["DELETE"])
+@players_page_bp.route("/api/players/<int:player_id>", methods=["DELETE"])
 def delete_player_route(player_id):
     success, error = delete_player(player_id)
 
@@ -61,7 +67,8 @@ def delete_player_route(player_id):
         "message": "Spieler erfolgreich gelöscht."
     })
 
-@player_bp.route("/players", methods=["GET"])
+
+@players_page_bp.route("/api/players", methods=["GET"])
 def get_players():
     players = get_all_players()
 

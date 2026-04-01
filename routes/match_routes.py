@@ -3,10 +3,10 @@ from flask import Blueprint, jsonify, request
 from services.match_service import create_match, get_all_matches
 from services.game_service import get_game_state, lock_saved_match
 
-match_bp = Blueprint("matches", __name__)
+match_page_bp = Blueprint("matches", __name__)
 
 
-@match_bp.route("/matches", methods=["POST"])
+@match_page_bp.route("/api/matches", methods=["POST"])
 def create_match_route():
     data = request.get_json()
 
@@ -36,7 +36,7 @@ def create_match_route():
         }
     }), 201
 
-@match_bp.route("/matches", methods=["GET"])
+@match_page_bp.route("/api/matches", methods=["GET"])
 def get_matches():
     matches = get_all_matches()
 
