@@ -6,7 +6,7 @@ from routes.statistic_routes import statistics_page_bp, statistics_api_bp
 from routes.evaluation_routes import evaluation_bp
 from routes.main_routes import main_bp
 
-from routes.rating_routes import rating_bp
+from routes.rating_routes import rating_page_bp
 
 
 def register_blueprints(app):
@@ -17,5 +17,5 @@ def register_blueprints(app):
     app.register_blueprint(statistics_page_bp)
     app.register_blueprint(statistics_api_bp)
 
-    app.register_blueprint(rating_bp)
+    app.register_blueprint(rating_page_bp)
     app.register_blueprint(evaluation_bp)
