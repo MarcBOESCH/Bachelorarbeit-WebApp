@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Statistiken - Jass App{% endblock %}
+
+{% block content %}
+    <h1 class="fw-bold mb-4">Statistiken</h1>
+
+    <div id="player-stats-empty" class="text-muted">
+        Noch keine Spielerstatistiken verfügbar.
+    </div>
+
+    <div id="player-stats-content" class="d-none">
+        <div class="row g-4 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small mb-1">Spieler gesamt</div>
+                        <div id="stats-total-players" class="display-6 fw-bold">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small mb-1">Meiste Matches</div>
+                        <div id="stats-most-matches-name" class="fw-semibold">-</div>
+                        <div id="stats-most-matches-value" class="fs-4 fw-bold">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small mb-1">Beste Siegquote</div>
+                        <div id="stats-best-win-rate-name" class="fw-semibold">-</div>
+                        <div id="stats-best-win-rate-value" class="fs-4 fw-bold">0 %</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small mb-1">Beste Ø Punktediff.</div>
+                        <div id="stats-best-diff-name" class="fw-semibold">-</div>
+                        <div id="stats-best-diff-value" class="fs-4 fw-bold">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive" id="player-stats-wrapper">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Spieler</th>
+                                <th>Matches</th>
+                                <th>Siege</th>
+                                <th>Niederlagen</th>
+                                <th>Siegquote</th>
+                                <th>Ø Punktediff.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-stats-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ url_for('static', filename='js/pages/statistics.js') }}"></script>
+{% endblock %}
