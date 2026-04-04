@@ -122,7 +122,7 @@ async function saveFinishedMatch(game) {
 function updateUI(game) {
     const scoreA = game.score_a ?? 0;
     const scoreB = game.score_b ?? 0;
-    const diff = scoreA - scoreB;
+    const diff = Math.abs(scoreA - scoreB);
 
     document.getElementById("score-a").textContent = scoreA;
     document.getElementById("score-b").textContent = scoreB;
