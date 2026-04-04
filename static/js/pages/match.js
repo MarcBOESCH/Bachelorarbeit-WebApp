@@ -198,18 +198,17 @@ async function handleManualInput(team) {
 }
 
 // Event-Handler für "Neues Spiel".
-async function handleReset() {
-    const confirmed = confirm("Willst du wirklich alle Punkte zurücksetzen?");
+async function handleNewGame() {
+    const confirmed = confirm("Willst du wirklich ein neues Spiel starten?");
     if (!confirmed) return;
 
-    await sendAction({
+    const result = await sendAction({
         action: "new_game"
     });
 
-    matchFinished = false;
-    setMatchInputsDisabled(false);
-    clearManualInputs();
-    hideMatchStatusMessage();
+    if (result?.redirect_url) {
+        window.location.href = result.redirect_url;
+    }
 }
 
 // Verknüpft alle Punktebuttons mit ihrem Click-Handler.
@@ -276,7 +275,7 @@ function initResetButton() {
 
     if (!resetBtn) return;
 
-    resetBtn.addEventListener("click", handleReset);
+    resetBtn.addEventListener("click", handleNewGame);
 }
 
 // Initialisiert die komplette Match-Seite.
