@@ -12,6 +12,13 @@ VALID_TEAMS = {"A", "B"}
 
 
 def create_new_game_state():
+    """
+    Erzeugt den Standardzustand für ein neues Spiel.
+
+    players:
+    - enthält die vier ausgewählten Spieler des aktiven Matches
+    - wird beim Starten über /api/match/start gesetzt
+    """
     return {
         "team_name_a": "Team A",
         "team_name_b": "Team B",
@@ -22,23 +29,37 @@ def create_new_game_state():
         "undo_a": [],
         "undo_b": [],
         "winner": None,
-        "match_saved": False
+        "match_saved": False,
+        "players": []
     }
 
 
 def get_game_state():
+    """
+    Gibt den aktuellen Spielzustand aus der Session zurück.
+    Existiert noch kein Spiel, wird ein Standardzustand erzeugt.
+    """
     if "game" not in session:
         session["game"] = create_new_game_state()
+
     return session["game"]
 
 
 def save_game_state(game):
+    """
+    Aktualisiert Gewinnerstatus und speichert den Spielzustand
+    zurück in die Session.
+    """
     update_winner(game)
     session["game"] = game
     session.modified = True
 
 
 def update_winner(game):
+    """
+    Setzt den Gewinner, sobald ein Team die Maximalpunktzahl
+    erreicht und gleichzeitig vorne liegt.
+    """
     if game["score_a"] >= game["max_points"] and game["score_a"] > game["score_b"]:
         game["winner"] = game["team_name_a"]
     elif game["score_b"] >= game["max_points"] and game["score_b"] > game["score_a"]:
@@ -48,12 +69,51 @@ def update_winner(game):
 
 
 def reset_game():
+    """
+    Setzt das Spiel vollständig auf den Standardzustand zurück.
+    Wird verwendet, wenn ein neues Match vorbereitet werden soll.
+    """
     game = create_new_game_state()
     save_game_state(game)
     return game
 
 
+def start_new_game(team_name_a, team_name_b, players):
+    """
+    Startet ein neues aktives Match mit den ausgewählten Teams und Spielern.
+
+    team_name_a / team_name_b:
+    - optionale Teamnamen aus dem Setup
+    - leere Werte werden automatisch ersetzt
+
+    players:
+    - Liste mit genau vier Spielerobjekten
+    """
+    game = create_new_game_state()
+    game["team_name_a"] = team_name_a.strip() if team_name_a and team_name_a.strip() else "Team A"
+    game["team_name_b"] = team_name_b.strip() if team_name_b and team_name_b.strip() else "Team B"
+    game["players"] = players
+
+    save_game_state(game)
+    return game
+
+
+def has_active_match(game):
+    """
+    Ein aktives Match liegt vor, wenn vier Spieler im aktuellen Spielzustand
+    hinterlegt sind.
+    """
+    if not game:
+        return False
+
+    players = game.get("players", [])
+    return isinstance(players, list) and len(players) == 4
+
+
 def add_points(game, team, action):
+    """
+    Fügt Punkte über die Schnellwahl-Buttons hinzu.
+    """
     if is_match_locked(game):
         return False, "Das Match wurde bereits gespeichert und kann nicht weiter verändert werden."
 
@@ -122,6 +182,9 @@ def add_manual_points(game, team, value):
 
 
 def undo_last_action(game):
+    """
+    Macht die zuletzt ausgeführte Spielaktion rückgängig.
+    """
     if is_match_locked(game):
         return False, "Ein bereits gespeichertes Match kann nicht mehr rückgängig gemacht werden."
 
@@ -152,11 +215,17 @@ def undo_last_action(game):
     save_game_state(game)
     return True, None
 
+
 def is_match_locked(game):
+    """
+    Gespeicherte Matches dürfen nicht mehr weiter verändert werden.
+    """
     return game.get("match_saved", False)
 
 
 def lock_saved_match(game):
+    """
+    Sperrt ein Match nach erfolgreichem Speichern in der Datenbank.
+    """
     game["match_saved"] = True
     save_game_state(game)
-

@@ -1,3 +1,5 @@
+{% set endpoint = request.endpoint %}
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -6,42 +8,88 @@
     <title>{% block title %}Jass Scoring App{% endblock %}</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.match_page') }}">Jass Scoring App</a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Navigation umschalten">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="mainNavbar">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.match_page') }}">Match</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('players.players_page') }}">Spieler</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('history.history_page') }}">Historie</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('statistics.statistics_page') }}">Statistiken</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('ratings.ratings_page') }}">Ratings &amp; Evaluation</a>
-                    </li>
-                </ul>
+<body class="app-shell">
+    <div class="app-layout">
+        <aside class="app-sidebar d-none d-md-flex">
+            <div class="sidebar-brand">
+                <div class="sidebar-title">Jass Scoring App</div>
+                <div class="sidebar-subtitle">Kreuzjass Tracker</div>
             </div>
-        </div>
-    </nav>
 
-    <main class="container py-4">
-        {% block content %}{% endblock %}
-    </main>
+            <nav class="sidebar-nav">
+                <a class="sidebar-link {% if endpoint in ['matches.player_selection_page', 'matches.match_page'] %}active{% endif %}"
+                   href="{{ url_for('matches.match_page') }}">
+                    <i class="bi bi-controller"></i>
+                    <span>Match</span>
+                </a>
+
+                <a class="sidebar-link {% if endpoint == 'players.players_page' %}active{% endif %}"
+                   href="{{ url_for('players.players_page') }}">
+                    <i class="bi bi-people"></i>
+                    <span>Spieler</span>
+                </a>
+
+                <a class="sidebar-link {% if endpoint == 'history.history_page' %}active{% endif %}"
+                   href="{{ url_for('history.history_page') }}">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Historie</span>
+                </a>
+
+                <a class="sidebar-link {% if endpoint == 'statistics.statistics_page' %}active{% endif %}"
+                   href="{{ url_for('statistics.statistics_page') }}">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Statistiken</span>
+                </a>
+
+                <a class="sidebar-link {% if endpoint == 'ratings.ratings_page' %}active{% endif %}"
+                   href="{{ url_for('ratings.ratings_page') }}">
+                    <i class="bi bi-trophy"></i>
+                    <span>Ratings &amp; Evaluation</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="app-content">
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <nav class="mobile-bottom-nav d-md-none">
+        <a class="mobile-nav-link {% if endpoint in ['matches.player_selection_page', 'matches.match_page'] %}active{% endif %}"
+           href="{{ url_for('matches.match_page') }}">
+            <i class="bi bi-controller"></i>
+            <span>Match</span>
+        </a>
+
+        <a class="mobile-nav-link {% if endpoint == 'players.players_page' %}active{% endif %}"
+           href="{{ url_for('players.players_page') }}">
+            <i class="bi bi-people"></i>
+            <span>Spieler</span>
+        </a>
+
+        <a class="mobile-nav-link {% if endpoint == 'history.history_page' %}active{% endif %}"
+           href="{{ url_for('history.history_page') }}">
+            <i class="bi bi-clock-history"></i>
+            <span>Historie</span>
+        </a>
+
+        <a class="mobile-nav-link {% if endpoint == 'statistics.statistics_page' %}active{% endif %}"
+           href="{{ url_for('statistics.statistics_page') }}">
+            <i class="bi bi-bar-chart"></i>
+            <span>Stats</span>
+        </a>
+
+        <a class="mobile-nav-link {% if endpoint == 'ratings.ratings_page' %}active{% endif %}"
+           href="{{ url_for('ratings.ratings_page') }}">
+            <i class="bi bi-trophy"></i>
+            <span>Ratings</span>
+        </a>
+    </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block page_scripts %}{% endblock %}

@@ -1,23 +1,559 @@
+:root {
+    color-scheme: light;
+
+    /* Colors */
+    --color-bg: #f6f7f3;
+    --color-surface: #ffffff;
+    --color-surface-soft: #f1f4ef;
+    --color-border: #e2e8e1;
+    --color-text: #1f2328;
+    --color-text-muted: #687076;
+
+    --color-brand: #0f5132;
+    --color-brand-dark: #0b3d26;
+    --color-brand-soft: #dcefe3;
+
+    --color-warning: #f3b63f;
+    --color-focus: rgba(15, 81, 50, 0.18);
+
+    /* Layout */
+    --sidebar-width: 300px;
+    --content-max-width: 880px;
+    --page-padding-x: 16px;
+    --page-padding-y: 20px;
+    --mobile-bottom-nav-height: 76px;
+
+    /* Radius */
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+
+    /* Shadow */
+    --shadow-sm: 0 8px 24px rgba(16, 24, 40, 0.06);
+
+    /* Typography */
+    --font-family-base: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-size-page-title: 2rem;
+    --font-size-score: 3.25rem;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
 body {
-    background-color: #f4f6f9;
-    color: #212529;
+    min-height: 100%;
+    margin: 0;
+    overflow-x: hidden;
 }
 
-.score-card {
+body.app-shell {
+    font-family: var(--font-family-base);
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+
+/* =========================
+   Layout
+========================= */
+
+.app-layout {
+    display: flex;
+    min-height: 100dvh;
+}
+
+.app-content {
+    width: 100%;
+    min-width: 0;
+}
+
+.content-wrapper {
+    width: min(100%, var(--content-max-width));
+    margin-inline: auto;
+    padding:
+        var(--page-padding-y)
+        var(--page-padding-x)
+        calc(var(--mobile-bottom-nav-height) + 24px)
+        var(--page-padding-x);
+}
+
+@media (min-width: 768px) {
+    .app-content {
+        margin-left: var(--sidebar-width);
+    }
+
+    .content-wrapper {
+        padding:
+            28px
+            24px
+            28px
+            24px;
+    }
+}
+
+/* =========================
+   Sidebar / Nav
+========================= */
+
+.app-sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    height: 100dvh;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1020;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 18px;
+    background: #ffffff;
+    border-inline-end: 1px solid var(--color-border);
+    overflow-y: auto;
+}
+
+.sidebar-brand {
+    padding: 4px 8px 8px;
+}
+
+.sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--color-brand);
+}
+
+.sidebar-subtitle {
+    margin-top: 6px;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    color: #46505a;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background: var(--color-surface-soft);
+    color: var(--color-text);
+}
+
+.sidebar-link.active {
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+}
+
+.sidebar-link i {
+    font-size: 1.1rem;
+}
+
+/* =========================
+   Mobile Bottom Nav
+========================= */
+
+.mobile-bottom-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 2000;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    min-height: var(--mobile-bottom-nav-height);
+    padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.97);
+    border-top: 1px solid var(--color-border);
+}
+
+.mobile-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 60px;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.mobile-nav-link i {
+    font-size: 1.15rem;
+}
+
+.mobile-nav-link.active {
+    color: var(--color-brand);
+}
+
+/* =========================
+   Base Elements
+========================= */
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    color: var(--color-text);
+}
+
+p {
+    margin: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+    display: block;
+    max-width: 100%;
+}
+
+.text-muted {
+    color: var(--color-text-muted) !important;
+}
+
+/* =========================
+   Page Header
+========================= */
+
+.page-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.page-header h1 {
+    font-size: var(--font-size-page-title);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 8px;
+}
+
+.page-header p {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+}
+
+/* =========================
+   Generic Sections / Cards
+========================= */
+
+.section-spacing {
+    margin-bottom: 16px;
+}
+
+.app-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.app-card-body {
+    padding: 18px;
+}
+
+.section-header {
+    margin-bottom: 16px;
+}
+
+.section-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.section-header p {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+}
+
+.stack-lg {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* =========================
+   Forms
+========================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    margin-bottom: 0;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.form-control,
+.form-select {
+    min-height: 52px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+    background: #fff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 0.2rem var(--color-focus);
+}
+
+.input-action-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* =========================
+   Buttons
+========================= */
+
+.btn {
+    min-height: 48px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+}
+
+.score-btn {
+    width: 100%;
     border: none;
-    border-radius: 1rem;
+    background: var(--color-brand);
+    color: #fff;
 }
 
-#score-a,
-#score-b {
-    min-height: 90px;
+.score-btn:hover,
+.score-btn:focus {
+    background: var(--color-brand-dark);
+    color: #fff;
 }
 
-.card {
-    border-radius: 1rem;
+.btn-outline-dark {
+    color: var(--color-brand);
+    border-color: var(--color-brand);
 }
 
-button {
-    min-width: 70px;
-    width: 30%;
+.btn-outline-dark:hover,
+.btn-outline-dark:focus {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: #fff;
+}
+
+.btn-secondary {
+    border: none;
+}
+
+.btn-warning {
+    border: none;
+}
+
+/* =========================
+   Match Page
+========================= */
+
+.team-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+}
+
+.team-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.score-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.score-team-card {
+    overflow: hidden;
+}
+
+.score-team-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    text-align: center;
+}
+
+.score-team-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.score-value {
+    font-size: var(--font-size-score);
+    line-height: 1;
+    font-weight: 800;
+    color: var(--color-brand);
+}
+
+.score-button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.match-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+    text-align: center;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.status-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.status-row:last-child {
+    border-bottom: 0;
+}
+
+.status-label {
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.status-value {
+    font-weight: 700;
+    color: var(--color-brand);
+    text-align: right;
+}
+
+.action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* =========================
+   Desktop Enhancements
+========================= */
+
+@media (min-width: 768px) {
+    :root {
+        --font-size-page-title: 2.5rem;
+        --font-size-score: 4.5rem;
+    }
+
+    .section-spacing {
+        margin-bottom: 20px;
+    }
+
+    .app-card-body {
+        padding: 24px;
+    }
+
+    .stack-lg {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .score-button-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .input-action-row {
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .input-action-row .form-control {
+        flex: 1;
+    }
+
+    .match-summary-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .action-group {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+/* =========================
+   Reduced Motion
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+        animation: none !important;
+    }
 }
