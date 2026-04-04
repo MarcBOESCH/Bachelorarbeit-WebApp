@@ -8,66 +8,64 @@
         <p>Punkte zählen für ein laufendes Match</p>
     </section>
 
-    <section class="score-section section-spacing">
-        <div class="score-team-card app-card">
-            <div class="app-card-body">
-                <div class="score-team-header">
-                    <h2>{{ game.team_name_a }}</h2>
-                    <p class="score-value" id="score-a">{{ game.score_a }}</p>
-                </div>
-
-                <div class="score-button-grid">
-                    <button class="btn score-btn" type="button" data-team="A" data-points="20">+20</button>
-                    <button class="btn score-btn" type="button" data-team="A" data-points="50">+50</button>
-                    <button class="btn score-btn" type="button" data-team="A" data-points="100">+100</button>
-                    <button class="btn score-btn" type="button" data-team="A" data-points="150">+150</button>
-                    <button class="btn score-btn" type="button" data-team="A" data-points="200">+200</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="score-team-card app-card">
-            <div class="app-card-body">
-                <div class="score-team-header">
-                    <h2>{{ game.team_name_b }}</h2>
-                    <p class="score-value" id="score-b">{{ game.score_b }}</p>
-                </div>
-
-                <div class="score-button-grid">
-                    <button class="btn score-btn" type="button" data-team="B" data-points="20">+20</button>
-                    <button class="btn score-btn" type="button" data-team="B" data-points="50">+50</button>
-                    <button class="btn score-btn" type="button" data-team="B" data-points="100">+100</button>
-                    <button class="btn score-btn" type="button" data-team="B" data-points="150">+150</button>
-                    <button class="btn score-btn" type="button" data-team="B" data-points="200">+200</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="app-card section-spacing">
+<section class="score-section section-spacing">
+    <div class="score-team-card app-card">
         <div class="app-card-body">
-            <div class="section-header">
-                <h2>Manuelle Punkteingabe</h2>
-                <p>Pro Runde nur ein Feld ausfüllen. Die Restpunkte werden automatisch ergänzt.</p>
-            </div>
 
-            <div class="stack-lg">
-                <div class="manual-score-block">
-                    <label for="manual-score-a" class="form-label">Punkte {{ game.team_name_a }}</label>
-                    <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="z. B. 87">
+            <div class="score-teams-wrapper">
+
+                <div class="team-column">
+                    <div class="score-team-header">
+                        <h2>{{ game.team_name_a }}</h2>
+                        <p class="score-value" id="score-a">{{ game.score_a }}</p>
+                    </div>
+
+                    <div class="score-button-col">
+                        <button class="btn score-btn" type="button" data-team="A" data-points="20">+20</button>
+                        <button class="btn score-btn" type="button" data-team="A" data-points="50">+50</button>
+                        <button class="btn score-btn" type="button" data-team="A" data-points="100">+100</button>
+                        <button class="btn score-btn" type="button" data-team="A" data-points="150">+150</button>
+                        <button class="btn score-btn" type="button" data-team="A" data-points="200">+200</button>
+                    </div>
+
+                    <div class="manual-score-input">
+                        <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="z. B. 87">
+                    </div>
                 </div>
 
-                <div class="manual-score-block">
-                    <label for="manual-score-b" class="form-label">Punkte {{ game.team_name_b }}</label>
-                    <input id="manual-score-b" type="number" class="form-control" min="0" max="157" placeholder="z. B. 70">
+                <div class="team-divider"></div>
+
+                <div class="team-column">
+                    <div class="score-team-header">
+                        <h2>{{ game.team_name_b }}</h2>
+                        <p class="score-value" id="score-b">{{ game.score_b }}</p>
+                    </div>
+
+                    <div class="score-button-col">
+                        <button class="btn score-btn" type="button" data-team="B" data-points="20">+20</button>
+                        <button class="btn score-btn" type="button" data-team="B" data-points="50">+50</button>
+                        <button class="btn score-btn" type="button" data-team="B" data-points="100">+100</button>
+                        <button class="btn score-btn" type="button" data-team="B" data-points="150">+150</button>
+                        <button class="btn score-btn" type="button" data-team="B" data-points="200">+200</button>
+                    </div>
+
+                    <div class="manual-score-input">
+                        <input id="manual-score-b" type="number" class="form-control" min="0" max="157" placeholder="z. B. 70">
+                    </div>
                 </div>
 
+            </div> <div class="card-action-row">
+                <button id="undo-btn" type="button" class="btn btn-secondary">
+                    Rückgängig
+                </button>
                 <button id="manual-submit-btn" type="button" class="btn btn-outline-dark">
                     Punkte hinzufügen
                 </button>
             </div>
+
         </div>
-    </section>
+    </div>
+</section>
 
     <section class="app-card section-spacing">
         <div class="app-card-body">
@@ -116,10 +114,6 @@
             </div>
 
             <div class="action-group">
-                <button id="undo-btn" type="button" class="btn btn-secondary">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                    <span>Undo</span>
-                </button>
 
                 <button id="reset-btn" type="button" class="btn btn-warning">
                     Neues Spiel
