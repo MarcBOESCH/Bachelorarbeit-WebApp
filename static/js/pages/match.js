@@ -89,15 +89,6 @@ function updateUI(game) {
     }
 }
 
-// Leert die Felder für die manuelle Punkteingabe.
-function clearManualInputs() {
-    const inputA = document.getElementById("manual-score-a");
-    const inputB = document.getElementById("manual-score-b");
-
-    if (inputA) inputA.value = "";
-    if (inputB) inputB.value = "";
-}
-
 // Blendet die Meldung ein, dass das Match gewonnen und gespeichert wurde.
 function showMatchStatusMessage(message) {
     const messageBox = document.getElementById("match-status-message");
@@ -132,8 +123,7 @@ function setMatchInputsDisabled(disabled) {
     const manualInputIds = [
         "manual-score-a",
         "manual-score-b",
-        "manual-btn-a",
-        "manual-btn-b"
+        "manual-submit-btn",
     ];
 
     manualInputIds.forEach(id => {
@@ -177,24 +167,94 @@ async function handleScoreButtonClick(event) {
 }
 
 // Event-Handler für die manuelle Punkteingabe.
-async function handleManualInput(team) {
-    const input = document.getElementById(`manual-score-${team.toLowerCase()}`);
-    if (!input) return;
+async function handleManualSubmit(team) {
+const inputA = document.getElementById("manual-score-a");
+    const inputB = document.getElementById("manual-score-b");
 
-    const value = input.value.trim();
+    if (!inputA || !inputB) return;
 
-    if (value === "") {
+    const valueA = inputA.value.trim();
+    const valueB = inputB.value.trim();
+
+    if (valueA === "" && valueB === "") {
         alert("Bitte einen Punktewert eingeben.");
         return;
     }
 
-    await sendAction({
-        action: "manual_input",
-        team,
-        value: Number(value)
-    });
+    if (valueA !== "" && valueB !== "") {
+        alert("Bitte nur ein Feld ausfüllen.");
+        return;
+    }
 
-    input.value = "";
+    const roundTotal = 157;
+
+    if (valueA !== "") {
+        const pointsA = Number(valueA);
+
+        if (!Number.isInteger(pointsA) || pointsA < 0 || pointsA > roundTotal) {
+            alert("Bitte für Team A einen gültigen Wert zwischen 0 und 157 eingeben.");
+            return;
+        }
+
+        const pointsB = roundTotal - pointsA;
+
+        await sendAction({
+            action: "manual_input",
+            team: "A",
+            value: pointsA
+        });
+    }
+
+    if (valueB !== "") {
+        const pointsB = Number(valueB);
+
+        if (!Number.isInteger(pointsB) || pointsB < 0 || pointsB > roundTotal) {
+            alert("Bitte für Team B einen gültigen Wert zwischen 0 und 157 eingeben.");
+            return;
+        }
+
+        const pointsA = roundTotal - pointsB;
+
+        await sendAction({
+            action: "manual_input",
+            team: "B",
+            value: pointsB
+        });
+    }
+
+    inputA.value = "";
+    inputB.value = "";
+}
+
+// Verknüpft den gemeinsamen Button für manuelle Eingabe.
+function initManualButton() {
+    const manualSubmitBtn = document.getElementById("manual-submit-btn");
+
+    if (!manualSubmitBtn) return;
+
+    manualSubmitBtn.addEventListener("click", handleManualSubmit);
+}
+
+// Enter löst ebenfalls die manuelle Eingabe aus.
+function initManualEnterKey() {
+    const inputA = document.getElementById("manual-score-a");
+    const inputB = document.getElementById("manual-score-b");
+
+    if (inputA) {
+        inputA.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                handleManualSubmit();
+            }
+        });
+    }
+
+    if (inputB) {
+        inputB.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                handleManualSubmit();
+            }
+        });
+    }
 }
 
 // Event-Handler für "Neues Spiel".
@@ -218,42 +278,6 @@ function initScoreButtons() {
     scoreButtons.forEach(button => {
         button.addEventListener("click", handleScoreButtonClick);
     });
-}
-
-// Verknüpft die Buttons für manuelle Eingabe mit ihrem Handler.
-function initManualButtons() {
-    const manualBtnA = document.getElementById("manual-btn-a");
-    const manualBtnB = document.getElementById("manual-btn-b");
-
-    if (manualBtnA) {
-        manualBtnA.addEventListener("click", () => handleManualInput("A"));
-    }
-
-    if (manualBtnB) {
-        manualBtnB.addEventListener("click", () => handleManualInput("B"));
-    }
-}
-
-// Erlaubt das Abschicken der manuellen Punkte per Enter-Taste.
-function initManualEnterKey() {
-    const inputA = document.getElementById("manual-score-a");
-    const inputB = document.getElementById("manual-score-b");
-
-    if (inputA) {
-        inputA.addEventListener("keydown", event => {
-            if (event.key === "Enter") {
-                handleManualInput("A");
-            }
-        });
-    }
-
-    if (inputB) {
-        inputB.addEventListener("keydown", event => {
-            if (event.key === "Enter") {
-                handleManualInput("B");
-            }
-        });
-    }
 }
 
 // Verknüpft den Undo-Button mit der Undo-Aktion.
@@ -281,7 +305,7 @@ function initResetButton() {
 // Initialisiert die komplette Match-Seite.
 function initMatchPage() {
     initScoreButtons();
-    initManualButtons();
+    initManualButton();
     initManualEnterKey();
     initUndoButton();
     initResetButton();

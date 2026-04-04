@@ -48,25 +48,23 @@
         <div class="app-card-body">
             <div class="section-header">
                 <h2>Manuelle Punkteingabe</h2>
-                <p>Für Werte ausserhalb der Schnellwahl.</p>
+                <p>Pro Runde nur ein Feld ausfüllen. Die Restpunkte werden automatisch ergänzt.</p>
             </div>
 
             <div class="stack-lg">
                 <div class="manual-score-block">
-                    <label for="manual-score-a" class="form-label">Manuelle Punkte {{ game.team_name_a }}</label>
-                    <div class="input-action-row">
-                        <input id="manual-score-a" type="number" class="form-control" min="1" placeholder="z. B. 87 oder 257">
-                        <button id="manual-btn-a" type="button" class="btn btn-outline-dark">Eintragen</button>
-                    </div>
+                    <label for="manual-score-a" class="form-label">Punkte {{ game.team_name_a }}</label>
+                    <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="z. B. 87">
                 </div>
 
                 <div class="manual-score-block">
-                    <label for="manual-score-b" class="form-label">Manuelle Punkte {{ game.team_name_b }}</label>
-                    <div class="input-action-row">
-                        <input id="manual-score-b" type="number" class="form-control" min="1" placeholder="z. B. 70 oder 257">
-                        <button id="manual-btn-b" type="button" class="btn btn-outline-dark">Eintragen</button>
-                    </div>
+                    <label for="manual-score-b" class="form-label">Punkte {{ game.team_name_b }}</label>
+                    <input id="manual-score-b" type="number" class="form-control" min="0" max="157" placeholder="z. B. 70">
                 </div>
+
+                <button id="manual-submit-btn" type="button" class="btn btn-outline-dark">
+                    Punkte hinzufügen
+                </button>
             </div>
         </div>
     </section>
