@@ -71,19 +71,25 @@ function updateUI(game) {
     const scoreB = game.score_b ?? 0;
     const diff = Math.abs(scoreA - scoreB);
 
+    const teamNameA = game.team_name_a ?? "Team A";
+    const teamNameB = game.team_name_b ?? "Team B";
+
     document.getElementById("score-a").textContent = scoreA;
     document.getElementById("score-b").textContent = scoreB;
-
     document.getElementById("point-diff").textContent = diff;
 
     const leaderElement = document.getElementById("leader");
+    const pointsWinElement = document.getElementById("points-win");
 
     if (scoreA > scoreB) {
-        leaderElement.textContent = "Team A";
+        leaderElement.textContent = teamNameA;
+        pointsWinElement.textContent = Math.max(0, 1000 - scoreA);
     } else if (scoreB > scoreA) {
-        leaderElement.textContent = "Team B";
+        leaderElement.textContent = teamNameB;
+        pointsWinElement.textContent = Math.max(0, 1000 - scoreB);
     } else {
         leaderElement.textContent = "-";
+        pointsWinElement.textContent = 1000;
     }
 }
 
