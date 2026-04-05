@@ -460,18 +460,17 @@ canvas {
     margin-top: 15px;
 }
 
-/* Der Container für die Buttons ganz unten in der Card */
 .card-action-row {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 15px;
-    margin-top: 25px; /* Abstand zum oberen Grid */
+    margin-top: 25px;
 }
 
 .match-summary-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    justify-content: center;
     gap: 12px;
     margin-bottom: 18px;
 }
@@ -479,6 +478,7 @@ canvas {
 .summary-item {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 4px;
     padding: 14px;
     border: 1px solid var(--color-border);

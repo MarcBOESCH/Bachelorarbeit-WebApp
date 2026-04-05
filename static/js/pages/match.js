@@ -74,8 +74,6 @@ function updateUI(game) {
     document.getElementById("score-a").textContent = scoreA;
     document.getElementById("score-b").textContent = scoreB;
 
-    document.getElementById("summary-a").textContent = scoreA;
-    document.getElementById("summary-b").textContent = scoreB;
     document.getElementById("point-diff").textContent = diff;
 
     const leaderElement = document.getElementById("leader");
