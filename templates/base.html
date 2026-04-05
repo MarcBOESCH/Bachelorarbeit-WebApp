@@ -15,7 +15,7 @@
     <div class="app-layout">
         <aside class="app-sidebar d-none d-md-flex">
             <div class="sidebar-brand">
-                <div class="sidebar-title">Jass Scoring App</div>
+                <div class="sidebar-title">JassTistics</div>
                 <div class="sidebar-subtitle">Kreuzjass Tracker</div>
             </div>
 
@@ -91,7 +91,11 @@
         </a>
     </nav>
 
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/shared/utils.js') }}"></script>
+
     {% block page_scripts %}{% endblock %}
     <script src="http://127.0.0.1:35729/livereload.js?snipver=1"></script>
 </body>

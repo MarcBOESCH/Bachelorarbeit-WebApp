@@ -15,7 +15,7 @@ async function sendAction(payload) {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || "Unbekannter Fehler");
+            showToast(data.error || "Unbekannter Fehler", "error");
             return null;
         }
 
@@ -24,7 +24,7 @@ async function sendAction(payload) {
         return data;
     } catch (error) {
         console.error("Fehler bei der Anfrage:", error);
-        alert("Verbindung zum Server fehlgeschlagen.");
+        showToast("Verbindung zum Server fehlgeschlagen.", "error");
         return null;
     }
 }
@@ -47,7 +47,7 @@ async function saveFinishedMatch(game) {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || "Fehler beim Speichern des Matches.");
+            showToast(data.error || "Fehler beim Speichern des Matches.", "error");
             return false;
         }
 
@@ -60,7 +60,7 @@ async function saveFinishedMatch(game) {
         return true;
     } catch (error) {
         console.error("Fehler beim Speichern des Matches:", error);
-        alert("Das Match konnte nicht gespeichert werden.");
+        showToast("Das Match konnte nicht gespeichert werden.", "error");
         return false;
     }
 }
@@ -175,12 +175,12 @@ const inputA = document.getElementById("manual-score-a");
     const valueB = inputB.value.trim();
 
     if (valueA === "" && valueB === "") {
-        alert("Bitte einen Punktewert eingeben.");
+        showToast("Bitte einen Punktewert eingeben.", "error");
         return;
     }
 
     if (valueA !== "" && valueB !== "") {
-        alert("Bitte nur ein Feld ausfüllen.");
+        showToast("Bitte nur ein Feld ausfüllen.", "error");
         return;
     }
 
@@ -190,7 +190,7 @@ const inputA = document.getElementById("manual-score-a");
         const pointsA = Number(valueA);
 
         if (!Number.isInteger(pointsA) || pointsA < 0 || pointsA > roundTotal) {
-            alert("Bitte für Team A einen gültigen Wert zwischen 0 und 157 eingeben.");
+            showToast("Bitte einen Wert zwischen 0 und 157 eingeben.", "error");
             return;
         }
 
@@ -207,7 +207,7 @@ const inputA = document.getElementById("manual-score-a");
         const pointsB = Number(valueB);
 
         if (!Number.isInteger(pointsB) || pointsB < 0 || pointsB > roundTotal) {
-            alert("Bitte für Team B einen gültigen Wert zwischen 0 und 157 eingeben.");
+            showToast("Bitte einen Wert zwischen 0 und 157 eingeben.", "error");
             return;
         }
 
