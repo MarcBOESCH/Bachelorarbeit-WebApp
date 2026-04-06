@@ -9,7 +9,9 @@ from services.game_service import (
     reset_game,
     start_new_game,
     undo_last_action,
+    lock_saved_match
 )
+from services.match_service import create_match, get_all_matches
 
 match_page_bp = Blueprint("matches", __name__)
 
@@ -156,3 +158,48 @@ def handle_action():
         return jsonify(game)
 
     return jsonify({"error": "Unbekannte Aktion"}), 400
+
+
+@match_page_bp.route("/api/matches", methods=["GET", "POST"])
+def api_matches():
+    if request.method == "POST":
+        game = get_game_state()
+        if not has_active_match(game):
+            return jsonify({"error": "Es ist aktuell kein aktives Match gestartet."}), 400
+
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Keine JSON-Daten erhalten"}), 400
+
+        score_team_a = data.get("score_team_a")
+        score_team_b = data.get("score_team_b")
+        players = game.get("players")  # Spieler aus der aktuellen Session holen!
+
+        success, error, match = create_match(score_team_a, score_team_b, players)
+
+        if not success:
+            return jsonify({"error": error}), 400
+
+        lock_saved_match(game)
+
+        return jsonify({"message": "Match erfolgreich gespeichert.", "match_id": match.id}), 201
+
+    elif request.method == "GET":
+        # Wird von history.js aufgerufen, um die Tabelle zu füllen
+        matches = get_all_matches()
+        result = []
+        for m in matches:
+            team_a_players = [{"name": p.player.name, "team_slot": p.team_slot} for p in m.players if p.team == "A"]
+            team_b_players = [{"name": p.player.name, "team_slot": p.team_slot} for p in m.players if p.team == "B"]
+
+            result.append({
+                "id": m.id,
+                "played_at": m.played_at.isoformat(),
+                "score_team_a": m.score_team_a,
+                "score_team_b": m.score_team_b,
+                "point_diff": m.point_diff,
+                "winner_team": m.winner_team,
+                "team_a_players": team_a_players,
+                "team_b_players": team_b_players
+            })
+        return jsonify(result), 200
