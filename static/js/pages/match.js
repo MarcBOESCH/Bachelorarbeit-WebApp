@@ -91,6 +91,10 @@ function updateUI(game) {
         leaderElement.textContent = "-";
         pointsWinElement.textContent = 1000;
     }
+
+    // WICHTIG: Hier geben wir jetzt die Undo-Historie aus dem Backend mit!
+    renderSnakeScores("a", scoreA, game.undo_a);
+    renderSnakeScores("b", scoreB, game.undo_b);
 }
 
 // Blendet die Meldung ein, dass das Match gewonnen und gespeichert wurde.
@@ -277,8 +281,7 @@ async function handleNewGame() {
 
 // Verknüpft alle Punktebuttons mit ihrem Click-Handler.
 function initScoreButtons() {
-    const scoreButtons = document.querySelectorAll(".score-btn");
-
+    const scoreButtons = document.querySelectorAll(".score-btn, .snake-hotspot-area");
     scoreButtons.forEach(button => {
         button.addEventListener("click", handleScoreButtonClick);
     });
@@ -306,6 +309,136 @@ function initResetButton() {
     resetBtn.addEventListener("click", handleNewGame);
 }
 
+// ==========================================
+// SCHLANGEN-MODUS & TOGGLE LOGIK
+// ==========================================
+
+function initModeToggle() {
+    const btnClassic = document.getElementById('btn-mode-classic');
+    const btnSnake = document.getElementById('btn-mode-snake');
+    const classicControls = document.getElementById('classic-controls');
+    const snakeControls = document.getElementById('snake-controls');
+
+    if (!btnClassic || !btnSnake) return;
+
+    // Gespeicherten Modus laden (Standard: Klassisch)
+    const savedMode = localStorage.getItem('jassScoreMode') || 'classic';
+    setMode(savedMode);
+
+    btnClassic.addEventListener('click', () => setMode('classic'));
+    btnSnake.addEventListener('click', () => setMode('snake'));
+
+    function setMode(mode) {
+        localStorage.setItem('jassScoreMode', mode);
+        if (mode === 'classic') {
+            btnClassic.classList.add('active');
+            btnSnake.classList.remove('active');
+            classicControls.classList.remove('d-none');
+            snakeControls.classList.add('d-none');
+        } else {
+            btnSnake.classList.add('active');
+            btnClassic.classList.remove('active');
+            snakeControls.classList.remove('d-none');
+            classicControls.classList.add('d-none');
+        }
+    }
+}
+
+// Berechnet die Striche exakt anhand der Zug-Historie und zerlegt manuelle Eingaben
+function renderSnakeScores(teamLower, currentScore, undoHistory) {
+    let tallies = { '100': 0, '50': 0, '20': 0 };
+    let rest = 0;
+
+    // Wenn eine Historie vorliegt, werten wir die exakten Züge aus
+    if (undoHistory && undoHistory.length > 0) {
+        let previousScore = 0;
+        let additions = [];
+
+        // Berechne die Differenz zwischen jedem Zug in der Historie
+        for (let i = 0; i < undoHistory.length; i++) {
+            let diff = undoHistory[i] - previousScore;
+            if (diff > 0) additions.push(diff);
+            previousScore = undoHistory[i];
+        }
+
+        // Berechne den finalen Zug (vom letzten Undo-State zum jetzigen Score)
+        let finalDiff = currentScore - previousScore;
+        if (finalDiff > 0) additions.push(finalDiff);
+
+        // Zähle die exakten Striche
+        additions.forEach(val => {
+            if (val === 200) {
+                tallies['100'] += 2;
+            } else if (val === 150) {
+                tallies['100'] += 1;
+                tallies['50'] += 1;
+            } else if (val === 100) {
+                tallies['100']++;
+            } else if (val === 50) {
+                tallies['50']++;
+            } else if (val === 20) {
+                tallies['20']++;
+            } else {
+                // NEU: Manuelle Eingaben (z.B. 157) werden hier mathematisch zerlegt!
+                let temp = val;
+                tallies['100'] += Math.floor(temp / 100);
+                temp %= 100;
+                tallies['50'] += Math.floor(temp / 50);
+                temp %= 50;
+                tallies['20'] += Math.floor(temp / 20);
+                rest += temp % 20; // Nur der tatsächliche Rest unter 20 landet hier
+            }
+        });
+    } else {
+        // Fallback: Wenn noch keine Historie da ist, berechne alles rein mathematisch
+        let s = currentScore || 0;
+        tallies['100'] = Math.floor(s / 100);
+        s %= 100;
+        tallies['50'] = Math.floor(s / 50);
+        s %= 50;
+        tallies['20'] = Math.floor(s / 20);
+        rest = s % 20;
+    }
+
+    drawTallies(`tally-${teamLower}-100`, tallies['100']);
+    drawTallies(`tally-${teamLower}-50`, tallies['50']);
+    drawTallies(`tally-${teamLower}-20`, tallies['20']);
+
+    const restEl = document.getElementById(`rest-${teamLower}`);
+    if (restEl) {
+        restEl.textContent = rest > 0 ? rest : "";
+    }
+}
+
+// Zeichnet die Striche als HTML-Elemente in den Container
+function drawTallies(containerId, count) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+        const tally = document.createElement("div");
+        tally.className = "snake-tally";
+        container.appendChild(tally);
+    }
+}
+
+// Stellt beim ersten Seitenaufbau sicher, dass die Schlange direkt stimmt
+function initSnakeScoresOnLoad() {
+    // Holt sich den gespeicherten Zustand, den wir in match.html ganz unten injiziert haben
+    const game = window.INITIAL_GAME_STATE;
+    if (game) {
+        renderSnakeScores("a", game.score_a, game.undo_a);
+        renderSnakeScores("b", game.score_b, game.undo_b);
+    } else {
+        // Fallback, falls INITIAL_GAME_STATE nicht existiert
+        const scoreA = parseInt(document.getElementById("score-a")?.textContent) || 0;
+        const scoreB = parseInt(document.getElementById("score-b")?.textContent) || 0;
+        renderSnakeScores("a", scoreA);
+        renderSnakeScores("b", scoreB);
+    }
+}
+
 // Initialisiert die komplette Match-Seite.
 function initMatchPage() {
     initScoreButtons();
@@ -313,6 +446,8 @@ function initMatchPage() {
     initManualEnterKey();
     initUndoButton();
     initResetButton();
+    initModeToggle();
+    initSnakeScoresOnLoad();
 }
 
 document.addEventListener("DOMContentLoaded", initMatchPage);

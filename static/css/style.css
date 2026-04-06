@@ -573,8 +573,10 @@ canvas {
 
 .snake-board {
     position: relative;
-    height: 430px;
-    margin: 1.25rem 0 1.5rem;
+    width: 100%;
+    max-width: 500px; /* <--- Mehr Breite für Desktop erlaubt */
+    margin: 1.5rem auto;
+    aspect-ratio: 1 / 1; /* <--- WICHTIG: Ist jetzt ein Quadrat (600x600 viewBox) */
 }
 
 .snake-shape {
@@ -588,168 +590,93 @@ canvas {
 .snake-center-line {
     fill: none;
     stroke: #111;
-    stroke-width: 8;
+    stroke-width: 6;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-.snake-hotspot {
-    position: absolute;
-    width: 64px;
-    height: 96px;
-    border: none;
-    background: transparent;
+/* =========================
+   Snake Board V2
+========================= */
+
+.snake-hotspot-area {
+    fill: transparent;
     cursor: pointer;
-    z-index: 5;
+    transition: fill 0.2s ease;
 }
 
-.snake-hotspot.left {
-    left: 18%;
+/* Leichter Indikator, wo man klicken kann */
+.snake-hotspot-area:hover {
+    fill: rgba(15, 81, 50, 0.05);
 }
 
-.snake-hotspot.right {
-    right: 18%;
-}
-
-.hotspot-top {
-    top: 34px;
-}
-
-.hotspot-middle {
-    top: 162px;
-}
-
-.hotspot-bottom {
-    top: 290px;
+.snake-tallies-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
 }
 
 .snake-tally-group {
     position: absolute;
     display: flex;
-    gap: 10px;
-    align-items: center;
-    min-height: 88px;
-    z-index: 4;
-    pointer-events: none;
+    flex-wrap: wrap;
+    gap: 4px;
+    width: 44%; /* <--- Nimmt jetzt 44% der Gesamtbreite ein (fast die ganze Linie) */
+    transform: translateY(-50%);
 }
 
 .snake-tally-group.left {
-    left: 24%;
+    right: 53%;
+    left: auto;
+    flex-direction: row-reverse; /* Wächst von innen nach außen */
+    justify-content: flex-start;
 }
 
 .snake-tally-group.right {
-    right: 24%;
-}
-
-.tally-top {
-    top: 42px;
-}
-
-.tally-middle {
-    top: 170px;
-}
-
-.tally-bottom {
-    top: 298px;
+    left: 53%;
+    right: auto;
+    flex-direction: row; /* Wächst von innen nach außen */
+    justify-content: flex-start;
 }
 
 .snake-tally {
-    width: 12px;
-    height: 74px;
-    background: rgba(17, 17, 17);
-    border-radius: 999px;
-    display: inline-block;
+    width: 8px;
+    height: 48px;
+    background: #111;
+    border-radius: 4px;
+    transform: rotate(15deg); /* Leicht schräg wie handgezeichnet */
 }
 
 .snake-rest {
     position: absolute;
-    bottom: -6px;
+    bottom: 0;
     font-size: 3rem;
-    line-height: 1;
+    font-weight: 800;
     color: #111;
-    z-index: 4;
 }
 
 .snake-rest.left {
-    left: 34%;
+    left: 25%;
     transform: translateX(-50%);
 }
 
 .snake-rest.right {
-    right: 34%;
+    right: 25%;
     transform: translateX(50%);
 }
 
 @media (max-width: 768px) {
     .snake-board {
-        height: 360px;
-    }
-
-    .snake-hotspot {
-        width: 50px;
-        height: 78px;
-    }
-
-    .snake-hotspot.left {
-        left: 14%;
-    }
-
-    .snake-hotspot.right {
-        right: 14%;
-    }
-
-    .hotspot-top {
-        top: 28px;
-    }
-
-    .hotspot-middle {
-        top: 134px;
-    }
-
-    .hotspot-bottom {
-        top: 240px;
-    }
-
-    .snake-tally-group {
-        gap: 7px;
-        min-height: 64px;
-    }
-
-    .snake-tally-group.left {
-        left: 27%;
-    }
-
-    .snake-tally-group.right {
-        right: 27%;
-    }
-
-    .tally-top {
-        top: 36px;
-    }
-
-    .tally-middle {
-        top: 143px;
-    }
-
-    .tally-bottom {
-        top: 249px;
+        max-width: 420px;
     }
 
     .snake-tally {
-        width: 8px;
-        height: 64px;
+        width: 6px;
+        height: 38px;
     }
 
     .snake-rest {
         font-size: 2.2rem;
-    }
-
-    .snake-rest.left {
-        left: 35%;
-    }
-
-    .snake-rest.right {
-        right: 35%;
     }
 }
 

@@ -11,14 +11,29 @@
         <div class="score-team-card app-card">
             <div class="app-card-body">
 
-                <div class="score-teams-wrapper">
+                <div class="score-mode-toggle">
+                    <button id="btn-mode-classic" class="btn-toggle active">Klassisch</button>
+                    <button id="btn-mode-snake" class="btn-toggle">Schlange</button>
+                </div>
 
+                <div class="score-teams-wrapper" style="margin-bottom: 0;">
                     <div class="team-column">
-                        <div class="score-team-header">
+                        <div class="score-team-header mb-0">
                             <h2>{{ game.team_name_a }}</h2>
                             <p class="score-value" id="score-a">{{ game.score_a }}</p>
                         </div>
+                    </div>
+                    <div class="team-divider"></div>
+                    <div class="team-column">
+                        <div class="score-team-header mb-0">
+                            <h2>{{ game.team_name_b }}</h2>
+                            <p class="score-value" id="score-b">{{ game.score_b }}</p>
+                        </div>
+                    </div>
+                </div>
 
+                <div id="classic-controls" class="score-teams-wrapper mt-3">
+                    <div class="team-column">
                         <div class="score-button-col">
                             <button class="btn score-btn" type="button" data-team="A" data-points="20">+20</button>
                             <button class="btn score-btn" type="button" data-team="A" data-points="50">+50</button>
@@ -26,20 +41,11 @@
                             <button class="btn score-btn" type="button" data-team="A" data-points="150">+150</button>
                             <button class="btn score-btn" type="button" data-team="A" data-points="200">+200</button>
                         </div>
-
-                        <div class="manual-score-input">
-                            <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="Punkte A">
-                        </div>
                     </div>
 
-                    <div class="team-divider"></div>
+                    <div class="team-divider" style="opacity: 0;"></div>
 
                     <div class="team-column">
-                        <div class="score-team-header">
-                            <h2>{{ game.team_name_b }}</h2>
-                            <p class="score-value" id="score-b">{{ game.score_b }}</p>
-                        </div>
-
                         <div class="score-button-col">
                             <button class="btn score-btn" type="button" data-team="B" data-points="20">+20</button>
                             <button class="btn score-btn" type="button" data-team="B" data-points="50">+50</button>
@@ -47,13 +53,67 @@
                             <button class="btn score-btn" type="button" data-team="B" data-points="150">+150</button>
                             <button class="btn score-btn" type="button" data-team="B" data-points="200">+200</button>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="manual-score-input">
+                <div id="snake-controls" class="d-none">
+                    <div class="snake-board">
+
+                        <svg class="snake-shape" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet" width="100%"
+                             height="100%">
+                            <line x1="300" y1="20" x2="300" y2="580" stroke="#111" stroke-width="10"
+                                  stroke-linecap="round"/>
+
+                            <path d="M 550,140 L 150,140 C 50,140 50,320 150,320 L 450,320 C 550,320 550,500 450,500 L 50,500"
+                                  fill="none" stroke="#111" stroke-width="10" stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                            <rect x="0" y="80" width="300" height="120" class="snake-hotspot-area" data-team="A"
+                                  data-points="100"/>
+                            <rect x="300" y="80" width="300" height="120" class="snake-hotspot-area" data-team="B"
+                                  data-points="100"/>
+
+                            <rect x="0" y="260" width="300" height="120" class="snake-hotspot-area" data-team="A"
+                                  data-points="50"/>
+                            <rect x="300" y="260" width="300" height="120" class="snake-hotspot-area" data-team="B"
+                                  data-points="50"/>
+
+                            <rect x="0" y="440" width="300" height="120" class="snake-hotspot-area" data-team="A"
+                                  data-points="20"/>
+                            <rect x="300" y="440" width="300" height="120" class="snake-hotspot-area" data-team="B"
+                                  data-points="20"/>
+                        </svg>
+
+                        <div class="snake-tallies-layer">
+                            <div class="snake-tally-group left" style="top: 23.33%;" id="tally-a-100"></div>
+                            <div class="snake-tally-group left" style="top: 53.33%;" id="tally-a-50"></div>
+                            <div class="snake-tally-group left" style="top: 83.33%;" id="tally-a-20"></div>
+
+                            <div class="snake-tally-group right" style="top: 23.33%;" id="tally-b-100"></div>
+                            <div class="snake-tally-group right" style="top: 53.33%;" id="tally-b-50"></div>
+                            <div class="snake-tally-group right" style="top: 83.33%;" id="tally-b-20"></div>
+                        </div>
+
+                        <div class="snake-rest left" id="rest-a"></div>
+                        <div class="snake-rest right" id="rest-b"></div>
+                    </div>
+                </div>
+
+                <div class="score-teams-wrapper mt-4">
+                    <div class="team-column">
+                        <div class="manual-score-input mt-0 w-100">
+                            <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="Punkte A">
+                        </div>
+                    </div>
+                    <div class="team-divider" style="opacity: 0;"></div>
+                    <div class="team-column">
+                        <div class="manual-score-input mt-0 w-100">
                             <input id="manual-score-b" type="number" class="form-control" min="0" max="157" placeholder="Punkte B">
                         </div>
                     </div>
+                </div>
 
-                </div> <div class="card-action-row">
+                <div class="card-action-row">
                     <button id="undo-btn" type="button" class="btn btn-secondary">
                         Rückgängig
                     </button>
@@ -136,6 +196,11 @@
         </div>
     </section>
 {% endblock %}
+
+<script>
+    // Übergibt das Backend-Game an JavaScript, um die Undo-Historie beim Laden zu haben
+    window.INITIAL_GAME_STATE = {{ game | tojson }};
+</script>
 
 {% block page_scripts %}
     <script src="{{ url_for('static', filename='js/pages/match.js') }}"></script>
