@@ -137,26 +137,27 @@ function renderPlayers(players) {
             <div class="d-flex justify-content-between align-items-center gap-3 w-100">
                 <div>
                     <span>${player.name}</span>
-                    <span class="badge text-bg-secondary ms-2">ID: ${player.id}</span>
                 </div>
 
                 <div class="d-flex gap-2">
                     <button
                         type="button"
-                        class="btn btn-sm btn-outline-primary edit-player-btn"
+                        class="btn btn-sm btn-outline-dark edit-player-btn"
+                        style="width: 48px; height: 48px;"
                         data-player-id="${player.id}"
                         data-player-name="${player.name}"
                     >
-                        Bearbeiten
+                        <i class="bi bi-pencil"></i>
                     </button>
 
                     <button
                         type="button"
                         class="btn btn-sm btn-outline-danger delete-player-btn"
+                        style="width: 48px; height: 48px;"
                         data-player-id="${player.id}"
                         data-player-name="${player.name}"
                     >
-                        Löschen
+                        <i class="bi bi-trash"></i>
                     </button>
                 </div>
             </div>
