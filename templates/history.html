@@ -3,25 +3,31 @@
 {% block title %}Historie - Jass App{% endblock %}
 
 {% block content %}
-    <h1 class="fw-bold mb-4">Matchhistorie</h1>
+    <h1 class="fw-bold mb-4 text-center">Matchhistorie</h1>
 
     <div class="card shadow-sm">
         <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="input-group ">
+                        <input type="text" id="match-search-input" class="form-control shadow-sm" placeholder="Nach Spieler suchen...">
+                    </div>
+                </div>
+            </div>
+
             <div id="match-history-empty" class="text-muted">
-                Noch keine Matches gespeichert.
+                Noch keine Matches gespeichert oder gefunden.
             </div>
 
             <div class="table-responsive d-none" id="match-history-wrapper">
-                <table class="table align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 text-nowrap">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Zeitpunkt</th>
                             <th>Team A</th>
                             <th>Team B</th>
                             <th>Score</th>
                             <th>Diff.</th>
-                            <th>Sieger</th>
+                            <th>Datum</th>
                         </tr>
                     </thead>
                     <tbody id="match-history-body"></tbody>
