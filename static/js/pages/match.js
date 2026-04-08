@@ -239,13 +239,11 @@ const inputA = document.getElementById("manual-score-a");
 
 // Verknüpft den gemeinsamen Button für manuelle Eingabe.
 function initManualButton() {
-    const form = document.getElementById("manual-score-form");
-    if (!form) return;
+    const manualSubmitBtn = document.getElementById("manual-submit-btn");
 
-    form.addEventListener("submit", event => {
-        event.preventDefault(); // Verhindert das Neuladen der Seite
-        handleManualSubmit(); // Deine bestehende Funktion aufrufen
-    });
+    if (!manualSubmitBtn) return;
+
+    manualSubmitBtn.addEventListener("click", handleManualSubmit);
 }
 
 // Enter löst ebenfalls die manuelle Eingabe aus.
@@ -384,18 +382,16 @@ function renderSnakeScores(teamLower, currentScore, undoHistory) {
             } else if (val === 20) {
                 tallies['20']++;
             } else {
-                // NEU: Manuelle Eingaben (z.B. 157) werden hier mathematisch zerlegt!
                 let temp = val;
                 tallies['100'] += Math.floor(temp / 100);
                 temp %= 100;
                 tallies['50'] += Math.floor(temp / 50);
                 temp %= 50;
                 tallies['20'] += Math.floor(temp / 20);
-                rest += temp % 20; // Nur der tatsächliche Rest unter 20 landet hier
+                rest += temp % 20;
             }
         });
     } else {
-        // Fallback: Wenn noch keine Historie da ist, berechne alles rein mathematisch
         let s = currentScore || 0;
         tallies['100'] = Math.floor(s / 100);
         s %= 100;
@@ -403,6 +399,18 @@ function renderSnakeScores(teamLower, currentScore, undoHistory) {
         s %= 50;
         tallies['20'] = Math.floor(s / 20);
         rest = s % 20;
+    }
+
+    // 5x 20er = 1x 100er
+    if (tallies['20'] > 10) {
+        tallies['100'] += Math.floor(tallies['20'] / 5);
+        tallies['20'] = tallies['20'] % 5;
+    }
+
+    // 2x 50er = 1x 100er
+    if (tallies['50'] > 10) {
+        tallies['100'] += Math.floor(tallies['50'] / 2);
+        tallies['50'] = tallies['50'] % 2;
     }
 
     drawTallies(`tally-${teamLower}-100`, tallies['100']);
