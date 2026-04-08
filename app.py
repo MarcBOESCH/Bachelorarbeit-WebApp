@@ -1,7 +1,6 @@
 import os
 
 from flask import Flask, request, redirect, url_for, session, render_template
-from livereload import Server
 
 from config import Config
 from extensions import db
@@ -31,13 +30,11 @@ def create_app():
 
 app = create_app()
 
-app = create_app()
-
 # ==========================================
 # LOGIN & SICHERHEIT (PIN-SYSTEM)
 # ==========================================
-USER_PIN = "42069"
-ADMIN_PIN = "1337"
+USER_PIN = os.environ.get("USER_PIN", "1234")
+ADMIN_PIN = os.environ.get("ADMIN_PIN", "5678")
 
 
 @app.before_request
@@ -83,8 +80,12 @@ def logout():
 
 
 if __name__ == "__main__":
-    server = Server(app.wsgi_app)
-    server.watch("templates/*.html")
-    server.watch("static/css/*.css")
-    server.watch("static/js/*/*js")
-    server.serve(port=8080, host="0.0.0.0", debug=False)
+    if __name__ == "__main__":
+        # Nur lokal mit Livereload starten
+        from livereload import Server
+
+        server = Server(app.wsgi_app)
+        server.watch("templates/*.html")
+        server.watch("static/css/*.css")
+        server.watch("static/js/*/*.js")
+        server.serve(port=8080, host="0.0.0.0", debug=True)
