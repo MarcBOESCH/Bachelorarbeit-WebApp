@@ -644,7 +644,7 @@ canvas {
     height: 48px;
     background: #111;
     border-radius: 4px;
-    transform: rotate(15deg); /* Leicht schräg wie handgezeichnet */
+    transform: rotate(10deg); /* Leicht schräg wie handgezeichnet */
 }
 
 .snake-rest {
