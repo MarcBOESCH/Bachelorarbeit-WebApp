@@ -151,17 +151,6 @@
                 </div>
 
                 <div class="summary-item">
-                    <span class="summary-label">Punktedifferenz</span>
-                    <span id="point-diff" class="summary-value">
-                        {% if game.score_a >= game.score_b %}
-                            {{ game.score_a - game.score_b}}
-                        {% else %}
-                            {{ game.score_b - game.score_a }}
-                        {% endif %}
-                    </span>
-                </div>
-
-                <div class="summary-item">
                     <span class="summary-label">Punkte zum Sieg</span>
                     <span id="points-win" class="summary-value">
                         {% if game.score_a > game.score_b %}
@@ -174,27 +163,27 @@
                     </span>
                 </div>
 
-            </div>
-
-            <div class="status-stack">
-
-                <div class="status-row">
-                    <span class="status-label">Gewinner</span>
-                    <span id="winner" class="status-value">
-                        {{ game.winner if game.winner else "-" }}
+                <div class="summary-item">
+                    <span class="summary-label">Punktedifferenz</span>
+                    <span id="point-diff" class="summary-value">
+                        {% if game.score_a >= game.score_b %}
+                            {{ game.score_a - game.score_b}}
+                        {% else %}
+                            {{ game.score_b - game.score_a }}
+                        {% endif %}
                     </span>
                 </div>
 
             </div>
 
-            <div class="action-group">
-
-                <button id="reset-btn" type="button" class="btn btn-warning">
-                    Neues Spiel
+            <div class="action-group mt-2">
+                <button id="reset-btn" type="button" class="btn btn-outline-secondary fw-semibold">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Neues Spiel
                 </button>
             </div>
 
-            <div id="match-status-message" class="alert alert-success mt-3 d-none" role="alert"></div>
+            <div id="match-status-message" class="alert alert-success mt-4 mb-0 d-none text-center fw-bold shadow-sm" role="alert"></div>
+
         </div>
     </section>
 {% endblock %}

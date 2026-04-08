@@ -200,12 +200,25 @@ body.app-shell {
     font-weight: 600;
 }
 
-.mobile-nav-link i {
-    font-size: 1.15rem;
+.mobile-nav-link i{
+    font-size: 1.25rem;
+    width: 56px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .mobile-nav-link.active {
     color: var(--color-brand);
+    font-weight: 700;
+}
+
+.mobile-nav-link.active i {
+    background-color: var(--color-brand-soft);
+    color: var(--color-brand-dark);
 }
 
 /* =========================
@@ -515,8 +528,9 @@ canvas {
 .score-button-col {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 10px;
-    width: 100%;
+    width: 60%;
 }
 
 .manual-score-input {
@@ -685,7 +699,6 @@ canvas {
         font-size: 2.2rem;
     }
 
-    /* Versteckt die Bottom-Nav auf Mobile, wenn die Tastatur offen ist (ein Input fokussiert ist) */
     body:has(input:focus) .mobile-bottom-nav {
         display: none;
     }
@@ -693,9 +706,10 @@ canvas {
 
 .match-summary-grid {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .summary-item {
@@ -718,7 +732,7 @@ canvas {
 .summary-value {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--color-text);
+    color: var(--color-brand);
 }
 
 .status-stack {
@@ -802,6 +816,14 @@ canvas {
 
     .toast-container {
         left: calc(50% + (var(--sidebar-width) / 2));
+    }
+
+    .match-summary-grid {
+        flex-direction: row;
+    }
+
+    .match-summary-grid .summary-item {
+        min-width: 140px;
     }
 }
 
