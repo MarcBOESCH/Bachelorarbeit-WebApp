@@ -785,6 +785,77 @@ canvas {
     gap: 10px;
 }
 
+/* --- Siegerpodest --- */
+.podium-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    min-height: 220px;
+    padding-top: 20px;
+}
+
+.podium-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 30%;
+    max-width: 140px;
+    transition: transform 0.3s ease;
+}
+
+.podium-col:hover {
+    transform: translateY(-5px);
+}
+
+.podium-step {
+    width: 100%;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 12px;
+    font-size: 2rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 -10px 20px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Edle Farbverläufe für die Medaillen-Farben */
+.podium-gold .podium-step { height: 130px; background: linear-gradient(135deg, #F9D423 0%, #FF4E50 100%); }
+.podium-silver .podium-step { height: 95px; background: linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%); color: rgba(0,0,0,0.3); }
+.podium-bronze .podium-step { height: 70px; background: linear-gradient(135deg, #D4A373 0%, #A98467 100%); }
+
+.podium-avatar {
+    width: 50px;
+    height: 50px;
+    background-color: var(--color-brand-dark);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    border: 3px solid white;
+    z-index: 2;
+}
+
+.podium-gold .podium-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 1.5rem;
+    background-color: var(--color-brand);
+    border: 4px solid #F9D423; /* Goldener Rand für Platz 1 */
+}
+
+.podium-name { font-weight: 700; text-align: center; margin-bottom: 2px; }
+.podium-stat { font-size: 0.9rem; color: #6c757d; margin-bottom: 10px; text-align: center; font-weight: 600;}
+.podium-gold .podium-stat { color: var(--color-brand-dark); font-size: 1rem;}
+
 /* =========================
    Desktop Enhancements
 ========================= */
