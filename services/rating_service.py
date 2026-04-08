@@ -317,8 +317,16 @@ def process_elo_match(match, k_factor=32):
     actual_a = 1.0 if match.winner_team == "A" else 0.0
     actual_b = 1.0 if match.winner_team == "B" else 0.0
 
-    delta_a = k_factor * (actual_a - expected_a)
-    delta_b = k_factor * (actual_b - expected_b)
+    # --- NEU: Margin of Victory (MoV) Multiplikator ---
+    # diff = 0 -> 1x K-Faktor
+    # diff = 500 -> 2x K-Faktor
+    # diff = 1000 -> 3x K-Faktor
+    mov_multiplier = 1.0 + (match.point_diff / 500.0)
+    adjusted_k = k_factor * mov_multiplier
+    # --------------------------------------------------
+
+    delta_a = adjusted_k * (actual_a - expected_a)
+    delta_b = adjusted_k * (actual_b - expected_b)
 
     for entry in team_a:
         rating = entry["rating_entry"]

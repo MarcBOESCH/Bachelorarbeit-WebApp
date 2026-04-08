@@ -94,8 +94,13 @@ def evaluate_elo_predictions():
         actual_b = 1.0 if actual_winner == "B" else 0.0
 
         k_factor = 32
-        delta_a = k_factor * (actual_a - expected_a)
-        delta_b = k_factor * (actual_b - expected_b)
+
+        # --- NEU: MoV Multiplikator auch für die Evaluation ---
+        mov_multiplier = 1.0 + (match.point_diff / 500.0)
+        adjusted_k = k_factor * mov_multiplier
+
+        delta_a = adjusted_k * (actual_a - expected_a)
+        delta_b = adjusted_k * (actual_b - expected_b)
 
         for entry in team_a_entries:
             player_ratings[entry.player_id] += delta_a
