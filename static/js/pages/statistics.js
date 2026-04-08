@@ -1,5 +1,5 @@
 let allStatsData = [];
-let currentSortColumn = 'win_rate'; // Standard-Sortierung
+let currentSortColumn = 'elo'; // Standard-Sortierung
 let currentSortAsc = false;         // Standardmäßig absteigend
 let currentSearchTerm = '';
 
@@ -127,7 +127,8 @@ function updatePodium(sortedData) {
         'wins': 'Siegen',
         'losses': 'Niederlagen',
         'win_rate': 'Siegquote',
-        'avg_point_diff': 'Ø Punktedifferenz'
+        'avg_point_diff': 'Ø Punktedifferenz',
+        'elo': 'Elo-Rating'
     };
     document.getElementById("podium-subtitle").textContent = `nach ${columnTitles[currentSortColumn]}`;
 
@@ -235,6 +236,7 @@ function processAndRenderTable() {
             <td class="text-end">${formatNumber(player.losses)}</td>
             <td class="text-end fw-bold" style="color: var(--color-brand);">${formatNumber(player.win_rate)} %</td>
             <td class="text-end"><span class="badge bg-light text-dark border">${diffValue}</span></td>
+            <td class="text-end fw-bold fs-6">${player.elo}</td>
         `;
 
         tbody.appendChild(row);

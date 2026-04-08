@@ -30,6 +30,12 @@ def get_player_stats():
         win_rate = round((wins / matches_played) * 100, 1) if matches_played > 0 else 0.0
         avg_point_diff = round(total_point_diff / matches_played, 1) if matches_played > 0 else 0.0
 
+        elo_rating = 1500  #
+        for r in player.ratings:
+            if r.system_name == "elo":
+                elo_rating = int(round(r.rating))
+                break
+
         result.append({
             "id": player.id,
             "name": player.name,
@@ -37,7 +43,8 @@ def get_player_stats():
             "wins": wins,
             "losses": losses,
             "win_rate": win_rate,
-            "avg_point_diff": avg_point_diff
+            "avg_point_diff": avg_point_diff,
+            "elo": elo_rating
         })
 
     return result

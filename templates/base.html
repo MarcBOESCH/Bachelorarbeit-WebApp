@@ -44,10 +44,16 @@
                     <span>Statistiken</span>
                 </a>
 
+                {% if session.get('role') == 'admin' %}
                 <a class="sidebar-link {% if endpoint == 'ratings.ratings_page' %}active{% endif %}"
                    href="{{ url_for('ratings.ratings_page') }}">
-                    <i class="bi bi-trophy"></i>
-                    <span>Ratings &amp; Evaluation</span>
+                    <i class="bi bi-star"></i> <span>Ratings &amp; Evaluation</span>
+                </a>
+                {% endif %}
+
+                <a class="sidebar-link text-danger mt-2" href="{{ url_for('logout') }}">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Abmelden</span>
                 </a>
             </nav>
         </aside>
@@ -84,10 +90,17 @@
             <span>Stats</span>
         </a>
 
+        {% if session.get('role') == 'admin' %}
         <a class="mobile-nav-link {% if endpoint == 'ratings.ratings_page' %}active{% endif %}"
            href="{{ url_for('ratings.ratings_page') }}">
-            <i class="bi bi-trophy"></i>
+            <i class="bi bi-star"></i>
             <span>Ratings</span>
+        </a>
+        {% endif %}
+
+        <a class="mobile-nav-link text-danger" href="{{ url_for('logout') }}">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Exit</span>
         </a>
     </nav>
 

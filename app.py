@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, request, redirect, url_for, session, render_template
 from livereload import Server
 
 from config import Config
@@ -30,6 +30,56 @@ def create_app():
 
 
 app = create_app()
+
+app = create_app()
+
+# ==========================================
+# LOGIN & SICHERHEIT (PIN-SYSTEM)
+# ==========================================
+USER_PIN = "42069"
+ADMIN_PIN = "1337"
+
+
+@app.before_request
+def require_login():
+    # Diese Routen dürfen ohne PIN geladen werden
+    allowed_endpoints = ['login', 'static']
+
+    # 1. Prüfen, ob überhaupt jemand eingeloggt ist
+    if request.endpoint not in allowed_endpoints and 'role' not in session:
+        return redirect(url_for('login'))
+
+    # 2. Prüfen, ob ein normaler User auf eine Admin-Seite will
+    admin_endpoints = ['ratings.ratings_page', 'ratings.process_ratings_for_system', 'ratings.get_ratings_for_system',
+                       'evaluation.evaluate_system']
+    if request.endpoint in admin_endpoints and session.get('role') != 'admin':
+        return redirect(url_for('matches.match_page'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        pin = request.form.get('pin')
+
+        if pin == USER_PIN:
+            session['role'] = 'user'
+            return redirect(url_for('matches.player_selection_page'))
+
+        elif pin == ADMIN_PIN:
+            session['role'] = 'admin'
+            return redirect(url_for('matches.player_selection_page'))
+
+        else:
+            error = "Falscher PIN."
+
+    return render_template('login.html', error=error)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 
 if __name__ == "__main__":
