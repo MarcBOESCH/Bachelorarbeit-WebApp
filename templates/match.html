@@ -11,6 +11,8 @@
         <div class="score-team-card app-card">
             <div class="app-card-body">
 
+                <div id="match-status-message" class="alert alert-success mb-4 d-none text-center fw-bold shadow-sm" style="font-size: 1.1rem;" role="alert"></div>
+
                 <div class="score-mode-toggle">
                     <button id="btn-mode-classic" class="btn-toggle active">Klassisch</button>
                     <button id="btn-mode-snake" class="btn-toggle">Schlange</button>
@@ -18,16 +20,30 @@
 
                 <div class="score-teams-wrapper" style="margin-bottom: 0;">
                     <div class="team-column">
-                        <div class="score-team-header mb-0">
-                            <h2>{{ game.team_name_a }}</h2>
-                            <p class="score-value" id="score-a">{{ game.score_a }}</p>
+                        <div class="score-team-header mb-0" style="gap: 2px;">
+                            <h2 class="mb-0">{{ game.team_name_a }}</h2>
+
+                            <div class="text-muted small fw-semibold mb-2" style="letter-spacing: 0.5px;">
+                                {% for p in game.players if p.team == 'A' %}
+                                    {{ p.get('player_name', 'Unbekannt') }}{% if not loop.last %} &amp; {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <p class="score-value mt-2" id="score-a">{{ game.score_a }}</p>
                         </div>
                     </div>
                     <div class="team-divider"></div>
                     <div class="team-column">
-                        <div class="score-team-header mb-0">
-                            <h2>{{ game.team_name_b }}</h2>
-                            <p class="score-value" id="score-b">{{ game.score_b }}</p>
+                        <div class="score-team-header mb-0" style="gap: 2px;">
+                            <h2 class="mb-0">{{ game.team_name_b }}</h2>
+
+                            <div class="text-muted small fw-semibold mb-2" style="letter-spacing: 0.5px;">
+                                {% for p in game.players if p.team == 'B' %}
+                                    {{ p.get('player_name', 'Unbekannt') }}{% if not loop.last %} &amp; {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <p class="score-value mt-2" id="score-b">{{ game.score_b }}</p>
                         </div>
                     </div>
                 </div>
@@ -177,15 +193,36 @@
             </div>
 
             <div class="action-group mt-2">
-                <button id="reset-btn" type="button" class="btn btn-outline-secondary fw-semibold">
-                    <i class="bi bi-arrow-clockwise me-1"></i> Neues Spiel
+                <button id="reset-btn" type="button" class="btn btn-outline-dark  fw-semibold">
+                    Neues Spiel
                 </button>
             </div>
 
-            <div id="match-status-message" class="alert alert-success mt-4 mb-0 d-none text-center fw-bold shadow-sm" role="alert"></div>
-
         </div>
     </section>
+
+    <div class="modal fade" id="confirmNewGameModal" tabindex="-1" aria-labelledby="confirmNewGameModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg text-center" style="border-radius: var(--radius-lg);">
+
+                <div class="modal-header border-bottom-0 pb-0 justify-content-center position-relative">
+                    <h5 class="modal-title fw-bold" id="confirmNewGameModalLabel">Neues Spiel starten</h5>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+
+                <div class="modal-body text-muted">
+                    Willst du wirklich ein neues Spiel starten?<br>
+                    Der aktuelle Match-Fortschritt geht dabei verloren.
+                </div>
+
+                <div class="modal-footer border-top-0 pt-0 justify-content-center gap-2">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-danger fw-semibold" id="confirm-new-game-btn">Neu starten</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 <script>
@@ -194,5 +231,7 @@
 </script>
 
 {% block page_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
     <script src="{{ url_for('static', filename='js/pages/match.js') }}"></script>
 {% endblock %}

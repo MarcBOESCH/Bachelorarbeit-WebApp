@@ -354,16 +354,26 @@ canvas {
     font-weight: 700;
 }
 
+.btn-dark {
+    background: var(--color-brand);
+}
+
+.btn-dark:hover,
+.btn-dark:focus {
+    background: var(--color-brand-dark);
+}
+
 .score-btn {
     width: 100%;
-    border: none;
-    background: var(--color-brand);
-    color: #fff;
+    border: 2px solid var(--color-brand);
+    background: transparent;
+    color: var(--color-brand);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .score-btn:hover,
-.score-btn:focus {
-    background: var(--color-brand-dark);
+.score-btn:active {
+    background: var(--color-brand);
     color: #fff;
 }
 
@@ -435,6 +445,10 @@ canvas {
     animation: slideIn 0.3s forwards ease-out;
 }
 
+.app-toast.success {
+    border-color: #d1e7dd;
+}
+
 .app-toast.error {
     border-color: #dc3545;
 }
@@ -491,7 +505,7 @@ canvas {
 }
 
 .score-team-header h2 {
-    font-size: 1.15rem;
+    font-size: 1.5rem;
     font-weight: 700;
 }
 
@@ -504,7 +518,6 @@ canvas {
 
 .score-teams-wrapper {
     display: grid;
-    /* Spalte 1, Trennlinie, Spalte 2 */
     grid-template-columns: 1fr auto 1fr;
     gap: 15px;
     align-items: start;
@@ -530,7 +543,7 @@ canvas {
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    width: 60%;
+    width: 100%;
 }
 
 .manual-score-input {
@@ -594,9 +607,9 @@ canvas {
 .snake-board {
     position: relative;
     width: 100%;
-    max-width: 500px; /* <--- Mehr Breite für Desktop erlaubt */
+    max-width: 500px;
     margin: 1.5rem auto;
-    aspect-ratio: 1 / 1; /* <--- WICHTIG: Ist jetzt ein Quadrat (600x600 viewBox) */
+    aspect-ratio: 1 / 1;
 }
 
 .snake-shape {
@@ -824,6 +837,10 @@ canvas {
 
     .match-summary-grid .summary-item {
         min-width: 140px;
+    }
+
+    .modal {
+        padding-left: var(--sidebar-width) !important;
     }
 }
 

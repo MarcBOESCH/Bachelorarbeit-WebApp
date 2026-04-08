@@ -1,4 +1,5 @@
 let matchFinished = false;
+let newGameModalInstance;
 
 // Sendet eine Spielaktion an das Backend, z. B. Punkte hinzufügen,
 // Undo oder neues Spiel.
@@ -52,7 +53,11 @@ async function saveFinishedMatch(game) {
         }
 
         const winnerName = game.score_a > game.score_b ? "Team A" : "Team B";
-        showMatchStatusMessage(`${winnerName} hat gewonnen. Das Match wurde erfolgreich gespeichert.`);
+        showMatchStatusMessage(`${winnerName} hat gewonnen 🏆`);
+
+        showToast(`Das Match wurde gespeichert.`, "success");
+
+        triggerConfetti();
 
         matchFinished = true;
         setMatchInputsDisabled(true);
@@ -268,20 +273,6 @@ function initManualEnterKey() {
     }
 }
 
-// Event-Handler für "Neues Spiel".
-async function handleNewGame() {
-    const confirmed = confirm("Willst du wirklich ein neues Spiel starten?");
-    if (!confirmed) return;
-
-    const result = await sendAction({
-        action: "new_game"
-    });
-
-    if (result?.redirect_url) {
-        window.location.href = result.redirect_url;
-    }
-}
-
 // Verknüpft alle Punktebuttons mit ihrem Click-Handler.
 function initScoreButtons() {
     const scoreButtons = document.querySelectorAll(".score-btn, .snake-hotspot-area");
@@ -303,13 +294,46 @@ function initUndoButton() {
     });
 }
 
-// Verknüpft den Reset-Button mit dem Reset-Handler.
-function initResetButton() {
+// Verknüpft den Reset-Button mit dem Modal
+function initNewGameButton() {
     const resetBtn = document.getElementById("reset-btn");
+    const confirmBtn = document.getElementById("confirm-new-game-btn");
+    const modalElement = document.getElementById("confirmNewGameModal");
 
-    if (!resetBtn) return;
+    if (!resetBtn || !modalElement || !confirmBtn) return;
 
-    resetBtn.addEventListener("click", handleNewGame);
+    // Bootstrap Modal initialisieren
+    newGameModalInstance = new bootstrap.Modal(modalElement);
+
+    // Klick auf "Neues Spiel" öffnet nur noch das schöne Modal
+    resetBtn.addEventListener("click", async () => {
+        if (matchFinished) {
+            const result = await sendAction({
+                action: "new_game"
+            });
+
+            if (result?.redirect_url) {
+                window.location.href = result.redirect_url;
+            }
+        } else {
+            // Spiel läuft noch -> Warn-Modal einblenden
+            newGameModalInstance.show();
+        }
+    });
+
+    confirmBtn.addEventListener("click", async () => {
+        // Modal direkt wieder schließen
+        newGameModalInstance.hide();
+
+        // Backend anpingen für neues Spiel
+        const result = await sendAction({
+            action: "new_game"
+        });
+
+        if (result?.redirect_url) {
+            window.location.href = result.redirect_url;
+        }
+    });
 }
 
 // ==========================================
@@ -452,13 +476,36 @@ function initSnakeScoresOnLoad() {
     }
 }
 
+// Feuert eine Konfetti-Animation in den App-Farben ab, zentriert auf den Content-Bereich.
+function triggerConfetti() {
+    if (typeof confetti !== "function") return;
+
+    let originX = 0.5;
+
+    // Auf dem Desktop (ab 768px) müssen wir die 300px Sidebar ausgleichen
+    if (window.innerWidth >= 768) {
+        const sidebarWidth = 300;
+        const contentWidth = window.innerWidth - sidebarWidth;
+        const centerPixelX = sidebarWidth + (contentWidth / 2);
+        originX = centerPixelX / window.innerWidth;
+    }
+
+    confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { x: originX, y: 0.6 },
+        colors: ['#0f5132', '#f3b63f', '#ffffff', '#0b3d26'],
+        disableForReducedMotion: true
+    });
+}
+
 // Initialisiert die komplette Match-Seite.
 function initMatchPage() {
     initScoreButtons();
     initManualButton();
     initManualEnterKey();
     initUndoButton();
-    initResetButton();
+    initNewGameButton();
     initModeToggle();
     initSnakeScoresOnLoad();
 }

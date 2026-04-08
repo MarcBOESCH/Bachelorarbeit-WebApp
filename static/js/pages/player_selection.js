@@ -163,6 +163,13 @@ function buildFinalTeamNames(data) {
     };
 }
 
+// Liest den angezeigten Namen aus dem Dropdown aus
+function getPlayerName(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select || select.selectedIndex === -1) return "Unbekannt";
+    return select.options[select.selectedIndex].text;
+}
+
 /*
  * Sendet das Setup an das Backend und startet damit ein neues aktives Match.
  * Danach erfolgt die Weiterleitung auf /match.
@@ -193,21 +200,25 @@ async function submitPlayerSelection(event) {
                 players: [
                     {
                         player_id: Number(formData.teamAPlayer1),
+                        player_name: getPlayerName("team-a-player-1"),
                         team: "A",
                         team_slot: 1
                     },
                     {
                         player_id: Number(formData.teamAPlayer2),
+                        player_name: getPlayerName("team-a-player-2"),
                         team: "A",
                         team_slot: 2
                     },
                     {
                         player_id: Number(formData.teamBPlayer1),
+                        player_name: getPlayerName("team-b-player-1"),
                         team: "B",
                         team_slot: 1
                     },
                     {
                         player_id: Number(formData.teamBPlayer2),
+                        player_name: getPlayerName("team-b-player-2"),
                         team: "B",
                         team_slot: 2
                     }
