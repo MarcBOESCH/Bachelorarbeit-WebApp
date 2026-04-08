@@ -174,8 +174,8 @@ async function handleScoreButtonClick(event) {
 }
 
 // Event-Handler für die manuelle Punkteingabe.
-async function handleManualSubmit(team) {
-const inputA = document.getElementById("manual-score-a");
+async function handleManualSubmit() {
+    const inputA = document.getElementById("manual-score-a");
     const inputB = document.getElementById("manual-score-b");
 
     if (!inputA || !inputB) return;
@@ -193,17 +193,18 @@ const inputA = document.getElementById("manual-score-a");
         return;
     }
 
-    const roundTotal = 157;
+    // Hilfsfunktion für die Validierung (0-157 oder exakt 257)
+    const isValidScore = (score) => {
+        return Number.isInteger(score) && score >= 0 && (score <= 157 || score === 257);
+    };
 
     if (valueA !== "") {
         const pointsA = Number(valueA);
 
-        if (!Number.isInteger(pointsA) || pointsA < 0 || pointsA > roundTotal) {
-            showToast("Bitte einen Wert zwischen 0 und 157 eingeben.", "error");
+        if (!isValidScore(pointsA)) {
+            showToast("Bitte einen Wert zwischen 0 und 157 (oder 257 für einen Matsch) eingeben.", "error");
             return;
         }
-
-        const pointsB = roundTotal - pointsA;
 
         await sendAction({
             action: "manual_input",
@@ -215,12 +216,10 @@ const inputA = document.getElementById("manual-score-a");
     if (valueB !== "") {
         const pointsB = Number(valueB);
 
-        if (!Number.isInteger(pointsB) || pointsB < 0 || pointsB > roundTotal) {
-            showToast("Bitte einen Wert zwischen 0 und 157 eingeben.", "error");
+        if (!isValidScore(pointsB)) {
+            showToast("Bitte einen Wert zwischen 0 und 157 (oder 257 für einen Matsch) eingeben.", "error");
             return;
         }
-
-        const pointsA = roundTotal - pointsB;
 
         await sendAction({
             action: "manual_input",
@@ -229,6 +228,7 @@ const inputA = document.getElementById("manual-score-a");
         });
     }
 
+    // Felder leeren
     inputA.value = "";
     inputB.value = "";
 

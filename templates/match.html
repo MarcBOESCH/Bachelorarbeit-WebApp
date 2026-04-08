@@ -40,7 +40,7 @@
                             <button class="btn score-btn" type="button" data-team="A" data-points="100">+100</button>
                             <button class="btn score-btn" type="button" data-team="A" data-points="150">+150</button>
                             <button class="btn score-btn" type="button" data-team="A" data-points="200">+200</button>
-                            <button class="btn score-btn" type="button" data-team="A" data-points="256">+256</button>
+                            <button class="btn score-btn" type="button" data-team="A" data-points="257">+257</button>
                         </div>
                     </div>
 
@@ -53,7 +53,7 @@
                             <button class="btn score-btn" type="button" data-team="B" data-points="100">+100</button>
                             <button class="btn score-btn" type="button" data-team="B" data-points="150">+150</button>
                             <button class="btn score-btn" type="button" data-team="B" data-points="200">+200</button>
-                            <button class="btn score-btn" type="button" data-team="B" data-points="256">+256</button>
+                            <button class="btn score-btn" type="button" data-team="B" data-points="257">+257</button>
                         </div>
                     </div>
                 </div>
@@ -104,13 +104,13 @@
                 <div class="score-teams-wrapper mt-4">
                     <div class="team-column">
                         <div class="manual-score-input mt-0 w-100">
-                            <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="Punkte A">
+                            <input id="manual-score-a" type="number" class="form-control" min="0" max="157" placeholder="Punkte {{ game.team_name_a }}">
                         </div>
                     </div>
                     <div class="team-divider" style="opacity: 0;"></div>
                     <div class="team-column">
                         <div class="manual-score-input mt-0 w-100">
-                            <input id="manual-score-b" type="number" class="form-control" min="0" max="157" placeholder="Punkte B">
+                            <input id="manual-score-b" type="number" class="form-control" min="0" max="157" placeholder="Punkte {{ game.team_name_b }}">
                         </div>
                     </div>
                 </div>
@@ -119,7 +119,7 @@
                     <button id="undo-btn" type="button" class="btn btn-secondary">
                         Rückgängig
                     </button>
-                    <button id="manual-submit-btn" type="button" class="btn btn-outline-dark">
+                    <button id="manual-submit-btn" type="button" class="btn btn-outline-dark ">
                         Hinzufügen
                     </button>
                 </div>

@@ -382,6 +382,12 @@ canvas {
     border: none;
 }
 
+.btn,
+.snake-hotspot-area,
+.btn-toggle {
+    touch-action: manipulation;
+}
+
 /* =========================
    Toast Benachrichtigungen
 ========================= */
