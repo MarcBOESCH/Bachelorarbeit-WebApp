@@ -678,6 +678,11 @@ canvas {
     .snake-rest {
         font-size: 2.2rem;
     }
+
+    /* Versteckt die Bottom-Nav auf Mobile, wenn die Tastatur offen ist (ein Input fokussiert ist) */
+    body:has(input:focus) .mobile-bottom-nav {
+        display: none;
+    }
 }
 
 .match-summary-grid {

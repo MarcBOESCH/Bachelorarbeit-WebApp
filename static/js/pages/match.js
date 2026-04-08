@@ -92,7 +92,6 @@ function updateUI(game) {
         pointsWinElement.textContent = 1000;
     }
 
-    // WICHTIG: Hier geben wir jetzt die Undo-Historie aus dem Backend mit!
     renderSnakeScores("a", scoreA, game.undo_a);
     renderSnakeScores("b", scoreB, game.undo_b);
 }
@@ -232,15 +231,21 @@ const inputA = document.getElementById("manual-score-a");
 
     inputA.value = "";
     inputB.value = "";
+
+    // Fokus entfernen (schließt die Handy-Tastatur)
+    inputA.blur();
+    inputB.blur();
 }
 
 // Verknüpft den gemeinsamen Button für manuelle Eingabe.
 function initManualButton() {
-    const manualSubmitBtn = document.getElementById("manual-submit-btn");
+    const form = document.getElementById("manual-score-form");
+    if (!form) return;
 
-    if (!manualSubmitBtn) return;
-
-    manualSubmitBtn.addEventListener("click", handleManualSubmit);
+    form.addEventListener("submit", event => {
+        event.preventDefault(); // Verhindert das Neuladen der Seite
+        handleManualSubmit(); // Deine bestehende Funktion aufrufen
+    });
 }
 
 // Enter löst ebenfalls die manuelle Eingabe aus.

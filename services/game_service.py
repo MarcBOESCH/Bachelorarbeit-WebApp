@@ -6,6 +6,7 @@ BUTTON_VALUES = {
     "score_100": 100,
     "score_150": 150,
     "score_200": 200,
+    "score_256": 256,
 }
 
 VALID_TEAMS = {"A", "B"}
