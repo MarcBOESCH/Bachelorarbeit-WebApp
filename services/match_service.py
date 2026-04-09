@@ -1,6 +1,7 @@
 from extensions import db
 from models.match import Match, MatchPlayer
 from models.player import Player
+from services.rating_service import process_match_for_system
 
 MAX_POINTS = 1000
 
@@ -104,7 +105,18 @@ def create_match(score_team_a, score_team_b, players):
             )
             db.session.add(match_player)
 
+        try:
+            db.session.commit()
+
+            try:
+                process_match_for_system(match, "elo")
+            except Exception as e:
+                print(f"Automatisches Elo-Update fehlgeschlagen: {e}")
+
+        except Exception:
+            db.session.rollback()
         db.session.commit()
+
     except Exception:
         db.session.rollback()
         return False, "Das Match konnte aufgrund eines Datenbankfehlers nicht gespeichert werden.", None
