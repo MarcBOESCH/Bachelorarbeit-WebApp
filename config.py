@@ -5,7 +5,7 @@ INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+    SECRET_KEY = os.environ["SECRET_KEY"]
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(INSTANCE_DIR, "jass.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
