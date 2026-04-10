@@ -207,7 +207,7 @@ async function handleManualSubmit() {
         const pointsA = Number(valueA);
 
         if (!isValidScore(pointsA)) {
-            showToast("Bitte einen Wert zwischen 0 und 157 (oder 257 für einen Matsch) eingeben.", "error");
+            showToast("Bitte einen Wert zwischen 0 und 157 eingeben. 0 bedeutet Matsch für das andere Team, 257 Matsch für das gewählte Team.", "error");
             return;
         }
 

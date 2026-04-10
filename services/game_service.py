@@ -122,7 +122,8 @@ def add_points(game, team, action):
 def add_manual_points(game, team, value):
     """
     Regeln:
-    - 257: Spezialfall, nur gewähltes Team erhält 257 Punkte
+    - 257: gewähltes Team erhält 257 Punkte (Matsch)
+    - 0: gewähltes Team erhält 0 Punkte, anderes Team erhält 257 Punkte
     - 1 bis 157: gewähltes Team erhält value,
       anderes Team erhält 157 - value
     """
@@ -135,7 +136,7 @@ def add_manual_points(game, team, value):
     if not isinstance(value, int):
         return False, "Punktewert muss eine Ganzzahl sein"
 
-    if value <= 0 or (value > 157 and value != 257):
+    if value < 0 or (value > 157 and value != 257):
         return False, "Ungültiger Punktewert"
 
     game["undo_a"].append(game["score_a"])
@@ -147,6 +148,15 @@ def add_manual_points(game, team, value):
             game["score_a"] += 257
         else:
             game["score_b"] += 257
+
+        save_game_state(game)
+        return True, None
+
+    if value == 0:
+        if team == "A":
+            game["score_b"] += 257
+        else:
+            game["score_a"] += 257
 
         save_game_state(game)
         return True, None
