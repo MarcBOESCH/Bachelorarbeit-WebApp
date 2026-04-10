@@ -3,6 +3,8 @@ let allPlayers = [];
 let tomSelectA, tomSelectB;
 let modalTomSelectP1, modalTomSelectP2;
 let currentModalTeam = '';
+let selectionMode = "players";
+let createTeamFromPlayersTarget = "";
 
 // 1. Initiales Laden der Daten
 async function loadData() {
@@ -19,9 +21,13 @@ async function loadData() {
 
         initTomSelects();
         initModalSelects();
+        initPlayerModeSelects();
+        initSelectionModeToggle();
         initPlayerSelectionForm();
+        updateExistingTeamInfo();
         updateStartMatchButtonState();
         updateMatchPreview();
+
     } catch (error) {
         console.error("Fehler beim Laden:", error);
         showToast("Daten konnten nicht geladen werden.", "error");
@@ -121,6 +127,156 @@ function updatePlayerInfo(teamLetter, teamId) {
     }
 }
 
+function findExistingTeamByPlayers(player1Id, player2Id) {
+    if (!player1Id || !player2Id) return null;
+
+    return allTeams.find(team =>
+        (String(team.player1_id) === String(player1Id) && String(team.player2_id) === String(player2Id)) ||
+        (String(team.player1_id) === String(player2Id) && String(team.player2_id) === String(player1Id))
+    );
+}
+
+function getSelectedPlayersForSide(teamLetter) {
+    if (teamLetter === "A") {
+        return {
+            player1Id: playerSelectTeamA1?.getValue() || "",
+            player2Id: playerSelectTeamA2?.getValue() || ""
+        };
+    }
+
+    return {
+        player1Id: playerSelectTeamB1?.getValue() || "",
+        player2Id: playerSelectTeamB2?.getValue() || ""
+    };
+}
+
+function initSelectionModeToggle() {
+    const btnPlayers = document.getElementById("btn-selection-mode-players");
+    const btnTeams = document.getElementById("btn-selection-mode-teams");
+    const playerSelectionView = document.getElementById("player-selection-view");
+    const teamSelectionView = document.getElementById("team-selection-view");
+
+    if (!btnPlayers || !btnTeams || !playerSelectionView || !teamSelectionView) return;
+
+    function setSelectionMode(mode) {
+        selectionMode = mode;
+
+        const isPlayersMode = mode === "players";
+
+        btnPlayers.classList.toggle("active", isPlayersMode);
+        btnTeams.classList.toggle("active", !isPlayersMode);
+
+        playerSelectionView.classList.toggle("d-none", !isPlayersMode);
+        teamSelectionView.classList.toggle("d-none", isPlayersMode);
+
+        updateExistingTeamInfo();
+        updateMatchPreview();
+        updateStartMatchButtonState();
+    }
+
+    btnPlayers.addEventListener("click", () => setSelectionMode("players"));
+    btnTeams.addEventListener("click", () => setSelectionMode("teams"));
+
+    setSelectionMode("players");
+}
+
+function initPlayerModeSelects() {
+    const playerConfig = {
+        valueField: "id",
+        labelField: "name",
+        searchField: "name",
+        options: allPlayers,
+        placeholder: "Spieler suchen..."
+    };
+
+    playerSelectTeamA1 = new TomSelect("#team-a-player-1", playerConfig);
+    playerSelectTeamA2 = new TomSelect("#team-a-player-2", playerConfig);
+    playerSelectTeamB1 = new TomSelect("#team-b-player-1", playerConfig);
+    playerSelectTeamB2 = new TomSelect("#team-b-player-2", playerConfig);
+
+    [
+        playerSelectTeamA1,
+        playerSelectTeamA2,
+        playerSelectTeamB1,
+        playerSelectTeamB2
+    ].forEach(selectInstance => {
+        selectInstance.on("change", () => {
+            updateExistingTeamInfo();
+            updateMatchPreview();
+            updateStartMatchButtonState();
+        });
+    });
+}
+
+function updateExistingTeamInfo() {
+    const teamAInfo = document.getElementById("team-a-existing-team-info");
+    const teamBInfo = document.getElementById("team-b-existing-team-info");
+
+    const teamAName = teamAInfo?.querySelector(".existing-team-name");
+    const teamBName = teamBInfo?.querySelector(".existing-team-name");
+
+    const teamAMissingInfo = document.getElementById("team-a-missing-team-info");
+    const teamBMissingInfo = document.getElementById("team-b-missing-team-info");
+
+    const teamACreateAction = document.getElementById("team-a-create-team-action");
+    const teamBCreateAction = document.getElementById("team-b-create-team-action");
+
+    if (
+        !teamAInfo || !teamBInfo || !teamAName || !teamBName ||
+        !teamAMissingInfo || !teamBMissingInfo ||
+        !teamACreateAction || !teamBCreateAction
+    ) {
+        return;
+    }
+
+    const teamAPlayers = getSelectedPlayersForSide("A");
+    const teamBPlayers = getSelectedPlayersForSide("B");
+
+    const teamAComplete = teamAPlayers.player1Id && teamAPlayers.player2Id;
+    const teamBComplete = teamBPlayers.player1Id && teamBPlayers.player2Id;
+
+    const teamA = findExistingTeamByPlayers(teamAPlayers.player1Id, teamAPlayers.player2Id);
+    const teamB = findExistingTeamByPlayers(teamBPlayers.player1Id, teamBPlayers.player2Id);
+
+    if (teamA) {
+        teamAName.textContent = teamA.name;
+        teamAInfo.classList.remove("d-none");
+        teamAMissingInfo.classList.add("d-none");
+        teamACreateAction.classList.add("d-none");
+    } else {
+        teamAName.textContent = "";
+        teamAInfo.classList.add("d-none");
+
+        const samePlayerInTeamA = teamAPlayers.player1Id && teamAPlayers.player1Id === teamAPlayers.player2Id;
+        if (teamAComplete && !samePlayerInTeamA) {
+            teamAMissingInfo.classList.remove("d-none");
+            teamACreateAction.classList.remove("d-none");
+        } else {
+            teamAMissingInfo.classList.add("d-none");
+            teamACreateAction.classList.add("d-none");
+        }
+    }
+
+    if (teamB) {
+        teamBName.textContent = teamB.name;
+        teamBInfo.classList.remove("d-none");
+        teamBMissingInfo.classList.add("d-none");
+        teamBCreateAction.classList.add("d-none");
+    } else {
+        teamBName.textContent = "";
+        teamBInfo.classList.add("d-none");
+
+        const samePlayerInTeamB = teamBPlayers.player1Id && teamBPlayers.player1Id === teamBPlayers.player2Id;
+        if (teamBComplete && !samePlayerInTeamB) {
+            teamBMissingInfo.classList.remove("d-none");
+            teamBCreateAction.classList.remove("d-none");
+        } else {
+            teamBMissingInfo.classList.add("d-none");
+            teamBCreateAction.classList.add("d-none");
+        }
+    }
+}
+
 function updateMatchPreview() {
     const previewCard = document.getElementById("match-preview-card");
     const previewContainer = document.querySelector(".match-preview");
@@ -129,13 +285,28 @@ function updateMatchPreview() {
     const previewTeamBName = document.getElementById("preview-team-b-name");
     const previewTeamBPlayers = document.getElementById("preview-team-b-players");
 
-    if (!previewCard || !previewContainer || !tomSelectA || !tomSelectB) return;
+    if (!previewCard || !previewContainer) return;
 
-    const teamA_id = tomSelectA.getValue();
-    const teamB_id = tomSelectB.getValue();
+    let teamA = null;
+    let teamB = null;
 
-    const teamA = allTeams.find(t => t.id == teamA_id);
-    const teamB = allTeams.find(t => t.id == teamB_id);
+    if (selectionMode === "teams") {
+        const teamAId = tomSelectA?.getValue();
+        const teamBId = tomSelectB?.getValue();
+
+        teamA = allTeams.find(t => t.id == teamAId);
+        teamB = allTeams.find(t => t.id == teamBId);
+    } else {
+        teamA = findExistingTeamByPlayers(
+            playerSelectTeamA1?.getValue(),
+            playerSelectTeamA2?.getValue()
+        );
+
+        teamB = findExistingTeamByPlayers(
+            playerSelectTeamB1?.getValue(),
+            playerSelectTeamB2?.getValue()
+        );
+    }
 
     if (!teamA && !teamB) {
         previewCard.classList.add("d-none");
@@ -151,11 +322,7 @@ function updateMatchPreview() {
     previewTeamBName.textContent = teamB ? teamB.name : "-";
     previewTeamBPlayers.textContent = teamB ? teamB.player_names : "-";
 
-    if (teamA && teamB) {
-        previewContainer.classList.add("ready");
-    } else {
-        previewContainer.classList.remove("ready");
-    }
+    previewContainer.classList.toggle("ready", Boolean(teamA && teamB));
 }
 
 // ==========================================
@@ -267,6 +434,37 @@ function initModalSelects() {
     });
 }
 
+window.openCreateTeamFromPlayersModal = function(teamLetter) {
+    createTeamFromPlayersTarget = teamLetter;
+
+    const selectedPlayers = getSelectedPlayersForSide(teamLetter);
+
+    if (!selectedPlayers.player1Id || !selectedPlayers.player2Id) {
+        showToast("Bitte zuerst zwei Spieler auswählen.", "error");
+        return;
+    }
+
+    if (selectedPlayers.player1Id === selectedPlayers.player2Id) {
+        showToast("Ein Team muss aus zwei unterschiedlichen Spielern bestehen.", "error");
+        return;
+    }
+
+    openNewTeamModal(teamLetter);
+
+    const modalNameInput = document.getElementById("new-team-name");
+    if (modalNameInput) {
+        modalNameInput.focus();
+    }
+
+    if (modalTomSelectP1) {
+        modalTomSelectP1.setValue(selectedPlayers.player1Id, true);
+    }
+
+    if (modalTomSelectP2) {
+        modalTomSelectP2.setValue(selectedPlayers.player2Id, true);
+    }
+};
+
 // Wenn das Modal geöffnet wird, setzen wir alles sauber zurück
 window.openNewTeamModal = function(teamLetter) {
     currentModalTeam = teamLetter.toLowerCase();
@@ -340,6 +538,9 @@ async function saveNewTeam() {
         updatePlayerInfo('b', tomSelectB.getValue());
         updateCrossDropdownLocks();
         updateMatchPreview();
+        updateExistingTeamInfo();
+        updateStartMatchButtonState();
+        createTeamFromPlayersTarget = "";
 
         bootstrap.Modal.getInstance(document.getElementById('newTeamModal')).hide();
         showToast("Team erfolgreich erstellt!", "success");
@@ -356,31 +557,41 @@ async function saveNewTeam() {
 
 function updateStartMatchButtonState() {
     const startButton = document.getElementById("start-match-btn");
-    if (!startButton || !tomSelectA || !tomSelectB) return;
+    if (!startButton) return;
 
-    const teamA_id = tomSelectA.getValue();
-    const teamB_id = tomSelectB.getValue();
+    let isValid = false;
 
-    let isValid = true;
+    if (selectionMode === "teams") {
+        const teamA_id = tomSelectA?.getValue();
+        const teamB_id = tomSelectB?.getValue();
 
-    if (!teamA_id || !teamB_id) {
-        isValid = false;
-    } else if (teamA_id === teamB_id) {
-        isValid = false;
+        if (teamA_id && teamB_id && teamA_id !== teamB_id) {
+            const teamA = allTeams.find(t => t.id == teamA_id);
+            const teamB = allTeams.find(t => t.id == teamB_id);
+
+            if (teamA && teamB) {
+                const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
+                const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
+                const hasOverlap = playersA.some(id => playersB.includes(id));
+                isValid = !hasOverlap;
+            }
+        }
     } else {
-        const teamA = allTeams.find(t => t.id == teamA_id);
-        const teamB = allTeams.find(t => t.id == teamB_id);
+        const teamA = findExistingTeamByPlayers(
+            playerSelectTeamA1?.getValue(),
+            playerSelectTeamA2?.getValue()
+        );
 
-        if (!teamA || !teamB) {
-            isValid = false;
-        } else {
+        const teamB = findExistingTeamByPlayers(
+            playerSelectTeamB1?.getValue(),
+            playerSelectTeamB2?.getValue()
+        );
+
+        if (teamA && teamB && teamA.id !== teamB.id) {
             const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
             const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
-
             const hasOverlap = playersA.some(id => playersB.includes(id));
-            if (hasOverlap) {
-                isValid = false;
-            }
+            isValid = !hasOverlap;
         }
     }
 
@@ -391,21 +602,64 @@ function updateStartMatchButtonState() {
 async function submitPlayerSelection(event) {
     event.preventDefault();
 
-    const teamA_id = tomSelectA.getValue();
-    const teamB_id = tomSelectB.getValue();
+    let teamA = null;
+    let teamB = null;
 
-    if (!teamA_id || !teamB_id) {
-        showToast("Bitte für beide Seiten ein Team auswählen.", "error");
-        return;
+    if (selectionMode === "teams") {
+        const teamA_id = tomSelectA?.getValue();
+        const teamB_id = tomSelectB?.getValue();
+
+        if (!teamA_id || !teamB_id) {
+            showToast("Bitte für beide Seiten ein Team auswählen.", "error");
+            return;
+        }
+
+        if (teamA_id === teamB_id) {
+            showToast("Team A und Team B können nicht dasselbe Team sein.", "error");
+            return;
+        }
+
+        teamA = allTeams.find(t => t.id == teamA_id);
+        teamB = allTeams.find(t => t.id == teamB_id);
+    } else {
+        const teamAPlayer1 = playerSelectTeamA1?.getValue();
+        const teamAPlayer2 = playerSelectTeamA2?.getValue();
+        const teamBPlayer1 = playerSelectTeamB1?.getValue();
+        const teamBPlayer2 = playerSelectTeamB2?.getValue();
+
+        if (!teamAPlayer1 || !teamAPlayer2 || !teamBPlayer1 || !teamBPlayer2) {
+            showToast("Bitte für beide Teams jeweils zwei Spieler auswählen.", "error");
+            return;
+        }
+
+        if (teamAPlayer1 === teamAPlayer2) {
+            showToast("Team A muss aus zwei unterschiedlichen Spielern bestehen.", "error");
+            return;
+        }
+
+        if (teamBPlayer1 === teamBPlayer2) {
+            showToast("Team B muss aus zwei unterschiedlichen Spielern bestehen.", "error");
+            return;
+        }
+
+        teamA = findExistingTeamByPlayers(teamAPlayer1, teamAPlayer2);
+        teamB = findExistingTeamByPlayers(teamBPlayer1, teamBPlayer2);
+
+        if (!teamA || !teamB) {
+            showToast("Für mindestens eine Spieler-Kombination existiert noch kein Team.", "error");
+            return;
+        }
+
+        if (teamA.id === teamB.id) {
+            showToast("Team A und Team B können nicht dasselbe Team sein.", "error");
+            return;
+        }
     }
 
-    if (teamA_id === teamB_id) {
-        showToast("Team A und Team B können nicht dasselbe Team sein.", "error");
+    if (!teamA || !teamB) {
+        showToast("Die Teamdaten konnten nicht aufgelöst werden.", "error");
         return;
     }
-
-    const teamA = allTeams.find(t => t.id == teamA_id);
-    const teamB = allTeams.find(t => t.id == teamB_id);
 
     const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
     const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
@@ -421,8 +675,8 @@ async function submitPlayerSelection(event) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                team_a_id: teamA_id,
-                team_b_id: teamB_id
+                team_a_id: teamA.id,
+                team_b_id: teamB.id
             })
         });
 

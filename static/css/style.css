@@ -466,6 +466,11 @@ canvas {
    Player Selection / Match Preview
 ========================= */
 
+.selection-mode-toggle {
+    display: flex;
+    justify-content: center;
+}
+
 .match-preview {
     display: flex;
     flex-direction: column;
