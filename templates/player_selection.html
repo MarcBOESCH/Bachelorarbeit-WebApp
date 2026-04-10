@@ -59,7 +59,7 @@
                                     class="btn btn-sm btn-outline-dark w-100"
                                     onclick="openCreateTeamFromPlayersModal('A')"
                             >
-                                <i class="bi bi-plus-lg"></i> Als neues Team speichern
+                                <i class="bi bi-plus-lg"></i> Neues Team erstellen
                             </button>
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                                     class="btn btn-sm btn-outline-dark w-100"
                                     onclick="openCreateTeamFromPlayersModal('B')"
                             >
-                                <i class="bi bi-plus-lg"></i> Als neues Team speichern
+                                <i class="bi bi-plus-lg"></i> Neues Team erstellen
                             </button>
                         </div>
                     </div>
@@ -138,7 +138,7 @@
 
                 <div class="d-flex justify-content-center px-3 pb-3">
                     <button type="button" class="btn btn-sm btn-outline-dark" onclick="openNewTeamModal('A')">
-                        <i class="bi bi-plus-lg"></i> Neues Team
+                        <i class="bi bi-plus-lg"></i> Neues Team erstellen
                     </button>
                 </div>
             </section>
@@ -166,7 +166,7 @@
 
                 <div class="d-flex justify-content-center px-3 pb-3">
                     <button type="button" class="btn btn-sm btn-outline-dark" onclick="openNewTeamModal('B')">
-                        <i class="bi bi-plus-lg"></i> Neues Team
+                        <i class="bi bi-plus-lg"></i> Neues Team erstellen
                     </button>
                 </div>
             </section>
@@ -208,14 +208,14 @@
     <div class="modal fade" id="newTeamModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Neues Team gründen</h5>
+                <div class="modal-header text-center">
+                    <h5 class="modal-title fw-bold">Neues Team erstellen</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Teamname</label>
-                        <input type="text" id="new-team-name" class="form-control" placeholder="z.B. Die Kreuzbuben" required>
+                        <input type="text" id="new-team-name" class="form-control" placeholder="z.B. Die Stichjäger" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Spieler 1</label>
@@ -227,7 +227,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                     <button type="button" class="btn btn-dark" id="save-new-team-btn">Team speichern</button>
                 </div>
             </div>

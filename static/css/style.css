@@ -941,6 +941,40 @@ canvas {
 .podium-gold .podium-stat { color: var(--color-brand-dark); font-size: 1rem;}
 
 /* =========================
+   Player Selection Modal
+========================= */
+
+#newTeamModal .modal-header {
+    padding-top: 16px;
+    justify-content: center;
+    position: relative;
+    text-align: center;
+    border-bottom: 0;
+}
+
+#newTeamModal .modal-title {
+    width: 100%;
+    text-align: center;
+}
+
+#newTeamModal .btn-close {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    margin: 0;
+}
+
+#newTeamModal .modal-footer {
+    justify-content: center;
+    gap: 12px;
+}
+
+#newTeamModal .modal-footer .btn {
+    min-width: 140px;
+}
+
+
+/* =========================
    Desktop Enhancements
 ========================= */
 

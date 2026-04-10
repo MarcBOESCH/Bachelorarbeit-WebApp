@@ -237,7 +237,7 @@ function initPlayerModeSelects() {
         labelField: "name",
         searchField: "name",
         options: allPlayers,
-        placeholder: "Spieler suchen oder neu tippen...",
+        placeholder: "Spieler suchen oder erstellen...",
         render: {
             option_create(data, escape) {
                 return `
