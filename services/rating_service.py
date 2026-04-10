@@ -362,21 +362,41 @@ def process_all_unprocessed_elo_matches():
 
     return results
 
+
 def get_match_player_ratings(match, system_name):
     ratings = []
 
-    sorted_entries = sorted(match.players, key=lambda player_entry: (player_entry.team, player_entry.team_slot))
+    # Team A Spieler
+    ratings.append({
+        "player_id": match.team_a.player1_id,
+        "player_name": match.team_a.player1.name,
+        "team": "A",
+        "team_slot": 1,
+        "rating_entry": get_or_create_player_rating(match.team_a.player1_id, system_name)
+    })
+    ratings.append({
+        "player_id": match.team_a.player2_id,
+        "player_name": match.team_a.player2.name,
+        "team": "A",
+        "team_slot": 2,
+        "rating_entry": get_or_create_player_rating(match.team_a.player2_id, system_name)
+    })
 
-    for entry in sorted_entries:
-        rating_entry = get_or_create_player_rating(entry.player_id, system_name)
-
-        ratings.append({
-            "player_id": entry.player_id,
-            "player_name": entry.player.name,
-            "team": entry.team,
-            "team_slot": entry.team_slot,
-            "rating_entry": rating_entry
-        })
+    # Team B Spieler
+    ratings.append({
+        "player_id": match.team_b.player1_id,
+        "player_name": match.team_b.player1.name,
+        "team": "B",
+        "team_slot": 1,
+        "rating_entry": get_or_create_player_rating(match.team_b.player1_id, system_name)
+    })
+    ratings.append({
+        "player_id": match.team_b.player2_id,
+        "player_name": match.team_b.player2.name,
+        "team": "B",
+        "team_slot": 2,
+        "rating_entry": get_or_create_player_rating(match.team_b.player2_id, system_name)
+    })
 
     return ratings
 

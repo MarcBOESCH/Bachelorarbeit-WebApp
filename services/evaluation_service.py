@@ -24,16 +24,21 @@ def calculate_elo_expected_score(team_a_rating, team_b_rating):
     return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
 
 
-def build_match_teams(match):
-    team_a_entries = sorted(
-        [entry for entry in match.players if entry.team == "A"],
-        key=lambda entry: entry.team_slot
-    )
-    team_b_entries = sorted(
-        [entry for entry in match.players if entry.team == "B"],
-        key=lambda entry: entry.team_slot
-    )
+class MockPlayerEntry:
+    def __init__(self, player_id, team, team_slot):
+        self.player_id = player_id
+        self.team = team
+        self.team_slot = team_slot
 
+def build_match_teams(match):
+    team_a_entries = [
+        MockPlayerEntry(match.team_a.player1_id, "A", 1),
+        MockPlayerEntry(match.team_a.player2_id, "A", 2)
+    ]
+    team_b_entries = [
+        MockPlayerEntry(match.team_b.player1_id, "B", 1),
+        MockPlayerEntry(match.team_b.player2_id, "B", 2)
+    ]
     return team_a_entries, team_b_entries
 
 

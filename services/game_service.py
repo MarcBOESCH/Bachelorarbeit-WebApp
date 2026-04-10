@@ -13,16 +13,11 @@ VALID_TEAMS = {"A", "B"}
 
 
 def create_new_game_state():
-    """
-    Erzeugt den Standardzustand für ein neues Spiel.
-
-    players:
-    - enthält die vier ausgewählten Spieler des aktiven Matches
-    - wird beim Starten über /api/match/start gesetzt
-    """
     return {
         "team_name_a": "Team A",
         "team_name_b": "Team B",
+        "team_a_id": None,
+        "team_b_id": None,
         "score_a": 0,
         "score_b": 0,
         "max_points": 1000,
@@ -30,8 +25,7 @@ def create_new_game_state():
         "undo_a": [],
         "undo_b": [],
         "winner": None,
-        "match_saved": False,
-        "players": []
+        "match_saved": False
     }
 
 
@@ -79,36 +73,22 @@ def reset_game():
     return game
 
 
-def start_new_game(team_name_a, team_name_b, players):
-    """
-    Startet ein neues aktives Match mit den ausgewählten Teams und Spielern.
-
-    team_name_a / team_name_b:
-    - optionale Teamnamen aus dem Setup
-    - leere Werte werden automatisch ersetzt
-
-    players:
-    - Liste mit genau vier Spielerobjekten
-    """
+def start_new_game(team_name_a, team_name_b, team_a_id, team_b_id):
     game = create_new_game_state()
-    game["team_name_a"] = team_name_a.strip() if team_name_a and team_name_a.strip() else "Team A"
-    game["team_name_b"] = team_name_b.strip() if team_name_b and team_name_b.strip() else "Team B"
-    game["players"] = players
+    game["team_name_a"] = team_name_a
+    game["team_name_b"] = team_name_b
+    game["team_a_id"] = team_a_id
+    game["team_b_id"] = team_b_id
 
     save_game_state(game)
     return game
 
 
 def has_active_match(game):
-    """
-    Ein aktives Match liegt vor, wenn vier Spieler im aktuellen Spielzustand
-    hinterlegt sind.
-    """
     if not game:
         return False
-
-    players = game.get("players", [])
-    return isinstance(players, list) and len(players) == 4
+    # Ein Match ist aktiv, wenn wir für beide Seiten eine Team-ID in der Session haben
+    return bool(game.get("team_a_id") and game.get("team_b_id"))
 
 
 def add_points(game, team, action):

@@ -1,228 +1,355 @@
+let allTeams = [];
 let allPlayers = [];
+let tomSelectA, tomSelectB;
+let modalTomSelectA, modalTomSelectB;
+let currentModalTeam = '';
 
-/*
- * Lädt alle Spieler aus dem Backend und initialisiert danach
- * die Auswahlfelder für die Teamzusammenstellung.
- */
-async function loadPlayersForSelection() {
+// 1. Initiales Laden der Daten
+async function loadData() {
     try {
-        const response = await fetch("/api/players");
+        const [teamsRes, playersRes] = await Promise.all([
+            fetch("/api/teams"),
+            fetch("/api/players")
+        ]);
 
-        if (!response.ok) {
-            const text = await response.text();
-            console.error("Fehlerhafte Antwort /api/players:", response.status, text);
-            showSelectionMessage("Spieler konnten nicht geladen werden.", "danger");
-            return;
-        }
+        if (!teamsRes.ok || !playersRes.ok) throw new Error("Netzwerkfehler");
 
-        allPlayers = await response.json();
-        renderAllPlayerSelects();
+        allTeams = await teamsRes.json();
+        allPlayers = await playersRes.json();
+
+        initTomSelects();
+        initModalSelects();
+        initPlayerSelectionForm();
     } catch (error) {
-        console.error("Fehler beim Laden der Spieler:", error);
-        showSelectionMessage("Verbindung zum Server fehlgeschlagen.", "danger");
+        console.error("Fehler beim Laden:", error);
+        showSelectionMessage("Daten konnten nicht geladen werden.", "danger");
     }
 }
 
-/*
- * Zeigt eine Rückmeldung oberhalb des Start-Buttons an.
- * type kann z. B. success, warning oder danger sein.
- */
-function showSelectionMessage(message, type = "warning") {
-    const messageBox = document.getElementById("player-selection-message");
-
-    if (!messageBox) return;
-
-    messageBox.textContent = message;
-    messageBox.className = `alert alert-${type}`;
-    messageBox.classList.remove("d-none");
-}
-
-/*
- * Versteckt die Rückmeldung wieder.
- */
-function hideSelectionMessage() {
-    const messageBox = document.getElementById("player-selection-message");
-
-    if (!messageBox) return;
-
-    messageBox.textContent = "";
-    messageBox.className = "alert d-none";
-}
-
-/*
- * Gibt alle aktuell gewählten Spieler-IDs zurück.
- */
-function getSelectedPlayerIds() {
-    return [
-        document.getElementById("team-a-player-1")?.value || "",
-        document.getElementById("team-a-player-2")?.value || "",
-        document.getElementById("team-b-player-1")?.value || "",
-        document.getElementById("team-b-player-2")?.value || ""
-    ];
-}
-
-/*
- * Befüllt alle vier Spieler-Dropdowns neu.
- * Bereits gewählte Spieler bleiben im eigenen Feld sichtbar,
- * werden aber in den anderen Feldern ausgeblendet.
- */
-function renderAllPlayerSelects() {
-    const selectIds = [
-        "team-a-player-1",
-        "team-a-player-2",
-        "team-b-player-1",
-        "team-b-player-2"
-    ];
-
-    const selectedValues = getSelectedPlayerIds();
-
-    selectIds.forEach((selectId, currentIndex) => {
-        const select = document.getElementById(selectId);
-        if (!select) return;
-
-        const currentValue = select.value;
-        select.innerHTML = '<option value="">Bitte Spieler wählen</option>';
-
-        allPlayers.forEach(player => {
-            const playerId = String(player.id);
-
-            const isSelectedElsewhere = selectedValues.some((selectedValue, selectedIndex) => {
-                return selectedIndex !== currentIndex && selectedValue === playerId;
-            });
-
-            if (isSelectedElsewhere && currentValue !== playerId) {
-                return;
+// 2. Tom Select für die Haupt-Dropdowns initialisieren
+function initTomSelects() {
+    const config = {
+        valueField: 'id',
+        labelField: 'name',
+        searchField: ['name', 'player_names'],
+        options: allTeams,
+        placeholder: "Bitte Team suchen...",
+        render: {
+            option: function(data, escape) {
+                return `<div>
+                            <span class="fw-bold">${escape(data.name)}</span><br>
+                            <span class="small text-muted">${escape(data.player_names)}</span>
+                        </div>`;
+            },
+            item: function(data, escape) {
+                return `<div data-players="${escape(data.player_names)}">${escape(data.name)}</div>`;
             }
+        }
+    };
 
-            const option = document.createElement("option");
-            option.value = player.id;
-            option.textContent = player.name;
-            select.appendChild(option);
-        });
+    tomSelectA = new TomSelect("#team-a-select", {
+        ...config,
+        onChange: (val) => {
+            updatePlayerInfo('a', val);
+            updateCrossDropdownLocks(); // NEU: Trigger Filterung
+        }
+    });
 
-        select.value = currentValue;
+    tomSelectB = new TomSelect("#team-b-select", {
+        ...config,
+        onChange: (val) => {
+            updatePlayerInfo('b', val);
+            updateCrossDropdownLocks(); // NEU: Trigger Filterung
+        }
     });
 }
 
-/*
- * Liest alle Setup-Werte aus dem Formular.
- * Leere Teamnamen werden noch nicht ersetzt, sondern roh zurückgegeben.
- */
-function getSelectionFormData() {
-    return {
-        teamNameA: document.getElementById("team-name-a")?.value.trim() || "",
-        teamNameB: document.getElementById("team-name-b")?.value.trim() || "",
-        teamAPlayer1: document.getElementById("team-a-player-1")?.value || "",
-        teamAPlayer2: document.getElementById("team-a-player-2")?.value || "",
-        teamBPlayer1: document.getElementById("team-b-player-1")?.value || "",
-        teamBPlayer2: document.getElementById("team-b-player-2")?.value || ""
+// 2.5 NEU: Entfernt Teams komplett aus der Auswahl, wenn Spieler sich überschneiden
+function updateCrossDropdownLocks() {
+    if (!tomSelectA || !tomSelectB) return;
+
+    const teamA_id = tomSelectA.getValue();
+    const teamB_id = tomSelectB.getValue();
+
+    // Finde die aktuell gewählten Teams heraus
+    const selectedTeamA = allTeams.find(t => t.id == teamA_id);
+    const selectedTeamB = allTeams.find(t => t.id == teamB_id);
+
+    // Extrahiere die Spieler-IDs (oder leeres Array, falls nichts gewählt)
+    const playersA = selectedTeamA ? [selectedTeamA.player1_id, selectedTeamA.player2_id] : [];
+    const playersB = selectedTeamB ? [selectedTeamB.player1_id, selectedTeamB.player2_id] : [];
+
+    // Hilfsfunktion zum dynamischen Hinzufügen/Entfernen der Optionen
+    const filterDropdown = (selectInstance, opposingPlayers, currentSelectionId) => {
+        allTeams.forEach(team => {
+            const hasConflict = opposingPlayers.includes(team.player1_id) || opposingPlayers.includes(team.player2_id);
+
+            // Wenn es einen Konflikt gibt UND das Team nicht gerade selbst ausgewählt ist
+            if (hasConflict && team.id != currentSelectionId) {
+                // Team komplett aus dem Dropdown entfernen
+                selectInstance.removeOption(team.id);
+            } else {
+                // Team wieder hinzufügen (falls es vorher entfernt wurde)
+                selectInstance.addOption(team);
+            }
+        });
     };
+
+    // Teams in Dropdown A filtern (basierend auf den Spielern von Team B)
+    filterDropdown(tomSelectA, playersB, teamA_id);
+
+    // Teams in Dropdown B filtern (basierend auf den Spielern von Team A)
+    filterDropdown(tomSelectB, playersA, teamB_id);
 }
 
-/*
- * Prüft, ob genau vier unterschiedliche Spieler gewählt wurden.
- */
-function validateSelection(data) {
-    const playerIds = [
-        data.teamAPlayer1,
-        data.teamAPlayer2,
-        data.teamBPlayer1,
-        data.teamBPlayer2
-    ];
+// 3. UI Update, wenn ein Team gewählt wird
+function updatePlayerInfo(teamLetter, teamId) {
+    hideSelectionMessage();
+    const infoDiv = document.getElementById(`team-${teamLetter}-players-info`);
+    const team = allTeams.find(t => t.id == teamId);
 
-    if (playerIds.some(id => !id)) {
-        return {
-            valid: false,
-            error: "Bitte für beide Teams jeweils zwei Spieler auswählen."
-        };
+    if (team) {
+        infoDiv.querySelector('.player-names').textContent = team.player_names;
+        infoDiv.classList.remove('d-none');
+    } else {
+        infoDiv.classList.add('d-none');
+    }
+}
+
+// ==========================================
+// MODAL LOGIK (Neues Team erstellen)
+// ==========================================
+
+function initModalSelects() {
+    const select1 = document.getElementById('new-team-p1');
+    const select2 = document.getElementById('new-team-p2');
+
+    if(!select1 || !select2) return;
+
+    // Basis-Konfiguration für beide Dropdowns (inkl. Live-Erstellung)
+    const baseConfig = {
+        valueField: 'id',
+        labelField: 'name',
+        searchField: 'name',
+        options: allPlayers,
+        placeholder: "Spieler suchen oder neu tippen...",
+        render: {
+            option_create: function(data, escape) {
+                return `<div class="create text-success fw-bold">
+                            <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
+                        </div>`;
+            }
+        },
+        create: async function(input, callback) {
+            try {
+                // API Aufruf, um den Spieler live im Backend zu speichern
+                const response = await fetch("/api/players", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: input })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.error || "Fehler beim Erstellen des Spielers.");
+                    callback(false);
+                    return;
+                }
+
+                // Neuen Spieler lokal in unsere Liste speichern
+                const newPlayer = { id: data.player.id, name: data.player.name };
+                allPlayers.push(newPlayer);
+
+                // Dem jeweils ANDEREN Dropdown auch sofort hinzufügen
+                if (modalTomSelectP1) modalTomSelectP1.addOption(newPlayer);
+                if (modalTomSelectP2) modalTomSelectP2.addOption(newPlayer);
+
+                callback(newPlayer);
+            } catch (error) {
+                alert("Verbindung zum Server fehlgeschlagen.");
+                callback(false);
+            }
+        }
+    };
+
+    // Spieler 1 Dropdown initialisieren
+    modalTomSelectP1 = new TomSelect('#new-team-p1', {
+        ...baseConfig,
+        onChange: function(value) {
+            if (!modalTomSelectP2) return;
+
+            // 1. Den vorher ausgewählten Spieler im ZWEITEN Dropdown wieder hinzufügen
+            if (this.prevSelected) {
+                const oldPlayer = allPlayers.find(p => p.id == this.prevSelected);
+                if (oldPlayer) modalTomSelectP2.addOption(oldPlayer);
+            }
+
+            // 2. Den neu ausgewählten Spieler im ZWEITEN Dropdown komplett entfernen
+            if (value) {
+                modalTomSelectP2.removeOption(value);
+            }
+
+            this.prevSelected = value;
+        }
+    });
+
+    // Spieler 2 Dropdown initialisieren (Exakt gleiche Logik, nur umgekehrt!)
+    modalTomSelectP2 = new TomSelect('#new-team-p2', {
+        ...baseConfig,
+        onChange: function(value) {
+            if (!modalTomSelectP1) return;
+
+            // 1. Den vorher ausgewählten Spieler im ERSTEN Dropdown wieder hinzufügen
+            if (this.prevSelected) {
+                const oldPlayer = allPlayers.find(p => p.id == this.prevSelected);
+                if (oldPlayer) modalTomSelectP1.addOption(oldPlayer);
+            }
+
+            // 2. Den neu ausgewählten Spieler im ERSTEN Dropdown komplett entfernen
+            if (value) {
+                modalTomSelectP1.removeOption(value);
+            }
+
+            this.prevSelected = value;
+        }
+    });
+
+    document.getElementById('save-new-team-btn').addEventListener('click', saveNewTeam);
+}
+
+// Wenn das Modal geöffnet wird, setzen wir alles sauber zurück
+window.openNewTeamModal = function(teamLetter) {
+    currentModalTeam = teamLetter.toLowerCase();
+    document.getElementById('new-team-name').value = '';
+
+    // Beide Dropdowns leeren und alle Spieler wieder als gültige Optionen hinzufügen
+    if (modalTomSelectP1) {
+        modalTomSelectP1.clear(true); // true = "lautlos" leeren, ohne onChange auszulösen
+        modalTomSelectP1.prevSelected = null;
+        modalTomSelectP1.addOption(allPlayers);
     }
 
-    const uniqueIds = new Set(playerIds);
-
-    if (uniqueIds.size !== 4) {
-        return {
-            valid: false,
-            error: "Ein Spieler darf nicht mehrfach im selben Match ausgewählt werden."
-        };
+    if (modalTomSelectP2) {
+        modalTomSelectP2.clear(true);
+        modalTomSelectP2.prevSelected = null;
+        modalTomSelectP2.addOption(allPlayers);
     }
 
-    return {
-        valid: true,
-        error: null
-    };
+    const modal = new bootstrap.Modal(document.getElementById('newTeamModal'));
+    modal.show();
+};
+
+async function saveNewTeam() {
+    const name = document.getElementById('new-team-name').value.trim();
+    // IDs jetzt sauber über die Tom Select Instanzen auslesen
+    const p1_id = modalTomSelectP1.getValue();
+    const p2_id = modalTomSelectP2.getValue();
+
+    if (!name || !p1_id || !p2_id) {
+        alert("Bitte alle Felder ausfüllen.");
+        return;
+    }
+
+    if (p1_id === p2_id) {
+        alert("Ein Team muss aus zwei unterschiedlichen Spielern bestehen.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/teams", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name, player1_id: p1_id, player2_id: p2_id })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Fehler beim Erstellen.");
+            return;
+        }
+
+        // Neues Team lokal zur Liste hinzufügen
+        const newTeam = {
+            id: data.id,
+            name: name,
+            player1_id: p1_id,
+            player2_id: p2_id,
+            player_names: `${allPlayers.find(p=>p.id==p1_id).name} & ${allPlayers.find(p=>p.id==p2_id).name}`
+        };
+
+        allTeams.push(newTeam);
+        tomSelectA.addOption(newTeam);
+        tomSelectB.addOption(newTeam);
+
+        // Direkt im richtigen Haupt-Dropdown (Team A oder B) auswählen
+        if (currentModalTeam === 'a') tomSelectA.setValue(newTeam.id);
+        if (currentModalTeam === 'b') tomSelectB.setValue(newTeam.id);
+
+        bootstrap.Modal.getInstance(document.getElementById('newTeamModal')).hide();
+        showSelectionMessage("Team erfolgreich erstellt!", "success");
+
+    } catch (error) {
+        alert("Verbindung zum Server fehlgeschlagen.");
+    }
 }
 
-/*
- * Erzeugt die finalen Teamnamen.
- * Leere Eingaben werden automatisch durch Standardnamen ersetzt.
- */
-function buildFinalTeamNames(data) {
-    return {
-        teamNameA: data.teamNameA || "Team A",
-        teamNameB: data.teamNameB || "Team B"
-    };
+// ==========================================
+// MATCH START LOGIK
+// ==========================================
+
+function showSelectionMessage(message, type = "warning") {
+    const box = document.getElementById("player-selection-message");
+    if (!box) return;
+    box.textContent = message;
+    box.className = `alert alert-${type}`;
+    box.classList.remove("d-none");
 }
 
-// Liest den angezeigten Namen aus dem Dropdown aus
-function getPlayerName(selectId) {
-    const select = document.getElementById(selectId);
-    if (!select || select.selectedIndex === -1) return "Unbekannt";
-    return select.options[select.selectedIndex].text;
+function hideSelectionMessage() {
+    const box = document.getElementById("player-selection-message");
+    if (!box) return;
+    box.classList.add("d-none");
 }
 
-/*
- * Sendet das Setup an das Backend und startet damit ein neues aktives Match.
- * Danach erfolgt die Weiterleitung auf /match.
- */
 async function submitPlayerSelection(event) {
     event.preventDefault();
     hideSelectionMessage();
 
-    const formData = getSelectionFormData();
-    const validation = validateSelection(formData);
+    const teamA_id = tomSelectA.getValue();
+    const teamB_id = tomSelectB.getValue();
 
-    if (!validation.valid) {
-        showSelectionMessage(validation.error, "warning");
+    if (!teamA_id || !teamB_id) {
+        showSelectionMessage("Bitte für beide Seiten ein Team auswählen.", "warning");
         return;
     }
 
-    const finalTeamNames = buildFinalTeamNames(formData);
+    if (teamA_id === teamB_id) {
+        showSelectionMessage("Team A und Team B können nicht dasselbe Team sein.", "danger");
+        return;
+    }
+
+    // ACHTUNG: Hier prüfen wir, ob Spieler überschneiden (Ein Spieler darf nicht gegen sich selbst spielen)
+    const teamA = allTeams.find(t => t.id == teamA_id);
+    const teamB = allTeams.find(t => t.id == teamB_id);
+
+    const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
+    const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
+
+    const hasOverlap = playersA.some(id => playersB.includes(id));
+    if (hasOverlap) {
+        showSelectionMessage("Ein Spieler kann nicht gleichzeitig in Team A und Team B spielen.", "danger");
+        return;
+    }
 
     try {
         const response = await fetch("/api/match/start", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                team_name_a: finalTeamNames.teamNameA,
-                team_name_b: finalTeamNames.teamNameB,
-                players: [
-                    {
-                        player_id: Number(formData.teamAPlayer1),
-                        player_name: getPlayerName("team-a-player-1"),
-                        team: "A",
-                        team_slot: 1
-                    },
-                    {
-                        player_id: Number(formData.teamAPlayer2),
-                        player_name: getPlayerName("team-a-player-2"),
-                        team: "A",
-                        team_slot: 2
-                    },
-                    {
-                        player_id: Number(formData.teamBPlayer1),
-                        player_name: getPlayerName("team-b-player-1"),
-                        team: "B",
-                        team_slot: 1
-                    },
-                    {
-                        player_id: Number(formData.teamBPlayer2),
-                        player_name: getPlayerName("team-b-player-2"),
-                        team: "B",
-                        team_slot: 2
-                    }
-                ]
+                team_a_id: teamA_id,
+                team_b_id: teamB_id
             })
         });
 
@@ -235,51 +362,13 @@ async function submitPlayerSelection(event) {
 
         window.location.href = "/match";
     } catch (error) {
-        console.error("Fehler beim Starten des Matches:", error);
         showSelectionMessage("Verbindung zum Server fehlgeschlagen.", "danger");
     }
 }
 
-/*
- * Registriert Änderungs-Events für alle Spieler-Dropdowns,
- * damit doppelte Spieler direkt verhindert werden.
- */
-function initPlayerSelectEvents() {
-    const selectIds = [
-        "team-a-player-1",
-        "team-a-player-2",
-        "team-b-player-1",
-        "team-b-player-2"
-    ];
-
-    selectIds.forEach(id => {
-        const select = document.getElementById(id);
-        if (!select) return;
-
-        select.addEventListener("change", () => {
-            hideSelectionMessage();
-            renderAllPlayerSelects();
-        });
-    });
-}
-
-/*
- * Registriert das Absenden des Setup-Formulars.
- */
 function initPlayerSelectionForm() {
     const form = document.getElementById("player-selection-form");
-    if (!form) return;
-
-    form.addEventListener("submit", submitPlayerSelection);
+    if (form) form.addEventListener("submit", submitPlayerSelection);
 }
 
-/*
- * Initialisiert die komplette Setup-Seite.
- */
-function initPlayerSelectionPage() {
-    initPlayerSelectEvents();
-    initPlayerSelectionForm();
-    loadPlayersForSelection();
-}
-
-document.addEventListener("DOMContentLoaded", initPlayerSelectionPage);
+document.addEventListener("DOMContentLoaded", loadData);
