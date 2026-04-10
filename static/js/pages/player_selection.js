@@ -24,6 +24,7 @@ async function loadData() {
         initPlayerModeSelects();
         initSelectionModeToggle();
         initPlayerSelectionForm();
+        refreshPlayerModeDropdownLocks();
         updateExistingTeamInfo();
         updateStartMatchButtonState();
         updateMatchPreview();
@@ -136,6 +137,51 @@ function findExistingTeamByPlayers(player1Id, player2Id) {
     );
 }
 
+async function createPlayerFromInput(input) {
+    try {
+        const response = await fetch("/api/players", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: input })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(data.error || "Fehler beim Erstellen des Spielers.", "error");
+            return null;
+        }
+
+        const newPlayer = {
+            id: data.player.id,
+            name: data.player.name
+        };
+
+        allPlayers.push(newPlayer);
+
+        [
+            modalTomSelectP1,
+            modalTomSelectP2,
+            playerSelectTeamA1,
+            playerSelectTeamA2,
+            playerSelectTeamB1,
+            playerSelectTeamB2
+        ].forEach(selectInstance => {
+            if (selectInstance) {
+                selectInstance.addOption(newPlayer);
+            }
+        });
+
+        refreshPlayerModeDropdownLocks();
+        showToast("Spieler erfolgreich erstellt!", "success");
+
+        return newPlayer;
+    } catch (error) {
+        showToast("Verbindung zum Server fehlgeschlagen.", "error");
+        return null;
+    }
+}
+
 function getSelectedPlayersForSide(teamLetter) {
     if (teamLetter === "A") {
         return {
@@ -148,6 +194,57 @@ function getSelectedPlayersForSide(teamLetter) {
         player1Id: playerSelectTeamB1?.getValue() || "",
         player2Id: playerSelectTeamB2?.getValue() || ""
     };
+}
+
+function refreshPlayerModeDropdownLocks() {
+    const selects = [
+        playerSelectTeamA1,
+        playerSelectTeamA2,
+        playerSelectTeamB1,
+        playerSelectTeamB2
+    ].filter(Boolean);
+
+    if (selects.length === 0) return;
+
+    const selectedValues = {
+        a1: playerSelectTeamA1?.getValue() || "",
+        a2: playerSelectTeamA2?.getValue() || "",
+        b1: playerSelectTeamB1?.getValue() || "",
+        b2: playerSelectTeamB2?.getValue() || ""
+    };
+
+    const currentValues = [
+        selectedValues.a1,
+        selectedValues.a2,
+        selectedValues.b1,
+        selectedValues.b2
+    ].filter(Boolean);
+
+    const syncOptionsForSelect = (selectInstance, ownValue) => {
+        if (!selectInstance) return;
+
+        selectInstance.clearOptions();
+
+        allPlayers.forEach(player => {
+            const playerId = String(player.id);
+            const isUsedElsewhere = currentValues.includes(playerId) && playerId !== String(ownValue);
+
+            if (!isUsedElsewhere) {
+                selectInstance.addOption(player);
+            }
+        });
+
+        selectInstance.refreshOptions(false);
+
+        if (ownValue) {
+            selectInstance.setValue(ownValue, true);
+        }
+    };
+
+    syncOptionsForSelect(playerSelectTeamA1, selectedValues.a1);
+    syncOptionsForSelect(playerSelectTeamA2, selectedValues.a2);
+    syncOptionsForSelect(playerSelectTeamB1, selectedValues.b1);
+    syncOptionsForSelect(playerSelectTeamB2, selectedValues.b2);
 }
 
 function initSelectionModeToggle() {
@@ -186,7 +283,24 @@ function initPlayerModeSelects() {
         labelField: "name",
         searchField: "name",
         options: allPlayers,
-        placeholder: "Spieler suchen..."
+        placeholder: "Spieler suchen oder neu tippen...",
+        render: {
+            option_create: function(data, escape) {
+                return `<div class="create text-success fw-bold">
+                            <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
+                        </div>`;
+            }
+        },
+        create: async function(input, callback) {
+            const newPlayer = await createPlayerFromInput(input);
+
+            if (!newPlayer) {
+                callback(false);
+                return;
+            }
+
+            callback(newPlayer);
+        }
     };
 
     playerSelectTeamA1 = new TomSelect("#team-a-player-1", playerConfig);
@@ -201,6 +315,7 @@ function initPlayerModeSelects() {
         playerSelectTeamB2
     ].forEach(selectInstance => {
         selectInstance.on("change", () => {
+            refreshPlayerModeDropdownLocks();
             updateExistingTeamInfo();
             updateMatchPreview();
             updateStartMatchButtonState();
