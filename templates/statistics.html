@@ -133,6 +133,60 @@
                 </div>
             </div>
         </div>
+
+    <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h2 class="h4 mb-0">Teamstatistiken</h2>
+                <span class="text-muted small">
+                <i class="bi bi-info-circle me-1"></i> Teams nach Name oder Werten sortieren
+            </span>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="input-group">
+                        <input
+                                type="text"
+                                id="team-stats-search-input"
+                                class="form-control shadow-sm"
+                                placeholder="Team suchen..."
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div id="team-stats-empty" class="text-muted">
+                Noch keine Teamstatistiken verfügbar.
+            </div>
+
+            <div class="table-responsive d-none" id="team-stats-wrapper">
+                <table class="table table-hover align-middle text-nowrap mb-0" id="team-stats-table">
+                    <thead>
+                    <tr class="user-select-none">
+                        <th class="team-sortable-header" data-sort="name" style="cursor: pointer;">Team</th>
+                        <th>Spieler</th>
+                        <th class="text-end team-sortable-header" data-sort="matches_played" style="cursor: pointer;">
+                            Matches
+                        </th>
+                        <th class="text-end team-sortable-header" data-sort="wins" style="cursor: pointer;">Siege</th>
+                        <th class="text-end team-sortable-header" data-sort="losses" style="cursor: pointer;">
+                            Niederlagen
+                        </th>
+                        <th class="text-end team-sortable-header" data-sort="win_rate" style="cursor: pointer;">
+                            Siegquote
+                        </th>
+                        <th class="text-end team-sortable-header" data-sort="avg_point_diff" style="cursor: pointer;">Ø
+                            Punktedifferenz
+                        </th>
+                        <th class="text-end team-sortable-header" data-sort="elo" style="cursor: pointer;">Team-Elo</th>
+                    </tr>
+                    </thead>
+                    <tbody id="team-stats-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     </div>
 {% endblock %}
 
