@@ -455,46 +455,8 @@ function updateMatchPreview() {
 }
 
 function updateStartMatchButtonState() {
-    const startButton = document.getElementById("start-match-btn");
-    if (!startButton) return;
-
-    let isValid = false;
-
-    if (selectionMode === "teams") {
-        const teamAId = tomSelectA?.getValue();
-        const teamBId = tomSelectB?.getValue();
-
-        if (teamAId && teamBId && teamAId !== teamBId) {
-            const teamA = findTeamById(teamAId);
-            const teamB = findTeamById(teamBId);
-
-            if (teamA && teamB) {
-                const playersA = getPlayersFromTeam(teamA);
-                const playersB = getPlayersFromTeam(teamB);
-                const hasOverlap = playersA.some(id => playersB.includes(id));
-                isValid = !hasOverlap;
-            }
-        }
-    } else {
-        const teamA = findExistingTeamByPlayers(
-            playerSelectTeamA1?.getValue(),
-            playerSelectTeamA2?.getValue()
-        );
-
-        const teamB = findExistingTeamByPlayers(
-            playerSelectTeamB1?.getValue(),
-            playerSelectTeamB2?.getValue()
-        );
-
-        if (teamA && teamB && teamA.id !== teamB.id) {
-            const playersA = getPlayersFromTeam(teamA);
-            const playersB = getPlayersFromTeam(teamB);
-            const hasOverlap = playersA.some(id => playersB.includes(id));
-            isValid = !hasOverlap;
-        }
-    }
-
-    startButton.disabled = !isValid;
+    // Button bleibt bewusst immer aktiv.
+    // Validierungsfeedback erfolgt erst beim Klick über Toasts.
 }
 
 /* =========================
@@ -866,8 +828,15 @@ async function submitPlayerSelection(event) {
 
 function initPlayerSelectionForm() {
     const form = document.getElementById("player-selection-form");
+    const startButton = document.getElementById("start-match-btn");
+
     if (form) {
         form.addEventListener("submit", submitPlayerSelection);
+    }
+
+    if (startButton) {
+        startButton.type = "button";
+        startButton.addEventListener("click", submitPlayerSelection);
     }
 }
 
