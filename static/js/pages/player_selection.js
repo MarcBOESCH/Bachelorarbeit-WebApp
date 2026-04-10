@@ -1,12 +1,25 @@
 let allTeams = [];
 let allPlayers = [];
-let tomSelectA, tomSelectB;
-let modalTomSelectP1, modalTomSelectP2;
-let currentModalTeam = '';
+
+let tomSelectA;
+let tomSelectB;
+
+let modalTomSelectP1;
+let modalTomSelectP2;
+
+let playerSelectTeamA1;
+let playerSelectTeamA2;
+let playerSelectTeamB1;
+let playerSelectTeamB2;
+
+let currentModalTeam = "";
 let selectionMode = "players";
 let createTeamFromPlayersTarget = "";
 
-// 1. Initiales Laden der Daten
+/* =========================
+   Daten laden und Initialisierung
+========================= */
+
 async function loadData() {
     try {
         const [teamsRes, playersRes] = await Promise.all([
@@ -14,7 +27,9 @@ async function loadData() {
             fetch("/api/players")
         ]);
 
-        if (!teamsRes.ok || !playersRes.ok) throw new Error("Netzwerkfehler");
+        if (!teamsRes.ok || !playersRes.ok) {
+            throw new Error("Netzwerkfehler");
+        }
 
         allTeams = await teamsRes.json();
         allPlayers = await playersRes.json();
@@ -24,108 +39,27 @@ async function loadData() {
         initPlayerModeSelects();
         initSelectionModeToggle();
         initPlayerSelectionForm();
+
         refreshPlayerModeDropdownLocks();
         updateExistingTeamInfo();
         updateStartMatchButtonState();
         updateMatchPreview();
-
     } catch (error) {
         console.error("Fehler beim Laden:", error);
         showToast("Daten konnten nicht geladen werden.", "error");
     }
 }
 
-// 2. Tom Select für die Haupt-Dropdowns initialisieren
-function initTomSelects() {
-    const config = {
-        valueField: 'id',
-        labelField: 'name',
-        searchField: ['name', 'player_names'],
-        options: allTeams,
-        placeholder: "Team suchen...",
-        render: {
-            option: function(data, escape) {
-                return `<div>
-                            <span class="fw-bold">${escape(data.name)}</span><br>
-                            <span class="small text-muted">${escape(data.player_names)}</span>
-                        </div>`;
-            },
-            item: function(data, escape) {
-                return `<div data-players="${escape(data.player_names)}">${escape(data.name)}</div>`;
-            }
-        }
-    };
+/* =========================
+   Hilfsfunktionen
+========================= */
 
-    tomSelectA = new TomSelect("#team-a-select", {
-        ...config,
-        onChange: (val) => {
-            updatePlayerInfo('a', val);
-            updateCrossDropdownLocks();
-            updateStartMatchButtonState();
-            updateMatchPreview();
-        }
-    });
-
-    tomSelectB = new TomSelect("#team-b-select", {
-        ...config,
-        onChange: (val) => {
-            updatePlayerInfo('b', val);
-            updateCrossDropdownLocks();
-            updateStartMatchButtonState();
-            updateMatchPreview();
-        }
-    });
+function findTeamById(teamId) {
+    return allTeams.find(team => String(team.id) === String(teamId));
 }
 
-// 2.5 NEU: Entfernt Teams komplett aus der Auswahl, wenn Spieler sich überschneiden
-function updateCrossDropdownLocks() {
-    if (!tomSelectA || !tomSelectB) return;
-
-    const teamA_id = tomSelectA.getValue();
-    const teamB_id = tomSelectB.getValue();
-
-    // Finde die aktuell gewählten Teams heraus
-    const selectedTeamA = allTeams.find(t => t.id == teamA_id);
-    const selectedTeamB = allTeams.find(t => t.id == teamB_id);
-
-    // Extrahiere die Spieler-IDs (oder leeres Array, falls nichts gewählt)
-    const playersA = selectedTeamA ? [selectedTeamA.player1_id, selectedTeamA.player2_id] : [];
-    const playersB = selectedTeamB ? [selectedTeamB.player1_id, selectedTeamB.player2_id] : [];
-
-    // Hilfsfunktion zum dynamischen Hinzufügen/Entfernen der Optionen
-    const filterDropdown = (selectInstance, opposingPlayers, currentSelectionId) => {
-        allTeams.forEach(team => {
-            const hasConflict = opposingPlayers.includes(team.player1_id) || opposingPlayers.includes(team.player2_id);
-
-            // Wenn es einen Konflikt gibt UND das Team nicht gerade selbst ausgewählt ist
-            if (hasConflict && team.id != currentSelectionId) {
-                // Team komplett aus dem Dropdown entfernen
-                selectInstance.removeOption(team.id);
-            } else {
-                // Team wieder hinzufügen (falls es vorher entfernt wurde)
-                selectInstance.addOption(team);
-            }
-        });
-    };
-
-    // Teams in Dropdown A filtern (basierend auf den Spielern von Team B)
-    filterDropdown(tomSelectA, playersB, teamA_id);
-
-    // Teams in Dropdown B filtern (basierend auf den Spielern von Team A)
-    filterDropdown(tomSelectB, playersA, teamB_id);
-}
-
-// 3. UI Update, wenn ein Team gewählt wird
-function updatePlayerInfo(teamLetter, teamId) {
-    const infoDiv = document.getElementById(`team-${teamLetter}-players-info`);
-    const team = allTeams.find(t => t.id == teamId);
-
-    if (team) {
-        infoDiv.querySelector('.player-names').textContent = team.player_names;
-        infoDiv.classList.remove('d-none');
-    } else {
-        infoDiv.classList.add('d-none');
-    }
+function findPlayerById(playerId) {
+    return allPlayers.find(player => String(player.id) === String(playerId));
 }
 
 function findExistingTeamByPlayers(player1Id, player2Id) {
@@ -136,6 +70,120 @@ function findExistingTeamByPlayers(player1Id, player2Id) {
         (String(team.player1_id) === String(player2Id) && String(team.player2_id) === String(player1Id))
     );
 }
+
+function getSelectedPlayersForSide(teamLetter) {
+    if (teamLetter === "A") {
+        return {
+            player1Id: playerSelectTeamA1?.getValue() || "",
+            player2Id: playerSelectTeamA2?.getValue() || ""
+        };
+    }
+
+    return {
+        player1Id: playerSelectTeamB1?.getValue() || "",
+        player2Id: playerSelectTeamB2?.getValue() || ""
+    };
+}
+
+function getPlayersFromTeam(team) {
+    if (!team) return [];
+    return [String(team.player1_id), String(team.player2_id)];
+}
+
+/* =========================
+   Team-Modus
+========================= */
+
+function initTomSelects() {
+    const config = {
+        valueField: "id",
+        labelField: "name",
+        searchField: ["name", "player_names"],
+        options: allTeams,
+        placeholder: "Team suchen...",
+        render: {
+            option(data, escape) {
+                return `
+                    <div>
+                        <span class="fw-bold">${escape(data.name)}</span><br>
+                        <span class="small text-muted">${escape(data.player_names)}</span>
+                    </div>
+                `;
+            },
+            item(data, escape) {
+                return `<div data-players="${escape(data.player_names)}">${escape(data.name)}</div>`;
+            }
+        }
+    };
+
+    tomSelectA = new TomSelect("#team-a-select", {
+        ...config,
+        onChange: value => {
+            updatePlayerInfo("a", value);
+            updateCrossDropdownLocks();
+            updateStartMatchButtonState();
+            updateMatchPreview();
+        }
+    });
+
+    tomSelectB = new TomSelect("#team-b-select", {
+        ...config,
+        onChange: value => {
+            updatePlayerInfo("b", value);
+            updateCrossDropdownLocks();
+            updateStartMatchButtonState();
+            updateMatchPreview();
+        }
+    });
+}
+
+function updateCrossDropdownLocks() {
+    if (!tomSelectA || !tomSelectB) return;
+
+    const teamAId = tomSelectA.getValue();
+    const teamBId = tomSelectB.getValue();
+
+    const selectedTeamA = findTeamById(teamAId);
+    const selectedTeamB = findTeamById(teamBId);
+
+    const playersA = selectedTeamA ? [selectedTeamA.player1_id, selectedTeamA.player2_id] : [];
+    const playersB = selectedTeamB ? [selectedTeamB.player1_id, selectedTeamB.player2_id] : [];
+
+    const filterDropdown = (selectInstance, opposingPlayers, currentSelectionId) => {
+        allTeams.forEach(team => {
+            const hasConflict =
+                opposingPlayers.includes(team.player1_id) ||
+                opposingPlayers.includes(team.player2_id);
+
+            if (hasConflict && String(team.id) !== String(currentSelectionId)) {
+                selectInstance.removeOption(team.id);
+            } else {
+                selectInstance.addOption(team);
+            }
+        });
+    };
+
+    filterDropdown(tomSelectA, playersB, teamAId);
+    filterDropdown(tomSelectB, playersA, teamBId);
+}
+
+function updatePlayerInfo(teamLetter, teamId) {
+    const infoDiv = document.getElementById(`team-${teamLetter}-players-info`);
+    const team = findTeamById(teamId);
+
+    if (!infoDiv) return;
+
+    if (team) {
+        infoDiv.querySelector(".player-names").textContent = team.player_names;
+        infoDiv.classList.remove("d-none");
+    } else {
+        infoDiv.classList.add("d-none");
+    }
+}
+
+/* =========================
+   Spieler-Modus
+========================= */
 
 async function createPlayerFromInput(input) {
     try {
@@ -173,6 +221,7 @@ async function createPlayerFromInput(input) {
         });
 
         refreshPlayerModeDropdownLocks();
+        refreshModalPlayerLocks();
         showToast("Spieler erfolgreich erstellt!", "success");
 
         return newPlayer;
@@ -182,18 +231,52 @@ async function createPlayerFromInput(input) {
     }
 }
 
-function getSelectedPlayersForSide(teamLetter) {
-    if (teamLetter === "A") {
-        return {
-            player1Id: playerSelectTeamA1?.getValue() || "",
-            player2Id: playerSelectTeamA2?.getValue() || ""
-        };
-    }
+function initPlayerModeSelects() {
+    const playerConfig = {
+        valueField: "id",
+        labelField: "name",
+        searchField: "name",
+        options: allPlayers,
+        placeholder: "Spieler suchen oder neu tippen...",
+        render: {
+            option_create(data, escape) {
+                return `
+                    <div class="create text-success fw-bold">
+                        <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
+                    </div>
+                `;
+            }
+        },
+        create: async function (input, callback) {
+            const newPlayer = await createPlayerFromInput(input);
 
-    return {
-        player1Id: playerSelectTeamB1?.getValue() || "",
-        player2Id: playerSelectTeamB2?.getValue() || ""
+            if (!newPlayer) {
+                callback(false);
+                return;
+            }
+
+            callback(newPlayer);
+        }
     };
+
+    playerSelectTeamA1 = new TomSelect("#team-a-player-1", playerConfig);
+    playerSelectTeamA2 = new TomSelect("#team-a-player-2", playerConfig);
+    playerSelectTeamB1 = new TomSelect("#team-b-player-1", playerConfig);
+    playerSelectTeamB2 = new TomSelect("#team-b-player-2", playerConfig);
+
+    [
+        playerSelectTeamA1,
+        playerSelectTeamA2,
+        playerSelectTeamB1,
+        playerSelectTeamB2
+    ].forEach(selectInstance => {
+        selectInstance.on("change", () => {
+            refreshPlayerModeDropdownLocks();
+            updateExistingTeamInfo();
+            updateMatchPreview();
+            updateStartMatchButtonState();
+        });
+    });
 }
 
 function refreshPlayerModeDropdownLocks() {
@@ -247,82 +330,6 @@ function refreshPlayerModeDropdownLocks() {
     syncOptionsForSelect(playerSelectTeamB2, selectedValues.b2);
 }
 
-function initSelectionModeToggle() {
-    const btnPlayers = document.getElementById("btn-selection-mode-players");
-    const btnTeams = document.getElementById("btn-selection-mode-teams");
-    const playerSelectionView = document.getElementById("player-selection-view");
-    const teamSelectionView = document.getElementById("team-selection-view");
-
-    if (!btnPlayers || !btnTeams || !playerSelectionView || !teamSelectionView) return;
-
-    function setSelectionMode(mode) {
-        selectionMode = mode;
-
-        const isPlayersMode = mode === "players";
-
-        btnPlayers.classList.toggle("active", isPlayersMode);
-        btnTeams.classList.toggle("active", !isPlayersMode);
-
-        playerSelectionView.classList.toggle("d-none", !isPlayersMode);
-        teamSelectionView.classList.toggle("d-none", isPlayersMode);
-
-        updateExistingTeamInfo();
-        updateMatchPreview();
-        updateStartMatchButtonState();
-    }
-
-    btnPlayers.addEventListener("click", () => setSelectionMode("players"));
-    btnTeams.addEventListener("click", () => setSelectionMode("teams"));
-
-    setSelectionMode("players");
-}
-
-function initPlayerModeSelects() {
-    const playerConfig = {
-        valueField: "id",
-        labelField: "name",
-        searchField: "name",
-        options: allPlayers,
-        placeholder: "Spieler suchen oder neu tippen...",
-        render: {
-            option_create: function(data, escape) {
-                return `<div class="create text-success fw-bold">
-                            <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
-                        </div>`;
-            }
-        },
-        create: async function(input, callback) {
-            const newPlayer = await createPlayerFromInput(input);
-
-            if (!newPlayer) {
-                callback(false);
-                return;
-            }
-
-            callback(newPlayer);
-        }
-    };
-
-    playerSelectTeamA1 = new TomSelect("#team-a-player-1", playerConfig);
-    playerSelectTeamA2 = new TomSelect("#team-a-player-2", playerConfig);
-    playerSelectTeamB1 = new TomSelect("#team-b-player-1", playerConfig);
-    playerSelectTeamB2 = new TomSelect("#team-b-player-2", playerConfig);
-
-    [
-        playerSelectTeamA1,
-        playerSelectTeamA2,
-        playerSelectTeamB1,
-        playerSelectTeamB2
-    ].forEach(selectInstance => {
-        selectInstance.on("change", () => {
-            refreshPlayerModeDropdownLocks();
-            updateExistingTeamInfo();
-            updateMatchPreview();
-            updateStartMatchButtonState();
-        });
-    });
-}
-
 function updateExistingTeamInfo() {
     const teamAInfo = document.getElementById("team-a-existing-team-info");
     const teamBInfo = document.getElementById("team-b-existing-team-info");
@@ -362,7 +369,10 @@ function updateExistingTeamInfo() {
         teamAName.textContent = "";
         teamAInfo.classList.add("d-none");
 
-        const samePlayerInTeamA = teamAPlayers.player1Id && teamAPlayers.player1Id === teamAPlayers.player2Id;
+        const samePlayerInTeamA =
+            teamAPlayers.player1Id &&
+            teamAPlayers.player1Id === teamAPlayers.player2Id;
+
         if (teamAComplete && !samePlayerInTeamA) {
             teamAMissingInfo.classList.remove("d-none");
             teamACreateAction.classList.remove("d-none");
@@ -381,7 +391,10 @@ function updateExistingTeamInfo() {
         teamBName.textContent = "";
         teamBInfo.classList.add("d-none");
 
-        const samePlayerInTeamB = teamBPlayers.player1Id && teamBPlayers.player1Id === teamBPlayers.player2Id;
+        const samePlayerInTeamB =
+            teamBPlayers.player1Id &&
+            teamBPlayers.player1Id === teamBPlayers.player2Id;
+
         if (teamBComplete && !samePlayerInTeamB) {
             teamBMissingInfo.classList.remove("d-none");
             teamBCreateAction.classList.remove("d-none");
@@ -391,6 +404,10 @@ function updateExistingTeamInfo() {
         }
     }
 }
+
+/* =========================
+   Match-Vorschau und Button-State
+========================= */
 
 function updateMatchPreview() {
     const previewCard = document.getElementById("match-preview-card");
@@ -406,11 +423,8 @@ function updateMatchPreview() {
     let teamB = null;
 
     if (selectionMode === "teams") {
-        const teamAId = tomSelectA?.getValue();
-        const teamBId = tomSelectB?.getValue();
-
-        teamA = allTeams.find(t => t.id == teamAId);
-        teamB = allTeams.find(t => t.id == teamBId);
+        teamA = findTeamById(tomSelectA?.getValue());
+        teamB = findTeamById(tomSelectB?.getValue());
     } else {
         teamA = findExistingTeamByPlayers(
             playerSelectTeamA1?.getValue(),
@@ -440,116 +454,192 @@ function updateMatchPreview() {
     previewContainer.classList.toggle("ready", Boolean(teamA && teamB));
 }
 
-// ==========================================
-// MODAL LOGIK (Neues Team erstellen)
-// ==========================================
+function updateStartMatchButtonState() {
+    const startButton = document.getElementById("start-match-btn");
+    if (!startButton) return;
 
-function initModalSelects() {
-    const select1 = document.getElementById('new-team-p1');
-    const select2 = document.getElementById('new-team-p2');
+    let isValid = false;
 
-    if(!select1 || !select2) return;
+    if (selectionMode === "teams") {
+        const teamAId = tomSelectA?.getValue();
+        const teamBId = tomSelectB?.getValue();
 
-    // Basis-Konfiguration für beide Dropdowns (inkl. Live-Erstellung)
-    const baseConfig = {
-        valueField: 'id',
-        labelField: 'name',
-        searchField: 'name',
-        options: allPlayers,
-        placeholder: "Spieler suchen oder erstellen...",
-        render: {
-            option_create: function(data, escape) {
-                return `<div class="create text-success fw-bold">
-                            <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
-                        </div>`;
+        if (teamAId && teamBId && teamAId !== teamBId) {
+            const teamA = findTeamById(teamAId);
+            const teamB = findTeamById(teamBId);
+
+            if (teamA && teamB) {
+                const playersA = getPlayersFromTeam(teamA);
+                const playersB = getPlayersFromTeam(teamB);
+                const hasOverlap = playersA.some(id => playersB.includes(id));
+                isValid = !hasOverlap;
             }
-        },
-        create: async function(input, callback) {
-            try {
-                // API Aufruf, um den Spieler live im Backend zu speichern
-                const response = await fetch("/api/players", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name: input })
-                });
+        }
+    } else {
+        const teamA = findExistingTeamByPlayers(
+            playerSelectTeamA1?.getValue(),
+            playerSelectTeamA2?.getValue()
+        );
 
-                const data = await response.json();
+        const teamB = findExistingTeamByPlayers(
+            playerSelectTeamB1?.getValue(),
+            playerSelectTeamB2?.getValue()
+        );
 
-                if (!response.ok) {
-                    showToast(data.error || "Fehler beim Erstellen des Spielers.", "error");
-                    callback(false);
-                    return;
-                }
+        if (teamA && teamB && teamA.id !== teamB.id) {
+            const playersA = getPlayersFromTeam(teamA);
+            const playersB = getPlayersFromTeam(teamB);
+            const hasOverlap = playersA.some(id => playersB.includes(id));
+            isValid = !hasOverlap;
+        }
+    }
 
-                // Neuen Spieler lokal in unsere Liste speichern
-                const newPlayer = { id: data.player.id, name: data.player.name };
-                allPlayers.push(newPlayer);
+    startButton.disabled = !isValid;
+}
 
-                // Dem jeweils ANDEREN Dropdown auch sofort hinzufügen
-                if (modalTomSelectP1) modalTomSelectP1.addOption(newPlayer);
-                if (modalTomSelectP2) modalTomSelectP2.addOption(newPlayer);
+/* =========================
+   Auswahlmodus
+========================= */
 
-                callback(newPlayer);
-            } catch (error) {
-                showToast("Verbindung zum Server fehlgeschlagen.", "error");
-                callback(false);
+function initSelectionModeToggle() {
+    const btnPlayers = document.getElementById("btn-selection-mode-players");
+    const btnTeams = document.getElementById("btn-selection-mode-teams");
+    const playerSelectionView = document.getElementById("player-selection-view");
+    const teamSelectionView = document.getElementById("team-selection-view");
+
+    if (!btnPlayers || !btnTeams || !playerSelectionView || !teamSelectionView) return;
+
+    function setSelectionMode(mode) {
+        selectionMode = mode;
+
+        const isPlayersMode = mode === "players";
+
+        btnPlayers.classList.toggle("active", isPlayersMode);
+        btnTeams.classList.toggle("active", !isPlayersMode);
+
+        playerSelectionView.classList.toggle("d-none", !isPlayersMode);
+        teamSelectionView.classList.toggle("d-none", isPlayersMode);
+
+        updateExistingTeamInfo();
+        updateMatchPreview();
+        updateStartMatchButtonState();
+    }
+
+    btnPlayers.addEventListener("click", () => setSelectionMode("players"));
+    btnTeams.addEventListener("click", () => setSelectionMode("teams"));
+
+    setSelectionMode("players");
+}
+
+/* =========================
+   Modal: Team erstellen
+========================= */
+
+function getBlockedPlayerIdsForModal() {
+    const selected = [
+        playerSelectTeamA1?.getValue() || "",
+        playerSelectTeamA2?.getValue() || "",
+        playerSelectTeamB1?.getValue() || "",
+        playerSelectTeamB2?.getValue() || ""
+    ].filter(Boolean);
+
+    if (!createTeamFromPlayersTarget) {
+        return selected;
+    }
+
+    const allowedPlayers = getSelectedPlayersForSide(createTeamFromPlayersTarget);
+
+    return selected.filter(playerId =>
+        playerId !== allowedPlayers.player1Id &&
+        playerId !== allowedPlayers.player2Id
+    );
+}
+
+function refreshModalPlayerLocks() {
+    if (!modalTomSelectP1 || !modalTomSelectP2) return;
+
+    const blockedIds = getBlockedPlayerIdsForModal();
+    const selectedP1 = modalTomSelectP1.getValue() || "";
+    const selectedP2 = modalTomSelectP2.getValue() || "";
+
+    const syncModalOptions = (selectInstance, ownValue) => {
+        selectInstance.clearOptions();
+
+        allPlayers.forEach(player => {
+            const playerId = String(player.id);
+            const isBlocked = blockedIds.includes(playerId) && playerId !== String(ownValue);
+
+            if (!isBlocked) {
+                selectInstance.addOption(player);
             }
+        });
+
+        selectInstance.refreshOptions(false);
+
+        if (ownValue) {
+            selectInstance.setValue(ownValue, true);
         }
     };
 
-    // Spieler 1 Dropdown initialisieren
-    modalTomSelectP1 = new TomSelect('#new-team-p1', {
-        ...baseConfig,
-        onChange: function(value) {
-            if (!modalTomSelectP2) return;
+    syncModalOptions(modalTomSelectP1, selectedP1);
+    syncModalOptions(modalTomSelectP2, selectedP2);
+}
 
-            // 1. Den vorher ausgewählten Spieler im ZWEITEN Dropdown wieder hinzufügen
-            if (this.prevSelected) {
-                const oldPlayer = allPlayers.find(p => p.id == this.prevSelected);
-                if (oldPlayer) modalTomSelectP2.addOption(oldPlayer);
+function initModalSelects() {
+    const select1 = document.getElementById("new-team-p1");
+    const select2 = document.getElementById("new-team-p2");
+
+    if (!select1 || !select2) return;
+
+    const baseConfig = {
+        valueField: "id",
+        labelField: "name",
+        searchField: "name",
+        options: allPlayers,
+        placeholder: "Spieler suchen oder erstellen...",
+        render: {
+            option_create(data, escape) {
+                return `
+                    <div class="create text-success fw-bold">
+                        <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
+                    </div>
+                `;
+            }
+        },
+        create: async function (input, callback) {
+            const newPlayer = await createPlayerFromInput(input);
+
+            if (!newPlayer) {
+                callback(false);
+                return;
             }
 
-            // 2. Den neu ausgewählten Spieler im ZWEITEN Dropdown komplett entfernen
-            if (value) {
-                modalTomSelectP2.removeOption(value);
-            }
-
-            this.prevSelected = value;
+            callback(newPlayer);
         }
+    };
+
+    modalTomSelectP1 = new TomSelect("#new-team-p1", baseConfig);
+    modalTomSelectP2 = new TomSelect("#new-team-p2", baseConfig);
+
+    modalTomSelectP1.on("change", () => {
+        refreshModalPlayerLocks();
     });
 
-    // Spieler 2 Dropdown initialisieren (Exakt gleiche Logik, nur umgekehrt!)
-    modalTomSelectP2 = new TomSelect('#new-team-p2', {
-        ...baseConfig,
-        onChange: function(value) {
-            if (!modalTomSelectP1) return;
-
-            // 1. Den vorher ausgewählten Spieler im ERSTEN Dropdown wieder hinzufügen
-            if (this.prevSelected) {
-                const oldPlayer = allPlayers.find(p => p.id == this.prevSelected);
-                if (oldPlayer) modalTomSelectP1.addOption(oldPlayer);
-            }
-
-            // 2. Den neu ausgewählten Spieler im ERSTEN Dropdown komplett entfernen
-            if (value) {
-                modalTomSelectP1.removeOption(value);
-            }
-
-            this.prevSelected = value;
-        }
+    modalTomSelectP2.on("change", () => {
+        refreshModalPlayerLocks();
     });
 
-    document.getElementById('save-new-team-btn').addEventListener('click', saveNewTeam);
+    document.getElementById("save-new-team-btn").addEventListener("click", saveNewTeam);
 
-    document.getElementById('new-team-name').addEventListener('keydown', event => {
-        if (event.key === 'Enter') {
+    document.getElementById("new-team-name").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
             event.preventDefault();
             saveNewTeam();
         }
     });
 }
 
-window.openCreateTeamFromPlayersModal = function(teamLetter) {
+window.openCreateTeamFromPlayersModal = function (teamLetter) {
     createTeamFromPlayersTarget = teamLetter;
 
     const selectedPlayers = getSelectedPlayersForSide(teamLetter);
@@ -578,44 +668,42 @@ window.openCreateTeamFromPlayersModal = function(teamLetter) {
     if (modalTomSelectP2) {
         modalTomSelectP2.setValue(selectedPlayers.player2Id, true);
     }
+
+    refreshModalPlayerLocks();
 };
 
-// Wenn das Modal geöffnet wird, setzen wir alles sauber zurück
-window.openNewTeamModal = function(teamLetter) {
+window.openNewTeamModal = function (teamLetter) {
     currentModalTeam = teamLetter.toLowerCase();
-    document.getElementById('new-team-name').value = '';
+    createTeamFromPlayersTarget = createTeamFromPlayersTarget || "";
+    document.getElementById("new-team-name").value = "";
 
-    // Beide Dropdowns leeren und alle Spieler wieder als gültige Optionen hinzufügen
     if (modalTomSelectP1) {
-        modalTomSelectP1.clear(true); // true = "lautlos" leeren, ohne onChange auszulösen
-        modalTomSelectP1.prevSelected = null;
+        modalTomSelectP1.clear(true);
         modalTomSelectP1.clearOptions();
-        modalTomSelectP1.addOption(allPlayers);
     }
 
     if (modalTomSelectP2) {
         modalTomSelectP2.clear(true);
-        modalTomSelectP2.prevSelected = null;
         modalTomSelectP2.clearOptions();
-        modalTomSelectP2.addOption(allPlayers);
     }
 
-    updateStartMatchButtonState();
-    const modal = new bootstrap.Modal(document.getElementById('newTeamModal'));
+    refreshModalPlayerLocks();
+
+    const modal = new bootstrap.Modal(document.getElementById("newTeamModal"));
     modal.show();
 };
 
 async function saveNewTeam() {
-    const name = document.getElementById('new-team-name').value.trim();
-    const p1_id = modalTomSelectP1.getValue();
-    const p2_id = modalTomSelectP2.getValue();
+    const name = document.getElementById("new-team-name").value.trim();
+    const p1Id = modalTomSelectP1.getValue();
+    const p2Id = modalTomSelectP2.getValue();
 
-    if (!name || !p1_id || !p2_id) {
+    if (!name || !p1Id || !p2Id) {
         showToast("Bitte alle Felder ausfüllen.", "error");
         return;
     }
 
-    if (p1_id === p2_id) {
+    if (p1Id === p2Id) {
         showToast("Ein Team muss aus zwei unterschiedlichen Spielern bestehen.", "error");
         return;
     }
@@ -624,7 +712,11 @@ async function saveNewTeam() {
         const response = await fetch("/api/teams", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: name, player1_id: p1_id, player2_id: p2_id })
+            body: JSON.stringify({
+                name: name,
+                player1_id: p1Id,
+                player2_id: p2Id
+            })
         });
 
         const data = await response.json();
@@ -634,85 +726,45 @@ async function saveNewTeam() {
             return;
         }
 
+        const player1 = findPlayerById(p1Id);
+        const player2 = findPlayerById(p2Id);
+
         const newTeam = {
             id: data.id,
             name: name,
-            player1_id: p1_id,
-            player2_id: p2_id,
-            player_names: `${allPlayers.find(p => p.id == p1_id).name} & ${allPlayers.find(p => p.id == p2_id).name}`
+            player1_id: p1Id,
+            player2_id: p2Id,
+            player_names: `${player1.name} & ${player2.name}`
         };
 
         allTeams.push(newTeam);
         tomSelectA.addOption(newTeam);
         tomSelectB.addOption(newTeam);
 
-        if (currentModalTeam === 'a') tomSelectA.setValue(newTeam.id);
-        if (currentModalTeam === 'b') tomSelectB.setValue(newTeam.id);
+        if (currentModalTeam === "a") tomSelectA.setValue(newTeam.id);
+        if (currentModalTeam === "b") tomSelectB.setValue(newTeam.id);
 
-        updatePlayerInfo('a', tomSelectA.getValue());
-        updatePlayerInfo('b', tomSelectB.getValue());
+        updatePlayerInfo("a", tomSelectA.getValue());
+        updatePlayerInfo("b", tomSelectB.getValue());
         updateCrossDropdownLocks();
         updateMatchPreview();
         updateExistingTeamInfo();
         updateStartMatchButtonState();
+
         createTeamFromPlayersTarget = "";
+        refreshModalPlayerLocks();
+        refreshPlayerModeDropdownLocks();
 
-        bootstrap.Modal.getInstance(document.getElementById('newTeamModal')).hide();
+        bootstrap.Modal.getInstance(document.getElementById("newTeamModal")).hide();
         showToast("Team erfolgreich erstellt!", "success");
-        updateStartMatchButtonState();
-
     } catch (error) {
         showToast("Verbindung zum Server fehlgeschlagen.", "error");
     }
 }
 
-// ==========================================
-// MATCH START LOGIK
-// ==========================================
-
-function updateStartMatchButtonState() {
-    const startButton = document.getElementById("start-match-btn");
-    if (!startButton) return;
-
-    let isValid = false;
-
-    if (selectionMode === "teams") {
-        const teamA_id = tomSelectA?.getValue();
-        const teamB_id = tomSelectB?.getValue();
-
-        if (teamA_id && teamB_id && teamA_id !== teamB_id) {
-            const teamA = allTeams.find(t => t.id == teamA_id);
-            const teamB = allTeams.find(t => t.id == teamB_id);
-
-            if (teamA && teamB) {
-                const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
-                const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
-                const hasOverlap = playersA.some(id => playersB.includes(id));
-                isValid = !hasOverlap;
-            }
-        }
-    } else {
-        const teamA = findExistingTeamByPlayers(
-            playerSelectTeamA1?.getValue(),
-            playerSelectTeamA2?.getValue()
-        );
-
-        const teamB = findExistingTeamByPlayers(
-            playerSelectTeamB1?.getValue(),
-            playerSelectTeamB2?.getValue()
-        );
-
-        if (teamA && teamB && teamA.id !== teamB.id) {
-            const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
-            const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
-            const hasOverlap = playersA.some(id => playersB.includes(id));
-            isValid = !hasOverlap;
-        }
-    }
-
-    startButton.disabled = !isValid;
-}
-
+/* =========================
+   Match starten
+========================= */
 
 async function submitPlayerSelection(event) {
     event.preventDefault();
@@ -721,21 +773,21 @@ async function submitPlayerSelection(event) {
     let teamB = null;
 
     if (selectionMode === "teams") {
-        const teamA_id = tomSelectA?.getValue();
-        const teamB_id = tomSelectB?.getValue();
+        const teamAId = tomSelectA?.getValue();
+        const teamBId = tomSelectB?.getValue();
 
-        if (!teamA_id || !teamB_id) {
+        if (!teamAId || !teamBId) {
             showToast("Bitte für beide Seiten ein Team auswählen.", "error");
             return;
         }
 
-        if (teamA_id === teamB_id) {
+        if (teamAId === teamBId) {
             showToast("Team A und Team B können nicht dasselbe Team sein.", "error");
             return;
         }
 
-        teamA = allTeams.find(t => t.id == teamA_id);
-        teamB = allTeams.find(t => t.id == teamB_id);
+        teamA = findTeamById(teamAId);
+        teamB = findTeamById(teamBId);
     } else {
         const teamAPlayer1 = playerSelectTeamA1?.getValue();
         const teamAPlayer2 = playerSelectTeamA2?.getValue();
@@ -776,10 +828,10 @@ async function submitPlayerSelection(event) {
         return;
     }
 
-    const playersA = [String(teamA.player1_id), String(teamA.player2_id)];
-    const playersB = [String(teamB.player1_id), String(teamB.player2_id)];
-
+    const playersA = getPlayersFromTeam(teamA);
+    const playersB = getPlayersFromTeam(teamB);
     const hasOverlap = playersA.some(id => playersB.includes(id));
+
     if (hasOverlap) {
         showToast("Ein Spieler kann nicht gleichzeitig in Team A und Team B spielen.", "error");
         return;
@@ -808,9 +860,15 @@ async function submitPlayerSelection(event) {
     }
 }
 
+/* =========================
+   Formular
+========================= */
+
 function initPlayerSelectionForm() {
     const form = document.getElementById("player-selection-form");
-    if (form) form.addEventListener("submit", submitPlayerSelection);
+    if (form) {
+        form.addEventListener("submit", submitPlayerSelection);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", loadData);
