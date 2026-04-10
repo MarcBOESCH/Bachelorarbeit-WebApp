@@ -68,6 +68,35 @@ def create_team():
         "id": new_team.id
     }), 201
 
+@team_api_bp.route("/api/teams/<int:team_id>", methods=["PUT"])
+def update_team(team_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Keine JSON-Daten erhalten."}), 400
+
+    new_name = data.get("name", "").strip()
+    if not new_name:
+        return jsonify({"error": "Der Teamname darf nicht leer sein."}), 400
+
+    team = Team.query.get(team_id)
+    if not team:
+        return jsonify({"error": "Team wurde nicht gefunden."}), 404
+
+    existing_name = Team.query.filter(func.lower(Team.name) == new_name.lower()).first()
+    if existing_name and existing_name.id != team.id:
+        return jsonify({"error": "Dieser Teamname existiert bereits."}), 400
+
+    team.name = new_name
+    db.session.commit()
+
+    return jsonify({
+        "message": "Team erfolgreich aktualisiert.",
+        "team": {
+            "id": team.id,
+            "name": team.name
+        }
+    }), 200
+
 @team_api_bp.route("/api/teams/<int:team_id>", methods=["DELETE"])
 def delete_team(team_id):
     if session.get("role") != "admin":

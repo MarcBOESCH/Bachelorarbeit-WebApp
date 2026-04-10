@@ -1,9 +1,11 @@
 let editPlayerModalInstance;
 let deletePlayerModalInstance;
+let editTeamModalInstance;
 let deleteTeamModalInstance;
 
 let playerIdToEdit = null;
 let playerIdToDelete = null;
+let teamIdToEdit = null;
 let teamIdToDelete = null;
 
 // Lädt alle Spieler aus der API und rendert sie in die Spielerliste.
@@ -152,6 +154,45 @@ async function deletePlayerConfirmed() {
     }
 }
 
+async function saveEditedTeam() {
+    const input = document.getElementById("edit-team-name");
+
+    if (!input || !teamIdToEdit) return;
+
+    const trimmedName = input.value.trim();
+
+    if (trimmedName === "") {
+        showToast("Der Teamname darf nicht leer sein.", "error");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/teams/${teamIdToEdit}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name: trimmedName })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(data.error || "Fehler beim Aktualisieren des Teams.", "error");
+            return;
+        }
+
+        editTeamModalInstance?.hide();
+        teamIdToEdit = null;
+
+        showToast("Team erfolgreich aktualisiert.", "success");
+        await loadTeams();
+    } catch (error) {
+        console.error("Fehler beim Bearbeiten des Teams:", error);
+        showToast("Team konnte nicht bearbeitet werden.", "error");
+    }
+}
+
 // Löscht ein Team, sofern das Backend dies erlaubt.
 async function deleteTeamConfirmed() {
     if (!teamIdToDelete) return;
@@ -216,6 +257,28 @@ function openDeletePlayerModal(playerId, playerName) {
     }
 
     deletePlayerModalInstance.show();
+}
+
+// Öffnet das Bearbeiten-Modal für Teams. (Derzeit nur mit Namen, da die Team-Zusammensetzung nicht bearbeitbar ist.)
+function openEditTeamModal(teamId, currentName) {
+    const input = document.getElementById("edit-team-name");
+    const modalElement = document.getElementById("editTeamModal");
+
+    if (!input || !modalElement) return;
+
+    teamIdToEdit = teamId;
+    input.value = currentName;
+
+    if (!editTeamModalInstance) {
+        editTeamModalInstance = new bootstrap.Modal(modalElement);
+    }
+
+    editTeamModalInstance.show();
+
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 150);
 }
 
 // Öffnet das Löschen-Modal für Teams.
@@ -316,6 +379,18 @@ function renderTeams(teams) {
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
 
+        const editButtonHtml = `
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-dark edit-team-btn"
+                    style="width: 48px; height: 48px;"
+                    data-team-id="${team.id}"
+                    data-team-name="${team.name}"
+                >
+                    <i class="bi bi-pencil"></i>
+                </button>
+            `;
+
         const deleteButtonHtml = isAdmin
             ? `
                 <button
@@ -338,6 +413,7 @@ function renderTeams(teams) {
                 </div>
 
                 <div class="d-flex gap-2">
+                    ${editButtonHtml}
                     ${deleteButtonHtml}
                 </div>
             </div>
@@ -368,16 +444,28 @@ function initPlayerModals() {
     const saveEditBtn = document.getElementById("save-player-edit-btn");
     const editNameInput = document.getElementById("edit-player-name");
     const confirmDeleteBtn = document.getElementById("confirm-player-delete-btn");
+    const saveTeamEditBtn = document.getElementById("save-team-edit-btn");
     const confirmTeamDeleteBtn = document.getElementById("confirm-team-delete-btn");
 
     const editModalElement = document.getElementById("editPlayerModal");
     const deleteModalElement = document.getElementById("deletePlayerModal");
+    const editTeamModalElement = document.getElementById("editTeamModal");
     const deleteTeamModalElement = document.getElementById("deleteTeamModal");
 
     if (editModalElement) {
         editModalElement.addEventListener("hidden.bs.modal", () => {
             playerIdToEdit = null;
             const input = document.getElementById("edit-player-name");
+            if (input) {
+                input.value = "";
+            }
+        });
+    }
+
+    if (editTeamModalElement) {
+        editTeamModalElement.addEventListener("hidden.bs.modal", () => {
+            teamIdToEdit = null;
+            const input = document.getElementById("edit-team-name");
             if (input) {
                 input.value = "";
             }
@@ -408,10 +496,23 @@ function initPlayerModals() {
         saveEditBtn.addEventListener("click", saveEditedPlayer);
     }
 
+    if (saveTeamEditBtn) {
+        saveTeamEditBtn.addEventListener("click", saveEditedTeam);
+    }
+
     if (editNameInput) {
         editNameInput.addEventListener("keydown", event => {
             if (event.key === "Enter") {
                 saveEditedPlayer();
+            }
+        });
+    }
+
+    const editTeamNameInput = document.getElementById("edit-team-name");
+    if (editTeamNameInput) {
+        editTeamNameInput.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                saveEditedTeam();
             }
         });
     }
@@ -452,7 +553,15 @@ function initPlayerActionEvents() {
 
     if (teamList) {
         teamList.addEventListener("click", event => {
+            const editButton = event.target.closest(".edit-team-btn");
             const deleteButton = event.target.closest(".delete-team-btn");
+
+            if (editButton) {
+                const teamId = Number(editButton.dataset.teamId);
+                const teamName = editButton.dataset.teamName;
+                openEditTeamModal(teamId, teamName);
+                return;
+            }
 
             if (deleteButton) {
                 const teamId = Number(deleteButton.dataset.teamId);
