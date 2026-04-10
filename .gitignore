@@ -18,3 +18,5 @@ __pycache__/
 # Flask / local data
 instance/
 .pytest_cache/
+/merge_code.py
+/code_review_export.txt
