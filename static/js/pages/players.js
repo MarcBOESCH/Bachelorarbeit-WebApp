@@ -6,7 +6,7 @@ async function loadPlayers() {
         if (!response.ok) {
             const text = await response.text();
             console.error("Fehlerhafte Antwort /api/players:", response.status, text);
-            alert(`Fehler beim Laden der Spieler (${response.status}).`);
+            showToast(`Fehler beim Laden der Spieler (${response.status}).`, "error");
             return;
         }
 
@@ -14,7 +14,7 @@ async function loadPlayers() {
         renderPlayers(players);
     } catch (error) {
         console.error("Fehler beim Laden der Spieler:", error);
-        alert("Spieler konnten nicht geladen werden. Details in der Konsole.");
+        showToast("Spieler konnten nicht geladen werden.", "error");
     }
 }
 
@@ -26,7 +26,7 @@ async function createPlayer() {
     const name = input.value.trim();
 
     if (name === "") {
-        alert("Bitte einen Spielernamen eingeben.");
+        showToast("Bitte einen Spielernamen eingeben.", "error");
         return;
     }
 
@@ -42,15 +42,16 @@ async function createPlayer() {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || "Fehler beim Erstellen des Spielers.");
+            showToast(data.error || "Fehler beim Erstellen des Spielers.", "error");
             return;
         }
 
         input.value = "";
+        showToast("Spieler erfolgreich erstellt.", "success");
         await loadPlayers();
     } catch (error) {
         console.error("Fehler beim Erstellen des Spielers:", error);
-        alert("Verbindung zum Server fehlgeschlagen.");
+        showToast("Verbindung zum Server fehlgeschlagen.", "error");
     }
 }
 
@@ -63,7 +64,7 @@ async function handleEditPlayer(playerId, currentName) {
     const trimmedName = newName.trim();
 
     if (trimmedName === "") {
-        alert("Der Name darf nicht leer sein.");
+        showToast("Der Name darf nicht leer sein.", "error");
         return;
     }
 
@@ -79,14 +80,15 @@ async function handleEditPlayer(playerId, currentName) {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || "Fehler beim Aktualisieren des Spielers.");
+            showToast(data.error || "Fehler beim Aktualisieren des Spielers.", "error");
             return;
         }
 
+        showToast("Spieler erfolgreich aktualisiert.", "success");
         await loadPlayers();
     } catch (error) {
         console.error("Fehler beim Bearbeiten des Spielers:", error);
-        alert("Spieler konnte nicht bearbeitet werden.");
+        showToast("Spieler konnte nicht bearbeitet werden.", "error");
     }
 }
 
@@ -103,14 +105,15 @@ async function handleDeletePlayer(playerId, playerName) {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || "Fehler beim Löschen des Spielers.");
+            showToast(data.error || "Fehler beim Löschen des Spielers.", "error");
             return;
         }
 
+        showToast("Spieler erfolgreich gelöscht.", "success");
         await loadPlayers();
     } catch (error) {
         console.error("Fehler beim Löschen des Spielers:", error);
-        alert("Spieler konnte nicht gelöscht werden.");
+        showToast("Spieler konnte nicht gelöscht werden.", "error");
     }
 }
 

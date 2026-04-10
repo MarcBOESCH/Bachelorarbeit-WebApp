@@ -8,13 +8,17 @@ function showToast(message, type = "error") {
     const container = document.getElementById("toast-container");
     if (!container) return;
 
+    const existingToasts = container.querySelectorAll(".app-toast");
+    if (existingToasts.length >= 3) {
+        existingToasts[0].remove();
+    }
+
     const toast = document.createElement("div");
     toast.className = `app-toast ${type}`;
     toast.textContent = message;
 
     container.appendChild(toast);
 
-    // Nach 3 Sekunden verschwinden lassen
     setTimeout(() => {
         toast.classList.add("fade-out");
 

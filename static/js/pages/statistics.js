@@ -272,7 +272,7 @@ async function loadPlayerStats() {
         if (!response.ok) {
             const text = await response.text();
             console.error("Fehlerhafte Antwort /api/player-stats:", response.status, text);
-            alert(`Fehler beim Laden der Spielerstatistiken (${response.status}).`);
+            showToast(`Fehler beim Laden der Spielerstatistiken (${response.status}).`, "error");
             return;
         }
 
@@ -280,7 +280,7 @@ async function loadPlayerStats() {
         renderPlayerStats(stats);
     } catch (error) {
         console.error("Fehler beim Laden der Spielerstatistiken:", error);
-        alert("Spielerstatistiken konnten nicht geladen werden.");
+        showToast("Spielerstatistiken konnten nicht geladen werden.", "error");
     }
 }
 

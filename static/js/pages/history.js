@@ -103,7 +103,7 @@ async function loadMatches() {
         if (!response.ok) {
             const text = await response.text();
             console.error("Fehlerhafte Antwort /api/matches:", response.status, text);
-            alert(`Fehler beim Laden der Matchhistorie (${response.status}).`);
+            showToast(`Fehler beim Laden der Matchhistorie (${response.status}).`, "error");
             return;
         }
 
@@ -114,7 +114,7 @@ async function loadMatches() {
         renderMatchHistory(matches);
     } catch (error) {
         console.error("Fehler beim Laden der Matchhistorie:", error);
-        alert("Matchhistorie konnte nicht geladen werden.");
+        showToast("Matchhistorie konnte nicht geladen werden.", "error");
     }
 }
 

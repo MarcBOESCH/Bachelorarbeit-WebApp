@@ -114,7 +114,7 @@ async function loadRatingsForSystem(systemName) {
         if (!response.ok) {
             const text = await response.text();
             console.error(`Fehlerhafte Antwort /ratings/${systemName}:`, response.status, text);
-            alert(`Fehler beim Laden der ${systemName}-Ratings (${response.status}).`);
+            showToast(`Fehler beim Laden der ${systemName}-Ratings (${response.status}).`, "error");
             return;
         }
 
@@ -122,7 +122,7 @@ async function loadRatingsForSystem(systemName) {
         renderRatingsForSystem(systemName, data.ratings);
     } catch (error) {
         console.error(`Fehler beim Laden der ${systemName}-Ratings:`, error);
-        alert(`${systemName}-Ratings konnten nicht geladen werden.`);
+        showToast(`${systemName}-Ratings konnten nicht geladen werden.`, "error");
     }
 }
 
@@ -141,7 +141,7 @@ async function processRatingsForSystem(systemName) {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error || `Fehler bei der ${systemName}-Verarbeitung.`);
+            showToast(data.error || `Fehler bei der ${systemName}-Verarbeitung.`, "error");
             return;
         }
 
@@ -152,10 +152,13 @@ async function processRatingsForSystem(systemName) {
             await loadEvaluationDetails(systemName);
         }
 
-        alert(`${systemName}-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`);
+        showToast(
+            `${systemName}-Verarbeitung abgeschlossen. Verarbeitete Matches: ${data.processed_matches}`,
+            "success"
+        );
     } catch (error) {
         console.error(`Fehler bei der ${systemName}-Verarbeitung:`, error);
-        alert(`${systemName}-Ratings konnten nicht verarbeitet werden.`);
+        showToast(`${systemName}-Ratings konnten nicht verarbeitet werden.`, "error");
     }
 }
 
@@ -248,7 +251,7 @@ async function loadEvaluationForSystem(systemName) {
         if (!response.ok) {
             const text = await response.text();
             console.error(`Fehlerhafte Antwort /evaluation/${systemName}:`, response.status, text);
-            alert(`Fehler beim Laden der Evaluation für ${systemName} (${response.status}).`);
+            showToast(`Fehler beim Laden der Evaluation für ${systemName} (${response.status}).`, "error");
             return;
         }
 
@@ -256,7 +259,7 @@ async function loadEvaluationForSystem(systemName) {
         renderEvaluation(systemName, data);
     } catch (error) {
         console.error(`Fehler beim Laden der Evaluation für ${systemName}:`, error);
-        alert(`Evaluation für ${systemName} konnte nicht geladen werden.`);
+        showToast(`Evaluation für ${systemName} konnte nicht geladen werden.`, "error");
     }
 }
 
@@ -313,7 +316,7 @@ async function loadEvaluationDetails(systemName = currentEvaluationDetailSystem)
         if (!response.ok) {
             const text = await response.text();
             console.error(`Fehlerhafte Antwort /evaluation/${systemName}:`, response.status, text);
-            alert(`Fehler beim Laden der Evaluationsdetails für ${systemName} (${response.status}).`);
+            showToast(`Fehler beim Laden der Evaluationsdetails für ${systemName} (${response.status}).`, "error");
             return;
         }
 
@@ -321,7 +324,7 @@ async function loadEvaluationDetails(systemName = currentEvaluationDetailSystem)
         renderEvaluationDetails(data);
     } catch (error) {
         console.error(`Fehler beim Laden der Evaluationsdetails für ${systemName}:`, error);
-        alert(`Evaluationsdetails für ${systemName} konnten nicht geladen werden.`);
+        showToast(`Evaluationsdetails für ${systemName} konnten nicht geladen werden.`, "error");
     }
 }
 
