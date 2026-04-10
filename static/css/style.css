@@ -378,8 +378,10 @@ canvas {
 }
 
 .btn-outline-dark {
+    border: 2px solid var(--color-brand);
+    background: transparent;
     color: var(--color-brand);
-    border-color: var(--color-brand);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-outline-dark:hover,
@@ -389,20 +391,15 @@ canvas {
     color: #fff;
 }
 
-.btn-secondary {
-    border: none;
-}
-
+.btn-secondary,
 .btn-warning {
     border: none;
 }
 
-.btn-secondary {
-    border: none;
-}
-
-.btn-warning {
-    border: none;
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
 }
 
 .btn,
@@ -463,6 +460,88 @@ canvas {
 
 @keyframes slideOut {
     to { opacity: 0; transform: translateY(-15px); }
+}
+
+/* =========================
+   Player Selection / Match Preview
+========================= */
+
+.match-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+}
+
+.match-preview-team {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    min-height: 120px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+}
+
+.match-preview-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.match-preview-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-brand);
+}
+
+.match-preview-players {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.match-preview-vs {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.match-preview.ready .match-preview-team {
+    border-color: var(--color-brand);
+    background: #eef7f1;
+    box-shadow: 0 6px 18px rgba(15, 81, 50, 0.08);
+}
+
+.match-preview.ready .match-preview-name {
+    color: var(--color-brand-dark);
+}
+
+.match-preview.ready .match-preview-vs {
+    color: var(--color-brand);
+}
+
+@media (min-width: 768px) {
+    .match-preview {
+        flex-direction: row;
+        justify-content: center;
+        align-items: stretch;
+    }
+
+    .match-preview-team {
+        max-width: 280px;
+    }
+
+    .match-preview-vs {
+        display: flex;
+        align-items: center;
+        padding-inline: 8px;
+    }
 }
 
 /* =========================

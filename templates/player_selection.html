@@ -9,10 +9,12 @@
 
     <form id="player-selection-form" class="section-spacing">
         <div class="stack-lg section-spacing">
+
             <section class="app-card">
                 <div class="app-card-body">
-                    <div class="section-header d-flex justify-content-between align-items-center justify-content-center">
-                        <h2 class="mb-0 text-center">Team A</h2>
+                    <div class="section-header team-selection-header text-center">
+                        <h2 class="mb-0">Team A</h2>
+                        <p>Wähle das erste Team für das Match</p>
                     </div>
 
                     <div class="team-setup mt-3">
@@ -29,7 +31,7 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-center mb-3">
+                <div class="d-flex justify-content-center px-3 pb-3">
                     <button type="button" class="btn btn-sm btn-outline-dark" onclick="openNewTeamModal('A')">
                         <i class="bi bi-plus-lg"></i> Neues Team
                     </button>
@@ -39,8 +41,9 @@
 
             <section class="app-card">
                 <div class="app-card-body">
-                    <div class="section-header d-flex">
-                        <h2 class="mb-0 text-center">Team B</h2>
+                    <div class="section-header team-selection-header text-center">
+                        <h2 class="mb-0">Team B</h2>
+                        <p>Wähle das zweite Team für das Match</p>
                     </div>
 
                     <div class="team-setup mt-3">
@@ -57,7 +60,7 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-center mb-3">
+                <div class="d-flex justify-content-center px-3 pb-3">
                     <button type="button" class="btn btn-sm btn-outline-dark" onclick="openNewTeamModal('B')">
                         <i class="bi bi-plus-lg"></i> Neues Team
                     </button>
@@ -66,13 +69,31 @@
 
         </div>
 
-        <section class="app-card">
+        <section id="match-preview-card" class="app-card section-spacing d-none">
             <div class="app-card-body">
+                <div class="section-header text-center">
+                    <h2>Match-Vorschau</h2>
+                    <p>So sieht das nächste Match aus</p>
+                </div>
 
-                <div id="player-selection-message" class="alert d-none" role="alert"></div>
+                <div class="match-preview">
+                    <div class="match-preview-team">
+                        <div class="match-preview-label">Team A</div>
+                        <div id="preview-team-a-name" class="match-preview-name">-</div>
+                        <div id="preview-team-a-players" class="match-preview-players text-muted">-</div>
+                    </div>
 
-                <div class="action-group">
-                    <button id="start-match-btn" type="submit" class="btn btn-dark">
+                    <div class="match-preview-vs">vs</div>
+
+                    <div class="match-preview-team">
+                        <div class="match-preview-label">Team B</div>
+                        <div id="preview-team-b-name" class="match-preview-name">-</div>
+                        <div id="preview-team-b-players" class="match-preview-players text-muted">-</div>
+                    </div>
+                </div>
+
+                <div class="action-group mt-4">
+                    <button id="start-match-btn" type="submit" class="btn btn-dark" disabled>
                         Match starten
                     </button>
                 </div>
