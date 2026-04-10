@@ -1,3 +1,9 @@
+let editPlayerModalInstance;
+let deletePlayerModalInstance;
+
+let playerIdToEdit = null;
+let playerIdToDelete = null;
+
 // Lädt alle Spieler aus der API und rendert sie in die Spielerliste.
 async function loadPlayers() {
     try {
@@ -55,13 +61,13 @@ async function createPlayer() {
     }
 }
 
-// Bearbeitet den Namen eines vorhandenen Spielers.
-async function handleEditPlayer(playerId, currentName) {
-    const newName = prompt("Neuen Namen eingeben:", currentName);
+// Speichert die Bearbeitung eines vorhandenen Spielers.
+async function saveEditedPlayer() {
+    const input = document.getElementById("edit-player-name");
 
-    if (newName === null) return;
+    if (!input || !playerIdToEdit) return;
 
-    const trimmedName = newName.trim();
+    const trimmedName = input.value.trim();
 
     if (trimmedName === "") {
         showToast("Der Name darf nicht leer sein.", "error");
@@ -69,7 +75,7 @@ async function handleEditPlayer(playerId, currentName) {
     }
 
     try {
-        const response = await fetch(`/api/players/${playerId}`, {
+        const response = await fetch(`/api/players/${playerIdToEdit}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -84,6 +90,9 @@ async function handleEditPlayer(playerId, currentName) {
             return;
         }
 
+        editPlayerModalInstance?.hide();
+        playerIdToEdit = null;
+
         showToast("Spieler erfolgreich aktualisiert.", "success");
         await loadPlayers();
     } catch (error) {
@@ -93,12 +102,11 @@ async function handleEditPlayer(playerId, currentName) {
 }
 
 // Löscht einen Spieler, sofern das Backend dies erlaubt.
-async function handleDeletePlayer(playerId, playerName) {
-    const confirmed = confirm(`Willst du den Spieler "${playerName}" wirklich löschen?`);
-    if (!confirmed) return;
+async function deletePlayerConfirmed() {
+    if (!playerIdToDelete) return;
 
     try {
-        const response = await fetch(`/api/players/${playerId}`, {
+        const response = await fetch(`/api/players/${playerIdToDelete}`, {
             method: "DELETE"
         });
 
@@ -109,12 +117,54 @@ async function handleDeletePlayer(playerId, playerName) {
             return;
         }
 
+        deletePlayerModalInstance?.hide();
+        playerIdToDelete = null;
+
         showToast("Spieler erfolgreich gelöscht.", "success");
         await loadPlayers();
     } catch (error) {
         console.error("Fehler beim Löschen des Spielers:", error);
         showToast("Spieler konnte nicht gelöscht werden.", "error");
     }
+}
+
+// Öffnet das Bearbeiten-Modal.
+function openEditPlayerModal(playerId, currentName) {
+    const input = document.getElementById("edit-player-name");
+    const modalElement = document.getElementById("editPlayerModal");
+
+    if (!input || !modalElement) return;
+
+    playerIdToEdit = playerId;
+    input.value = currentName;
+
+    if (!editPlayerModalInstance) {
+        editPlayerModalInstance = new bootstrap.Modal(modalElement);
+    }
+
+    editPlayerModalInstance.show();
+
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 150);
+}
+
+// Öffnet das Löschen-Modal.
+function openDeletePlayerModal(playerId, playerName) {
+    const nameElement = document.getElementById("delete-player-name");
+    const modalElement = document.getElementById("deletePlayerModal");
+
+    if (!nameElement || !modalElement) return;
+
+    playerIdToDelete = playerId;
+    nameElement.textContent = `"${playerName}"`;
+
+    if (!deletePlayerModalInstance) {
+        deletePlayerModalInstance = new bootstrap.Modal(modalElement);
+    }
+
+    deletePlayerModalInstance.show();
 }
 
 // Rendert die Spielerliste im DOM.
@@ -185,6 +235,51 @@ function initPlayerSection() {
     });
 }
 
+// Initialisiert die Modals.
+function initPlayerModals() {
+    const saveEditBtn = document.getElementById("save-player-edit-btn");
+    const editNameInput = document.getElementById("edit-player-name");
+    const confirmDeleteBtn = document.getElementById("confirm-player-delete-btn");
+    const editModalElement = document.getElementById("editPlayerModal");
+    const deleteModalElement = document.getElementById("deletePlayerModal");
+
+    if (editModalElement) {
+        editModalElement.addEventListener("hidden.bs.modal", () => {
+            playerIdToEdit = null;
+            const input = document.getElementById("edit-player-name");
+            if (input) {
+                input.value = "";
+            }
+        });
+    }
+
+    if (deleteModalElement) {
+        deleteModalElement.addEventListener("hidden.bs.modal", () => {
+            playerIdToDelete = null;
+            const nameElement = document.getElementById("delete-player-name");
+            if (nameElement) {
+                nameElement.textContent = "";
+            }
+        });
+    }
+
+    if (saveEditBtn) {
+        saveEditBtn.addEventListener("click", saveEditedPlayer);
+    }
+
+    if (editNameInput) {
+        editNameInput.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                saveEditedPlayer();
+            }
+        });
+    }
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", deletePlayerConfirmed);
+    }
+}
+
 // Verwendet Event Delegation für Bearbeiten-/Löschen-Buttons in der Liste.
 function initPlayerActionEvents() {
     const playerList = document.getElementById("player-list");
@@ -197,14 +292,14 @@ function initPlayerActionEvents() {
         if (editButton) {
             const playerId = Number(editButton.dataset.playerId);
             const playerName = editButton.dataset.playerName;
-            handleEditPlayer(playerId, playerName);
+            openEditPlayerModal(playerId, playerName);
             return;
         }
 
         if (deleteButton) {
             const playerId = Number(deleteButton.dataset.playerId);
             const playerName = deleteButton.dataset.playerName;
-            handleDeletePlayer(playerId, playerName);
+            openDeletePlayerModal(playerId, playerName);
         }
     });
 }
@@ -212,6 +307,7 @@ function initPlayerActionEvents() {
 // Initialisiert die komplette Spieler-Seite.
 function initPlayersPage() {
     initPlayerSection();
+    initPlayerModals();
     initPlayerActionEvents();
     loadPlayers();
 }

@@ -5,37 +5,88 @@
 {% block content %}
     <h1 class="fw-bold mb-4 text-center">Spieler</h1>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h2 class="h4 mb-3">Spielerverwaltung</h2>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4 mb-3">Spielerverwaltung</h2>
 
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-8">
-                        <label for="player-name" class="form-label">Neuen Spieler anlegen</label>
-                        <input
-                            id="player-name"
-                            type="text"
-                            class="form-control"
-                            placeholder="z. B. Hans Peter"
-                        >
-                    </div>
-
-                    <div class="col-md-4">
-                        <button id="create-player-btn" class="btn btn-dark w-100">
-                            Spieler anlegen
-                        </button>
-                    </div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="player-name" class="form-label">Neuen Spieler anlegen</label>
+                    <input
+                        id="player-name"
+                        type="text"
+                        class="form-control"
+                        placeholder="z. B. Hans Peter"
+                    >
                 </div>
 
-                <div class="mt-4">
-                    <h3 class="h5">Vorhandene Spieler</h3>
-                    <ul id="player-list" class="list-group mt-3">
-                        <li class="list-group-item text-muted">Noch keine Spieler vorhanden.</li>
-                    </ul>
+                <div class="col-md-4">
+                    <button id="create-player-btn" class="btn btn-dark w-100">
+                        Spieler anlegen
+                    </button>
                 </div>
+            </div>
 
+            <div class="mt-4">
+                <h3 class="h5">Vorhandene Spieler</h3>
+                <ul id="player-list" class="list-group mt-3">
+                    <li class="list-group-item text-muted">Noch keine Spieler vorhanden.</li>
+                </ul>
             </div>
         </div>
+    </div>
+
+    <!-- Modal: Spieler bearbeiten -->
+    <div class="modal fade" id="editPlayerModal" tabindex="-1" aria-labelledby="editPlayerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h5 class="modal-title fw-bold w-100" id="editPlayerModalLabel">Spieler bearbeiten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label for="edit-player-name" class="form-label fw-semibold">Neuer Name</label>
+                    <input
+                        type="text"
+                        id="edit-player-name"
+                        class="form-control"
+                        placeholder="Spielername eingeben"
+                    >
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-dark" id="save-player-edit-btn">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Spieler löschen -->
+    <div class="modal fade" id="deletePlayerModal" tabindex="-1" aria-labelledby="deletePlayerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h5 class="modal-title fw-bold w-100" id="deletePlayerModalLabel">Spieler löschen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p class="mb-0">
+                        Willst du den Spieler
+                        <strong id="delete-player-name"></strong>
+                        wirklich löschen?
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-danger" id="confirm-player-delete-btn">Löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block page_scripts %}

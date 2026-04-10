@@ -944,7 +944,7 @@ canvas {
    Player Selection Modal
 ========================= */
 
-#newTeamModal .modal-header {
+.modal-header {
     padding-top: 16px;
     justify-content: center;
     position: relative;
@@ -952,24 +952,24 @@ canvas {
     border-bottom: 0;
 }
 
-#newTeamModal .modal-title {
+.modal-title {
     width: 100%;
     text-align: center;
 }
 
-#newTeamModal .btn-close {
+.btn-close {
     position: absolute;
     right: 16px;
     top: 16px;
     margin: 0;
 }
 
-#newTeamModal .modal-footer {
+.modal-footer {
     justify-content: center;
     gap: 12px;
 }
 
-#newTeamModal .modal-footer .btn {
+.modal-footer .btn {
     min-width: 140px;
 }
 
