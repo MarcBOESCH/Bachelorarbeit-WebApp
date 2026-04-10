@@ -331,11 +331,11 @@ function refreshPlayerModeDropdownLocks() {
 }
 
 function updateExistingTeamInfo() {
-    const teamAInfo = document.getElementById("team-a-existing-team-info");
-    const teamBInfo = document.getElementById("team-b-existing-team-info");
+    const teamABanner = document.getElementById("team-a-existing-team-banner");
+    const teamBBanner = document.getElementById("team-b-existing-team-banner");
 
-    const teamAName = teamAInfo?.querySelector(".existing-team-name");
-    const teamBName = teamBInfo?.querySelector(".existing-team-name");
+    const teamAName = teamABanner?.querySelector(".existing-team-name");
+    const teamBName = teamBBanner?.querySelector(".existing-team-name");
 
     const teamAMissingInfo = document.getElementById("team-a-missing-team-info");
     const teamBMissingInfo = document.getElementById("team-b-missing-team-info");
@@ -344,7 +344,7 @@ function updateExistingTeamInfo() {
     const teamBCreateAction = document.getElementById("team-b-create-team-action");
 
     if (
-        !teamAInfo || !teamBInfo || !teamAName || !teamBName ||
+        !teamABanner || !teamBBanner || !teamAName || !teamBName ||
         !teamAMissingInfo || !teamBMissingInfo ||
         !teamACreateAction || !teamBCreateAction
     ) {
@@ -362,12 +362,12 @@ function updateExistingTeamInfo() {
 
     if (teamA) {
         teamAName.textContent = teamA.name;
-        teamAInfo.classList.remove("d-none");
+        teamABanner.classList.remove("d-none");
         teamAMissingInfo.classList.add("d-none");
         teamACreateAction.classList.add("d-none");
     } else {
         teamAName.textContent = "";
-        teamAInfo.classList.add("d-none");
+        teamABanner.classList.add("d-none");
 
         const samePlayerInTeamA =
             teamAPlayers.player1Id &&
@@ -384,12 +384,12 @@ function updateExistingTeamInfo() {
 
     if (teamB) {
         teamBName.textContent = teamB.name;
-        teamBInfo.classList.remove("d-none");
+        teamBBanner.classList.remove("d-none");
         teamBMissingInfo.classList.add("d-none");
         teamBCreateAction.classList.add("d-none");
     } else {
         teamBName.textContent = "";
-        teamBInfo.classList.add("d-none");
+        teamBBanner.classList.add("d-none");
 
         const samePlayerInTeamB =
             teamBPlayers.player1Id &&
