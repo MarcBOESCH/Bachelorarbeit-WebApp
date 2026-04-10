@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, session
 
 from services.player_service import create_player, get_all_players, update_player, delete_player
 
@@ -58,6 +58,9 @@ def update_player_route(player_id):
 
 @players_page_bp.route("/api/players/<int:player_id>", methods=["DELETE"])
 def delete_player_route(player_id):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Nur Admins dürfen Spieler löschen."}), 403
+
     success, error = delete_player(player_id)
 
     if not success:

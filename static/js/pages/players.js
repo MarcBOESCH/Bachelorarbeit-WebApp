@@ -1,8 +1,10 @@
 let editPlayerModalInstance;
 let deletePlayerModalInstance;
+let deleteTeamModalInstance;
 
 let playerIdToEdit = null;
 let playerIdToDelete = null;
+let teamIdToDelete = null;
 
 // Lädt alle Spieler aus der API und rendert sie in die Spielerliste.
 async function loadPlayers() {
@@ -21,6 +23,26 @@ async function loadPlayers() {
     } catch (error) {
         console.error("Fehler beim Laden der Spieler:", error);
         showToast("Spieler konnten nicht geladen werden.", "error");
+    }
+}
+
+// Lädt alle Teams aus der API und rendert sie in die Teamliste.
+async function loadTeams() {
+    try {
+        const response = await fetch("/api/teams");
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("Fehlerhafte Antwort /api/teams:", response.status, text);
+            showToast(`Fehler beim Laden der Teams (${response.status}).`, "error");
+            return;
+        }
+
+        const teams = await response.json();
+        renderTeams(teams);
+    } catch (error) {
+        console.error("Fehler beim Laden der Teams:", error);
+        showToast("Teams konnten nicht geladen werden.", "error");
     }
 }
 
@@ -95,6 +117,7 @@ async function saveEditedPlayer() {
 
         showToast("Spieler erfolgreich aktualisiert.", "success");
         await loadPlayers();
+        await loadTeams();
     } catch (error) {
         console.error("Fehler beim Bearbeiten des Spielers:", error);
         showToast("Spieler konnte nicht bearbeitet werden.", "error");
@@ -122,9 +145,37 @@ async function deletePlayerConfirmed() {
 
         showToast("Spieler erfolgreich gelöscht.", "success");
         await loadPlayers();
+        await loadTeams();
     } catch (error) {
         console.error("Fehler beim Löschen des Spielers:", error);
         showToast("Spieler konnte nicht gelöscht werden.", "error");
+    }
+}
+
+// Löscht ein Team, sofern das Backend dies erlaubt.
+async function deleteTeamConfirmed() {
+    if (!teamIdToDelete) return;
+
+    try {
+        const response = await fetch(`/api/teams/${teamIdToDelete}`, {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(data.error || "Fehler beim Löschen des Teams.", "error");
+            return;
+        }
+
+        deleteTeamModalInstance?.hide();
+        teamIdToDelete = null;
+
+        showToast("Team erfolgreich gelöscht.", "success");
+        await loadTeams();
+    } catch (error) {
+        console.error("Fehler beim Löschen des Teams:", error);
+        showToast("Team konnte nicht gelöscht werden.", "error");
     }
 }
 
@@ -150,7 +201,7 @@ function openEditPlayerModal(playerId, currentName) {
     }, 150);
 }
 
-// Öffnet das Löschen-Modal.
+// Öffnet das Löschen-Modal für Spieler.
 function openDeletePlayerModal(playerId, playerName) {
     const nameElement = document.getElementById("delete-player-name");
     const modalElement = document.getElementById("deletePlayerModal");
@@ -167,8 +218,26 @@ function openDeletePlayerModal(playerId, playerName) {
     deletePlayerModalInstance.show();
 }
 
+// Öffnet das Löschen-Modal für Teams.
+function openDeleteTeamModal(teamId, teamName) {
+    const nameElement = document.getElementById("delete-team-name");
+    const modalElement = document.getElementById("deleteTeamModal");
+
+    if (!nameElement || !modalElement) return;
+
+    teamIdToDelete = teamId;
+    nameElement.textContent = `"${teamName}"`;
+
+    if (!deleteTeamModalInstance) {
+        deleteTeamModalInstance = new bootstrap.Modal(modalElement);
+    }
+
+    deleteTeamModalInstance.show();
+}
+
 // Rendert die Spielerliste im DOM.
 function renderPlayers(players) {
+    const isAdmin = window.IS_ADMIN === true || window.IS_ADMIN === "true";
     const playerList = document.getElementById("player-list");
     if (!playerList) return;
 
@@ -186,6 +255,21 @@ function renderPlayers(players) {
     players.forEach(player => {
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+        const deleteButtonHtml = isAdmin
+            ? `
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger delete-player-btn"
+                    style="width: 48px; height: 48px;"
+                    data-player-id="${player.id}"
+                    data-player-name="${player.name}"
+                >
+                    <i class="bi bi-trash"></i>
+                </button>
+            `
+            : "";
+
         li.innerHTML = `
             <div class="d-flex justify-content-between align-items-center gap-3 w-100">
                 <div>
@@ -203,19 +287,63 @@ function renderPlayers(players) {
                         <i class="bi bi-pencil"></i>
                     </button>
 
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-danger delete-player-btn"
-                        style="width: 48px; height: 48px;"
-                        data-player-id="${player.id}"
-                        data-player-name="${player.name}"
-                    >
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    ${deleteButtonHtml}
                 </div>
             </div>
         `;
         playerList.appendChild(li);
+    });
+}
+
+// Rendert die Teamliste im DOM.
+function renderTeams(teams) {
+    const isAdmin = window.IS_ADMIN === true || window.IS_ADMIN === "true";
+    const teamList = document.getElementById("team-list");
+    if (!teamList) return;
+
+    teamList.innerHTML = "";
+
+    if (!teams || teams.length === 0) {
+        teamList.innerHTML = `
+            <li class="list-group-item text-muted">
+                Noch keine Teams vorhanden.
+            </li>
+        `;
+        return;
+    }
+
+    teams.forEach(team => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+        const deleteButtonHtml = isAdmin
+            ? `
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger delete-team-btn"
+                    style="width: 48px; height: 48px;"
+                    data-team-id="${team.id}"
+                    data-team-name="${team.name}"
+                >
+                    <i class="bi bi-trash"></i>
+                </button>
+            `
+            : "";
+
+        li.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center gap-3 w-100">
+                <div>
+                    <div class="fw-semibold">${team.name}</div>
+                    <div class="small text-muted">${team.player_names}</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    ${deleteButtonHtml}
+                </div>
+            </div>
+        `;
+
+        teamList.appendChild(li);
     });
 }
 
@@ -240,8 +368,11 @@ function initPlayerModals() {
     const saveEditBtn = document.getElementById("save-player-edit-btn");
     const editNameInput = document.getElementById("edit-player-name");
     const confirmDeleteBtn = document.getElementById("confirm-player-delete-btn");
+    const confirmTeamDeleteBtn = document.getElementById("confirm-team-delete-btn");
+
     const editModalElement = document.getElementById("editPlayerModal");
     const deleteModalElement = document.getElementById("deletePlayerModal");
+    const deleteTeamModalElement = document.getElementById("deleteTeamModal");
 
     if (editModalElement) {
         editModalElement.addEventListener("hidden.bs.modal", () => {
@@ -263,6 +394,16 @@ function initPlayerModals() {
         });
     }
 
+    if (deleteTeamModalElement) {
+        deleteTeamModalElement.addEventListener("hidden.bs.modal", () => {
+            teamIdToDelete = null;
+            const nameElement = document.getElementById("delete-team-name");
+            if (nameElement) {
+                nameElement.textContent = "";
+            }
+        });
+    }
+
     if (saveEditBtn) {
         saveEditBtn.addEventListener("click", saveEditedPlayer);
     }
@@ -278,30 +419,48 @@ function initPlayerModals() {
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener("click", deletePlayerConfirmed);
     }
+
+    if (confirmTeamDeleteBtn) {
+        confirmTeamDeleteBtn.addEventListener("click", deleteTeamConfirmed);
+    }
 }
 
-// Verwendet Event Delegation für Bearbeiten-/Löschen-Buttons in der Liste.
+// Verwendet Event Delegation für Bearbeiten-/Löschen-Buttons in den Listen.
 function initPlayerActionEvents() {
     const playerList = document.getElementById("player-list");
-    if (!playerList) return;
+    const teamList = document.getElementById("team-list");
 
-    playerList.addEventListener("click", event => {
-        const editButton = event.target.closest(".edit-player-btn");
-        const deleteButton = event.target.closest(".delete-player-btn");
+    if (playerList) {
+        playerList.addEventListener("click", event => {
+            const editButton = event.target.closest(".edit-player-btn");
+            const deleteButton = event.target.closest(".delete-player-btn");
 
-        if (editButton) {
-            const playerId = Number(editButton.dataset.playerId);
-            const playerName = editButton.dataset.playerName;
-            openEditPlayerModal(playerId, playerName);
-            return;
-        }
+            if (editButton) {
+                const playerId = Number(editButton.dataset.playerId);
+                const playerName = editButton.dataset.playerName;
+                openEditPlayerModal(playerId, playerName);
+                return;
+            }
 
-        if (deleteButton) {
-            const playerId = Number(deleteButton.dataset.playerId);
-            const playerName = deleteButton.dataset.playerName;
-            openDeletePlayerModal(playerId, playerName);
-        }
-    });
+            if (deleteButton) {
+                const playerId = Number(deleteButton.dataset.playerId);
+                const playerName = deleteButton.dataset.playerName;
+                openDeletePlayerModal(playerId, playerName);
+            }
+        });
+    }
+
+    if (teamList) {
+        teamList.addEventListener("click", event => {
+            const deleteButton = event.target.closest(".delete-team-btn");
+
+            if (deleteButton) {
+                const teamId = Number(deleteButton.dataset.teamId);
+                const teamName = deleteButton.dataset.teamName;
+                openDeleteTeamModal(teamId, teamName);
+            }
+        });
+    }
 }
 
 // Initialisiert die komplette Spieler-Seite.
@@ -310,6 +469,7 @@ function initPlayersPage() {
     initPlayerModals();
     initPlayerActionEvents();
     loadPlayers();
+    loadTeams();
 }
 
 document.addEventListener("DOMContentLoaded", initPlayersPage);

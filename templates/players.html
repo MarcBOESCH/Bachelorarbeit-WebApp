@@ -9,28 +9,23 @@
         <div class="card-body">
             <h2 class="h4 mb-3">Spielerverwaltung</h2>
 
-            <div class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label for="player-name" class="form-label">Neuen Spieler anlegen</label>
-                    <input
-                        id="player-name"
-                        type="text"
-                        class="form-control"
-                        placeholder="z. B. Hans Peter"
-                    >
-                </div>
-
-                <div class="col-md-4">
-                    <button id="create-player-btn" class="btn btn-dark w-100">
-                        Spieler anlegen
-                    </button>
-                </div>
-            </div>
-
             <div class="mt-4">
                 <h3 class="h5">Vorhandene Spieler</h3>
                 <ul id="player-list" class="list-group mt-3">
                     <li class="list-group-item text-muted">Noch keine Spieler vorhanden.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4 mb-3">Teamverwaltung</h2>
+
+            <div class="mt-5">
+                <h3 class="h5">Vorhandene Teams</h3>
+                <ul id="team-list" class="list-group mt-3">
+                    <li class="list-group-item text-muted">Noch keine Teams vorhanden.</li>
                 </ul>
             </div>
         </div>
@@ -63,32 +58,62 @@
         </div>
     </div>
 
-    <!-- Modal: Spieler löschen -->
-    <div class="modal fade" id="deletePlayerModal" tabindex="-1" aria-labelledby="deletePlayerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header text-center">
-                    <h5 class="modal-title fw-bold w-100" id="deletePlayerModalLabel">Spieler löschen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
+    {% if session.get('role') == 'admin' %}
+        <!-- Modal: Spieler löschen -->
+        <div class="modal fade" id="deletePlayerModal" tabindex="-1" aria-labelledby="deletePlayerModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header text-center">
+                        <h5 class="modal-title fw-bold w-100" id="deletePlayerModalLabel">Spieler löschen</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                    </div>
 
-                <div class="modal-body text-center">
-                    <p class="mb-0">
-                        Willst du den Spieler
-                        <strong id="delete-player-name"></strong>
-                        wirklich löschen?
-                    </p>
-                </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-0">
+                            Willst du den Spieler
+                            <strong id="delete-player-name"></strong>
+                            wirklich löschen?
+                        </p>
+                    </div>
 
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                    <button type="button" class="btn btn-danger" id="confirm-player-delete-btn">Löschen</button>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="button" class="btn btn-danger" id="confirm-player-delete-btn">Löschen</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Modal: Team löschen -->
+        <div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-labelledby="deleteTeamModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header text-center">
+                        <h5 class="modal-title fw-bold w-100" id="deleteTeamModalLabel">Team löschen</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                    </div>
+
+                    <div class="modal-body text-center">
+                        <p class="mb-0">
+                            Willst du das Team
+                            <strong id="delete-team-name"></strong>
+                            wirklich löschen?
+                        </p>
+                    </div>
+
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="button" class="btn btn-danger" id="confirm-team-delete-btn">Löschen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block page_scripts %}
+    <script>
+        window.IS_ADMIN = {{ 'true' if session.get('role') == 'admin' else 'false' }};
+    </script>
     <script src="{{ url_for('static', filename='js/pages/players.js') }}"></script>
 {% endblock %}

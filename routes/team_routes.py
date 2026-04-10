@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from sqlalchemy import func
 
 from extensions import db
 from models.player import Player
 from models.team import Team
+from models.match import Match
 
 team_api_bp = Blueprint("team_api", __name__)
 
@@ -66,3 +67,25 @@ def create_team():
         "message": "Team erstellt",
         "id": new_team.id
     }), 201
+
+@team_api_bp.route("/api/teams/<int:team_id>", methods=["DELETE"])
+def delete_team(team_id):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Nur Admins dürfen Teams löschen."}), 403
+
+    team = Team.query.get(team_id)
+
+    if not team:
+        return jsonify({"error": "Team wurde nicht gefunden."}), 404
+
+    is_used_in_match = Match.query.filter(
+        db.or_(Match.team_a_id == team_id, Match.team_b_id == team_id)
+    ).first()
+
+    if is_used_in_match:
+        return jsonify({"error": "Team kann nicht gelöscht werden, da es bereits in Matches verwendet wurde."}), 400
+
+    db.session.delete(team)
+    db.session.commit()
+
+    return jsonify({"message": "Team erfolgreich gelöscht."}), 200

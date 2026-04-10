@@ -47,8 +47,14 @@ def require_login():
         return redirect(url_for('login'))
 
     # 2. Prüfen, ob ein normaler User auf eine Admin-Seite will
-    admin_endpoints = ['ratings.ratings_page', 'ratings.process_ratings_for_system', 'ratings.get_ratings_for_system',
-                       'evaluation.evaluate_system']
+    admin_endpoints = [
+        'ratings.ratings_page',
+        'ratings.process_ratings_for_system',
+        'ratings.get_ratings_for_system',
+        'evaluation.evaluate_system',
+        'players.delete_player_route',
+        'team_api.delete_team'
+    ]
     if request.endpoint in admin_endpoints and session.get('role') != 'admin':
         return redirect(url_for('matches.match_page'))
 
