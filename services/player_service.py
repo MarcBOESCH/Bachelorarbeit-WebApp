@@ -1,13 +1,11 @@
-from models.player import Player
+from sqlalchemy import or_
+
 from extensions import db
+from models.player import Player
+from models.team import Team
 
 
 def create_player(name):
-    """
-    Erstellt einen neuen Spieler, wenn der Name gültig ist
-    und noch nicht existiert.
-    """
-
     if not isinstance(name, str):
         return False, "Name muss ein Text sein", None
 
@@ -57,13 +55,18 @@ def delete_player(player_id):
     if not player:
         return False, "Spieler wurde nicht gefunden."
 
-    if player.match_entries:
-        return False, "Spieler kann nicht gelöscht werden, da er bereits in Matches verwendet wurde."
+    is_used_in_team = Team.query.filter(
+        or_(Team.player1_id == player_id, Team.player2_id == player_id)
+    ).first()
+
+    if is_used_in_team:
+        return False, "Spieler kann nicht gelöscht werden, da er bereits in einem Team verwendet wird."
 
     db.session.delete(player)
     db.session.commit()
 
     return True, None
+
 
 def get_all_players():
     return Player.query.order_by(Player.name.asc()).all()
