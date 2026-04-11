@@ -225,12 +225,12 @@
     </div>
 {% endblock %}
 
-<script>
-    // Übergibt das Backend-Game an JavaScript, um die Undo-Historie beim Laden zu haben
-    window.INITIAL_GAME_STATE = {{ game | tojson }};
-</script>
 
 {% block page_scripts %}
+    <script>
+        // Übergibt das Backend-Game an JavaScript, um die Undo-Historie beim Laden zu haben
+        window.INITIAL_GAME_STATE = {{ game | tojson }};
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
     <script src="{{ url_for('static', filename='js/pages/match.js') }}"></script>
