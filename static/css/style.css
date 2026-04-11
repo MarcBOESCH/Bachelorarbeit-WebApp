@@ -702,10 +702,6 @@ canvas {
     transition: fill 0.2s ease;
 }
 
-.snake-hotspot-area:hover {
-    fill: rgba(15, 81, 50, 0.05);
-}
-
 .snake-tallies-layer {
     position: absolute;
     inset: 0;
