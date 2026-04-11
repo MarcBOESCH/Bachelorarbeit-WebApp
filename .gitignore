@@ -47,3 +47,5 @@ node_modules/
 # Upload / temp artifacts
 tmp/
 temp/
+/code_review_export.txt
+/merge_code.py
