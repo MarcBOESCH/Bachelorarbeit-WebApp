@@ -1,20 +1,21 @@
-import math
-
-import trueskill
 from glicko2 import Player as Glicko2Player
 
 from models.match import Match
-
-
-SUPPORTED_EVALUATION_SYSTEMS = {"elo", "glicko2", "trueskill"}
-
-TRUESKILL_ENV = trueskill.TrueSkill(
-    mu=25.0,
-    sigma=8.333,
-    beta=4.167,
-    tau=0.083,
-    draw_probability=0.0
+from services.rating_utils import (
+    SUPPORTED_RATING_SYSTEMS,
+    DEFAULT_ELO_RATING,
+    DEFAULT_GLICKO2_RATING,
+    DEFAULT_GLICKO2_RD,
+    DEFAULT_GLICKO2_VOL,
+    DEFAULT_TRUESKILL_MU,
+    DEFAULT_TRUESKILL_SIGMA,
+    TRUESKILL_ENV,
+    calculate_elo_expected_score,
+    calculate_log_loss,
 )
+
+
+SUPPORTED_EVALUATION_SYSTEMS = SUPPORTED_RATING_SYSTEMS
 
 
 class MockPlayerEntry:
@@ -24,26 +25,14 @@ class MockPlayerEntry:
         self.team_slot = team_slot
 
 
-def calculate_log_loss(probability, actual_outcome):
-    clipped_probability = min(max(probability, 1e-6), 1 - 1e-6)
-    return -(
-        actual_outcome * math.log(clipped_probability) +
-        (1 - actual_outcome) * math.log(1 - clipped_probability)
-    )
-
-
-def calculate_elo_expected_score(team_a_rating, team_b_rating):
-    return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
-
-
 def build_match_teams(match):
     team_a_entries = [
         MockPlayerEntry(match.team_a.player1_id, "A", 1),
-        MockPlayerEntry(match.team_a.player2_id, "A", 2)
+        MockPlayerEntry(match.team_a.player2_id, "A", 2),
     ]
     team_b_entries = [
         MockPlayerEntry(match.team_b.player1_id, "B", 1),
-        MockPlayerEntry(match.team_b.player2_id, "B", 2)
+        MockPlayerEntry(match.team_b.player2_id, "B", 2),
     ]
     return team_a_entries, team_b_entries
 
@@ -54,7 +43,7 @@ def build_result_payload(
     correct_predictions,
     total_brier_score,
     total_log_loss,
-    prediction_details
+    prediction_details,
 ):
     accuracy = round((correct_predictions / total_predictions) * 100, 2) if total_predictions > 0 else 0.0
     average_brier_score = round(total_brier_score / total_predictions, 6) if total_predictions > 0 else 0.0
@@ -67,7 +56,7 @@ def build_result_payload(
         "accuracy": accuracy,
         "brier_score": average_brier_score,
         "log_loss": average_log_loss,
-        "details": prediction_details
+        "details": prediction_details,
     }
 
 
@@ -89,7 +78,7 @@ def evaluate_elo_predictions():
 
         for entry in team_a_entries + team_b_entries:
             if entry.player_id not in player_ratings:
-                player_ratings[entry.player_id] = 1500.0
+                player_ratings[entry.player_id] = DEFAULT_ELO_RATING
 
         team_a_rating = sum(player_ratings[entry.player_id] for entry in team_a_entries) / 2
         team_b_rating = sum(player_ratings[entry.player_id] for entry in team_b_entries) / 2
@@ -120,7 +109,7 @@ def evaluate_elo_predictions():
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
             "log_loss": round(log_loss, 6),
-            "correct": is_correct
+            "correct": is_correct,
         })
 
         actual_a = 1.0 if actual_winner == "A" else 0.0
@@ -145,7 +134,7 @@ def evaluate_elo_predictions():
         correct_predictions,
         total_brier_score,
         total_log_loss,
-        prediction_details
+        prediction_details,
     )
 
 
@@ -168,9 +157,9 @@ def evaluate_glicko2_predictions():
         for entry in team_a_entries + team_b_entries:
             if entry.player_id not in player_states:
                 player_states[entry.player_id] = {
-                    "rating": 1500.0,
-                    "rd": 350.0,
-                    "vol": 0.06
+                    "rating": DEFAULT_GLICKO2_RATING,
+                    "rd": DEFAULT_GLICKO2_RD,
+                    "vol": DEFAULT_GLICKO2_VOL,
                 }
 
         team_a_rating = sum(player_states[entry.player_id]["rating"] for entry in team_a_entries) / 2
@@ -208,18 +197,18 @@ def evaluate_glicko2_predictions():
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
             "log_loss": round(log_loss, 6),
-            "correct": is_correct
+            "correct": is_correct,
         })
 
         team_a_player = Glicko2Player(
             rating=team_a_rating,
             rd=team_a_rd,
-            vol=team_a_vol
+            vol=team_a_vol,
         )
         team_b_player = Glicko2Player(
             rating=team_b_rating,
             rd=team_b_rd,
-            vol=team_b_vol
+            vol=team_b_vol,
         )
 
         if actual_winner == "A":
@@ -238,12 +227,12 @@ def evaluate_glicko2_predictions():
         team_a_player.update_player(
             [team_a_opponent_rating],
             [team_a_opponent_rd],
-            [team_a_result]
+            [team_a_result],
         )
         team_b_player.update_player(
             [team_b_opponent_rating],
             [team_b_opponent_rd],
-            [team_b_result]
+            [team_b_result],
         )
 
         delta_a_rating = team_a_player.rating - team_a_rating
@@ -271,7 +260,7 @@ def evaluate_glicko2_predictions():
         correct_predictions,
         total_brier_score,
         total_log_loss,
-        prediction_details
+        prediction_details,
     )
 
 
@@ -293,7 +282,10 @@ def evaluate_trueskill_predictions():
 
         for entry in team_a_entries + team_b_entries:
             if entry.player_id not in player_states:
-                player_states[entry.player_id] = TRUESKILL_ENV.create_rating(mu=25.0, sigma=8.333)
+                player_states[entry.player_id] = TRUESKILL_ENV.create_rating(
+                    mu=DEFAULT_TRUESKILL_MU,
+                    sigma=DEFAULT_TRUESKILL_SIGMA,
+                )
 
         team_a_mu = sum(player_states[entry.player_id].mu for entry in team_a_entries) / 2
         team_b_mu = sum(player_states[entry.player_id].mu for entry in team_b_entries) / 2
@@ -324,7 +316,7 @@ def evaluate_trueskill_predictions():
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
             "log_loss": round(log_loss, 6),
-            "correct": is_correct
+            "correct": is_correct,
         })
 
         team_a_ratings = [player_states[entry.player_id] for entry in team_a_entries]
@@ -349,7 +341,7 @@ def evaluate_trueskill_predictions():
         correct_predictions,
         total_brier_score,
         total_log_loss,
-        prediction_details
+        prediction_details,
     )
 
 

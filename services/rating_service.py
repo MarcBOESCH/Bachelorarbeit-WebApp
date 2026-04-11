@@ -1,23 +1,24 @@
 import datetime
 
-import trueskill
 from glicko2 import Player as Glicko2Player
 
 from extensions import db
 from models.match import Match
 from models.match_rating_status import MatchRatingStatus
 from models.rating import PlayerRating
-
-
-SUPPORTED_SYSTEMS = {"elo", "glicko2", "trueskill"}
-
-TRUESKILL_ENV = trueskill.TrueSkill(
-    mu=25.0,
-    sigma=8.333,
-    beta=4.167,
-    tau=0.083,
-    draw_probability=0.0
+from services.rating_utils import (
+    SUPPORTED_RATING_SYSTEMS,
+    DEFAULT_ELO_RATING,
+    DEFAULT_GLICKO2_RATING,
+    DEFAULT_GLICKO2_RD,
+    DEFAULT_GLICKO2_VOL,
+    DEFAULT_TRUESKILL_MU,
+    DEFAULT_TRUESKILL_SIGMA,
+    TRUESKILL_ENV,
+    calculate_elo_expected_score
 )
+
+SUPPORTED_SYSTEMS = SUPPORTED_RATING_SYSTEMS
 
 
 def get_or_create_player_rating(player_id, system_name):
@@ -36,24 +37,24 @@ def get_or_create_player_rating(player_id, system_name):
         rating_entry = PlayerRating(
             player_id=player_id,
             system_name="elo",
-            rating=1500.0,
+            rating=DEFAULT_ELO_RATING,
             matches_played=0
         )
     elif system_name == "glicko2":
         rating_entry = PlayerRating(
             player_id=player_id,
             system_name="glicko2",
-            rating=1500.0,
-            rating_deviation=350.0,
-            volatility=0.06,
+            rating=DEFAULT_GLICKO2_RATING,
+            rating_deviation=DEFAULT_GLICKO2_RD,
+            volatility=DEFAULT_GLICKO2_VOL,
             matches_played=0
         )
     elif system_name == "trueskill":
         rating_entry = PlayerRating(
             player_id=player_id,
             system_name="trueskill",
-            mu=25.0,
-            sigma=8.333,
+            mu=DEFAULT_TRUESKILL_MU,
+            sigma=DEFAULT_TRUESKILL_SIGMA,
             matches_played=0
         )
     else:
@@ -61,7 +62,6 @@ def get_or_create_player_rating(player_id, system_name):
 
     db.session.add(rating_entry)
     db.session.commit()
-
     return rating_entry
 
 
@@ -110,10 +110,6 @@ def calculate_team_average_rating(team_entries):
     return sum(ratings) / len(ratings)
 
 
-def calculate_elo_expected_score(team_a_rating, team_b_rating):
-    return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
-
-
 def calculate_team_average_glicko2_values(team_entries):
     avg_rating = sum(entry["rating_entry"].rating for entry in team_entries) / len(team_entries)
     avg_rd = sum(entry["rating_entry"].rating_deviation for entry in team_entries) / len(team_entries)
@@ -148,7 +144,6 @@ def get_or_create_match_rating_status(match_id, system_name):
 
     db.session.add(status_entry)
     db.session.commit()
-
     return status_entry
 
 
@@ -232,16 +227,8 @@ def process_glicko2_match(match):
     team_a_rating, team_a_rd, team_a_vol = calculate_team_average_glicko2_values(team_a)
     team_b_rating, team_b_rd, team_b_vol = calculate_team_average_glicko2_values(team_b)
 
-    team_a_player = Glicko2Player(
-        rating=team_a_rating,
-        rd=team_a_rd,
-        vol=team_a_vol
-    )
-    team_b_player = Glicko2Player(
-        rating=team_b_rating,
-        rd=team_b_rd,
-        vol=team_b_vol
-    )
+    team_a_player = Glicko2Player(rating=team_a_rating, rd=team_a_rd, vol=team_a_vol)
+    team_b_player = Glicko2Player(rating=team_b_rating, rd=team_b_rd, vol=team_b_vol)
 
     if match.winner_team == "A":
         team_a_result = 1
@@ -250,29 +237,13 @@ def process_glicko2_match(match):
         team_a_result = 0
         team_b_result = 1
 
-    team_a_opponent_rating = team_b_rating
-    team_a_opponent_rd = team_b_rd
-
-    team_b_opponent_rating = team_a_rating
-    team_b_opponent_rd = team_a_rd
-
-    team_a_player.update_player(
-        [team_a_opponent_rating],
-        [team_a_opponent_rd],
-        [team_a_result]
-    )
-    team_b_player.update_player(
-        [team_b_opponent_rating],
-        [team_b_opponent_rd],
-        [team_b_result]
-    )
+    team_a_player.update_player([team_b_rating], [team_b_rd], [team_a_result])
+    team_b_player.update_player([team_a_rating], [team_a_rd], [team_b_result])
 
     delta_a_rating = team_a_player.rating - team_a_rating
     delta_b_rating = team_b_player.rating - team_b_rating
-
     delta_a_rd = team_a_player.rd - team_a_rd
     delta_b_rd = team_b_player.rd - team_b_rd
-
     delta_a_vol = team_a_player.vol - team_a_vol
     delta_b_vol = team_b_player.vol - team_b_vol
 
@@ -309,14 +280,8 @@ def process_trueskill_match(match):
     if len(team_a) != 2 or len(team_b) != 2:
         raise ValueError("Ein TrueSkill-Match muss genau 2 Spieler pro Team haben.")
 
-    team_a_ratings = [
-        build_trueskill_rating(entry["rating_entry"])
-        for entry in team_a
-    ]
-    team_b_ratings = [
-        build_trueskill_rating(entry["rating_entry"])
-        for entry in team_b
-    ]
+    team_a_ratings = [build_trueskill_rating(entry["rating_entry"]) for entry in team_a]
+    team_b_ratings = [build_trueskill_rating(entry["rating_entry"]) for entry in team_b]
 
     if match.winner_team == "A":
         rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
@@ -353,10 +318,8 @@ def process_trueskill_match(match):
 def process_match_for_system(match, system_name):
     if system_name == "elo":
         return process_elo_match(match)
-
     if system_name == "glicko2":
         return process_glicko2_match(match)
-
     if system_name == "trueskill":
         return process_trueskill_match(match)
 
