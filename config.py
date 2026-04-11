@@ -3,7 +3,7 @@ from datetime import timedelta
 
 
 class BaseConfig:
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SESSION_COOKIE_HTTPONLY = True
@@ -20,6 +20,8 @@ class DevelopmentConfig(BaseConfig):
     DEBUG = True
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "NEON_DATABASE_URL"
+    ) or os.environ.get(
         "DATABASE_URL",
         "postgresql+psycopg2://localhost/jasstistics_dev"
     )

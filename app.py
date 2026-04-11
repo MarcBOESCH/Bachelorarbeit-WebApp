@@ -18,8 +18,12 @@ def create_app():
     app.config.from_object(config_class)
 
     if env_name == "production":
-        required_keys = ["SECRET_KEY", "USER_PIN", "ADMIN_PIN", "DATABASE_URL"]
+        required_keys = ["SECRET_KEY", "USER_PIN", "ADMIN_PIN"]
         missing = [key for key in required_keys if not app.config.get(key)]
+
+        if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+            missing.append("NEON_DATABASE_URL or DATABASE_URL")
+
         if missing:
             raise RuntimeError(
                 f"Fehlende Umgebungsvariablen für Production: {', '.join(missing)}"
