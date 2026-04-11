@@ -414,7 +414,8 @@ function drawTallies(containerId, count) {
     }
 }
 
-// Berechnet die Striche exakt anhand der Zug-Historie und zerlegt manuelle Eingaben.
+// Glättet die Schlangenanzeige visuell.
+// Sobald mehr als 10 Striche sichtbar wären, wird ein Teil in einen 100er-Block umgewandelt.
 function renderSnakeScores(teamLower, currentScore, undoHistory) {
     const tallies = { 100: 0, 50: 0, 20: 0 };
     let rest = 0;
@@ -476,14 +477,14 @@ function renderSnakeScores(teamLower, currentScore, undoHistory) {
         rest = remaining % 20;
     }
 
-    if (tallies[20] > 10) {
-        tallies[100] += Math.floor(tallies[20] / 5);
-        tallies[20] %= 5;
+    while (tallies[20] > 10) {
+        tallies[100] += 2;
+        tallies[20] -= 10;
     }
 
-    if (tallies[50] > 10) {
-        tallies[100] += Math.floor(tallies[50] / 2);
-        tallies[50] %= 2;
+    while (tallies[50] > 10) {
+        tallies[100] += 5;
+        tallies[50] -= 10;
     }
 
     drawTallies(`tally-${teamLower}-100`, tallies[100]);

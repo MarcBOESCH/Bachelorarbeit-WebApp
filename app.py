@@ -50,7 +50,7 @@ def require_login():
         "ratings.get_ratings_for_system",
         "evaluation.evaluate_system",
         "players.delete_player_route",
-        "team_api.delete_team",
+        "team_api.delete_team_route",
     ]
 
     if request.endpoint in admin_endpoints and session.get("role") != "admin":

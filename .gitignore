@@ -1,22 +1,49 @@
-# macOS
-.DS_Store
-
-# Environment
-.env
-.venv/
-venv/
-
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
+*$py.class
 
-# IDE
+# Virtual environments
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+
+# IDEs
 .idea/
 .vscode/
 
-# Flask / local data
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Instance / local database
 instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask / cache / test
 .pytest_cache/
-/merge_code.py
-/code_review_export.txt
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+
+# Node leftovers, falls mal vorhanden
+node_modules/
+
+# Upload / temp artifacts
+tmp/
+temp/
