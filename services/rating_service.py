@@ -115,14 +115,21 @@ def process_glicko2_match(match):
         team_a_result = 0
         team_b_result = 1
 
+    # Vorher-Werte des Gegners sichern, damit beide Teams gegen denselben Pre-Match-Stand gerechnet werden
+    team_a_opponent_rating = team_b_rating
+    team_a_opponent_rd = team_b_rd
+
+    team_b_opponent_rating = team_a_rating
+    team_b_opponent_rd = team_a_rd
+
     team_a_player.update_player(
-        [team_b_player.rating],
-        [team_b_player.rd],
+        [team_a_opponent_rating],
+        [team_a_opponent_rd],
         [team_a_result]
     )
     team_b_player.update_player(
-        [team_a_player.rating],
-        [team_a_player.rd],
+        [team_b_opponent_rating],
+        [team_b_opponent_rd],
         [team_b_result]
     )
 
@@ -421,6 +428,15 @@ def get_player_ratings_for_system(system_name):
             "sigma": round(entry.sigma, 4) if entry.sigma is not None else None
         })
 
-    result.sort(key=lambda item: item["rating"] if item["rating"] is not None else -999999, reverse=True)
+    if system_name in {"elo", "glicko2"}:
+        result.sort(
+            key=lambda item: item["rating"] if item["rating"] is not None else -999999,
+            reverse=True
+        )
+    elif system_name == "trueskill":
+        result.sort(
+            key=lambda item: item["mu"] if item["mu"] is not None else -999999,
+            reverse=True
+        )
 
     return result
