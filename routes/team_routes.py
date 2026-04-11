@@ -1,46 +1,56 @@
 from flask import Blueprint, jsonify, request, session
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 
 from extensions import db
+from models.match import Match
 from models.player import Player
 from models.team import Team
-from models.match import Match
+
 
 team_api_bp = Blueprint("team_api", __name__)
 
 
-@team_api_bp.route("/api/teams", methods=["GET"])
-def get_teams():
-    teams = Team.query.all()
+def serialize_team(team):
+    return {
+        "id": team.id,
+        "name": team.name,
+        "player1_id": team.player1_id,
+        "player2_id": team.player2_id,
+        "player_names": f"{team.player1.name} & {team.player2.name}",
+    }
 
-    return jsonify([
-        {
-            "id": t.id,
-            "name": t.name,
-            "player1_id": t.player1_id,
-            "player2_id": t.player2_id,
-            "player_names": f"{t.player1.name} & {t.player2.name}",
-        }
-        for t in teams
-    ]), 200
+
+def get_existing_team_with_same_pair(player1_id, player2_id):
+    return Team.query.filter(
+        or_(
+            and_(Team.player1_id == player1_id, Team.player2_id == player2_id),
+            and_(Team.player1_id == player2_id, Team.player2_id == player1_id),
+        )
+    ).first()
+
+
+@team_api_bp.route("/api/teams", methods=["GET"])
+def get_teams_route():
+    teams = Team.query.all()
+    return jsonify([serialize_team(team) for team in teams]), 200
 
 
 @team_api_bp.route("/api/teams", methods=["POST"])
-def create_team():
+def create_team_route():
     data = request.get_json()
 
     if not data:
         return jsonify({"error": "Keine JSON-Daten erhalten."}), 400
 
     name = data.get("name", "").strip()
-    p1_id = data.get("player1_id")
-    p2_id = data.get("player2_id")
+    player1_id = data.get("player1_id")
+    player2_id = data.get("player2_id")
 
-    if not name or not p1_id or not p2_id or p1_id == p2_id:
+    if not name or not player1_id or not player2_id or player1_id == player2_id:
         return jsonify({"error": "Ungültige Team-Daten."}), 400
 
-    player1 = Player.query.get(p1_id)
-    player2 = Player.query.get(p2_id)
+    player1 = Player.query.get(player1_id)
+    player2 = Player.query.get(player2_id)
 
     if not player1 or not player2:
         return jsonify({"error": "Mindestens ein Spieler existiert nicht."}), 400
@@ -49,28 +59,24 @@ def create_team():
     if existing_name:
         return jsonify({"error": "Dieser Teamname existiert bereits."}), 400
 
-    existing_same_pair = Team.query.filter(
-        db.or_(
-            db.and_(Team.player1_id == p1_id, Team.player2_id == p2_id),
-            db.and_(Team.player1_id == p2_id, Team.player2_id == p1_id),
-        )
-    ).first()
-
+    existing_same_pair = get_existing_team_with_same_pair(player1_id, player2_id)
     if existing_same_pair:
         return jsonify({"error": "Dieses Team existiert bereits."}), 400
 
-    new_team = Team(name=name, player1_id=p1_id, player2_id=p2_id)
+    new_team = Team(name=name, player1_id=player1_id, player2_id=player2_id)
     db.session.add(new_team)
     db.session.commit()
 
     return jsonify({
-        "message": "Team erstellt",
-        "id": new_team.id
+        "message": "Team erstellt.",
+        "id": new_team.id,
     }), 201
 
+
 @team_api_bp.route("/api/teams/<int:team_id>", methods=["PUT"])
-def update_team(team_id):
+def update_team_route(team_id):
     data = request.get_json()
+
     if not data:
         return jsonify({"error": "Keine JSON-Daten erhalten."}), 400
 
@@ -93,28 +99,32 @@ def update_team(team_id):
         "message": "Team erfolgreich aktualisiert.",
         "team": {
             "id": team.id,
-            "name": team.name
-        }
+            "name": team.name,
+        },
     }), 200
 
+
 @team_api_bp.route("/api/teams/<int:team_id>", methods=["DELETE"])
-def delete_team(team_id):
+def delete_team_route(team_id):
     if session.get("role") != "admin":
         return jsonify({"error": "Nur Admins dürfen Teams löschen."}), 403
 
     team = Team.query.get(team_id)
-
     if not team:
         return jsonify({"error": "Team wurde nicht gefunden."}), 404
 
     is_used_in_match = Match.query.filter(
-        db.or_(Match.team_a_id == team_id, Match.team_b_id == team_id)
+        or_(Match.team_a_id == team_id, Match.team_b_id == team_id)
     ).first()
 
     if is_used_in_match:
-        return jsonify({"error": "Team kann nicht gelöscht werden, da es bereits in Matches verwendet wurde."}), 400
+        return jsonify({
+            "error": "Team kann nicht gelöscht werden, da es bereits in Matches verwendet wurde."
+        }), 400
 
     db.session.delete(team)
     db.session.commit()
 
-    return jsonify({"message": "Team erfolgreich gelöscht."}), 200
+    return jsonify({
+        "message": "Team erfolgreich gelöscht."
+    }), 200

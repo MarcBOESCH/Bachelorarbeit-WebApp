@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, render_template
 from services.player_stats_service import get_player_stats
 from services.team_stats_service import get_team_stats
 
+
 statistics_page_bp = Blueprint("statistics", __name__)
 statistics_api_bp = Blueprint("statistics_api", __name__)
 
@@ -13,12 +14,12 @@ def statistics_page():
 
 
 @statistics_api_bp.route("/api/player-stats", methods=["GET"])
-def player_stats():
+def get_player_stats_route():
     stats = get_player_stats()
     return jsonify(stats), 200
 
 
 @statistics_api_bp.route("/api/team-stats", methods=["GET"])
-def team_stats():
+def get_team_stats_route():
     stats = get_team_stats()
     return jsonify(stats), 200

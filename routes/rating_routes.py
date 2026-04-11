@@ -2,10 +2,13 @@ from flask import Blueprint, jsonify, render_template
 
 from services.rating_service import (
     SUPPORTED_SYSTEMS,
-    process_all_unprocessed_matches_for_system, get_player_ratings_for_system,
+    get_player_ratings_for_system,
+    process_all_unprocessed_matches_for_system,
 )
 
+
 rating_page_bp = Blueprint("ratings", __name__)
+
 
 @rating_page_bp.route("/ratings", methods=["GET"])
 def ratings_page():
@@ -33,7 +36,7 @@ def process_ratings_for_system(system_name):
         "system_name": system_name,
         "processed_matches": len(results),
         "results": results
-    })
+    }), 200
 
 
 @rating_page_bp.route("/ratings/<system_name>", methods=["GET"])
@@ -55,4 +58,4 @@ def get_ratings_for_system(system_name):
     return jsonify({
         "system_name": system_name,
         "ratings": ratings
-    })
+    }), 200

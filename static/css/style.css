@@ -666,7 +666,7 @@ canvas {
 
 .match-summary-actions .btn {
     width: auto;
-    min-width: 220px;
+    min-width: 150px;
 }
 
 .summary-item {
@@ -679,6 +679,7 @@ canvas {
     border-radius: var(--radius-md);
     background: var(--color-surface-soft);
     text-align: center;
+
 }
 
 .summary-label {
@@ -1032,10 +1033,11 @@ canvas {
 
     .match-summary-grid {
         flex-direction: row;
+        flex-wrap: wrap;
     }
 
     .match-summary-grid .summary-item {
-        min-width: 140px;
+        min-width: 250px;
     }
 
     .toast-container {

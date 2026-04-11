@@ -2,7 +2,9 @@ from flask import Blueprint, jsonify
 
 from services.evaluation_service import evaluate_predictions_for_system
 
+
 evaluation_bp = Blueprint("evaluation", __name__)
+
 
 @evaluation_bp.route("/evaluation/<system_name>", methods=["GET"])
 def evaluate_system(system_name):
@@ -15,4 +17,4 @@ def evaluate_system(system_name):
             "error": "Bei der Evaluation ist ein unerwarteter Fehler aufgetreten."
         }), 500
 
-    return jsonify(result)
+    return jsonify(result), 200

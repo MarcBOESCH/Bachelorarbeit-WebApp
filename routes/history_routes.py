@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template
 
+
 history_page_bp = Blueprint("history", __name__)
 
 
