@@ -8,6 +8,10 @@ let playerIdToDelete = null;
 let teamIdToEdit = null;
 let teamIdToDelete = null;
 
+/* =========================
+   Daten laden
+========================= */
+
 // Lädt alle Spieler aus der API und rendert sie in die Spielerliste.
 async function loadPlayers() {
     try {
@@ -48,10 +52,17 @@ async function loadTeams() {
     }
 }
 
+/* =========================
+   Spieler-Aktionen
+========================= */
+
 // Erstellt einen neuen Spieler über die API.
 async function createPlayer() {
     const input = document.getElementById("player-name");
-    if (!input) return;
+
+    if (!input) {
+        return;
+    }
 
     const name = input.value.trim();
 
@@ -89,7 +100,9 @@ async function createPlayer() {
 async function saveEditedPlayer() {
     const input = document.getElementById("edit-player-name");
 
-    if (!input || !playerIdToEdit) return;
+    if (!input || !playerIdToEdit) {
+        return;
+    }
 
     const trimmedName = input.value.trim();
 
@@ -128,7 +141,9 @@ async function saveEditedPlayer() {
 
 // Löscht einen Spieler, sofern das Backend dies erlaubt.
 async function deletePlayerConfirmed() {
-    if (!playerIdToDelete) return;
+    if (!playerIdToDelete) {
+        return;
+    }
 
     try {
         const response = await fetch(`/api/players/${playerIdToDelete}`, {
@@ -154,10 +169,17 @@ async function deletePlayerConfirmed() {
     }
 }
 
+/* =========================
+   Team-Aktionen
+========================= */
+
+// Speichert die Bearbeitung eines vorhandenen Teams.
 async function saveEditedTeam() {
     const input = document.getElementById("edit-team-name");
 
-    if (!input || !teamIdToEdit) return;
+    if (!input || !teamIdToEdit) {
+        return;
+    }
 
     const trimmedName = input.value.trim();
 
@@ -195,7 +217,9 @@ async function saveEditedTeam() {
 
 // Löscht ein Team, sofern das Backend dies erlaubt.
 async function deleteTeamConfirmed() {
-    if (!teamIdToDelete) return;
+    if (!teamIdToDelete) {
+        return;
+    }
 
     try {
         const response = await fetch(`/api/teams/${teamIdToDelete}`, {
@@ -220,12 +244,18 @@ async function deleteTeamConfirmed() {
     }
 }
 
-// Öffnet das Bearbeiten-Modal.
+/* =========================
+   Modals öffnen
+========================= */
+
+// Öffnet das Bearbeiten-Modal für Spieler.
 function openEditPlayerModal(playerId, currentName) {
     const input = document.getElementById("edit-player-name");
     const modalElement = document.getElementById("editPlayerModal");
 
-    if (!input || !modalElement) return;
+    if (!input || !modalElement) {
+        return;
+    }
 
     playerIdToEdit = playerId;
     input.value = currentName;
@@ -247,7 +277,9 @@ function openDeletePlayerModal(playerId, playerName) {
     const nameElement = document.getElementById("delete-player-name");
     const modalElement = document.getElementById("deletePlayerModal");
 
-    if (!nameElement || !modalElement) return;
+    if (!nameElement || !modalElement) {
+        return;
+    }
 
     playerIdToDelete = playerId;
     nameElement.textContent = `"${playerName}"`;
@@ -259,12 +291,14 @@ function openDeletePlayerModal(playerId, playerName) {
     deletePlayerModalInstance.show();
 }
 
-// Öffnet das Bearbeiten-Modal für Teams. (Derzeit nur mit Namen, da die Team-Zusammensetzung nicht bearbeitbar ist.)
+// Öffnet das Bearbeiten-Modal für Teams.
 function openEditTeamModal(teamId, currentName) {
     const input = document.getElementById("edit-team-name");
     const modalElement = document.getElementById("editTeamModal");
 
-    if (!input || !modalElement) return;
+    if (!input || !modalElement) {
+        return;
+    }
 
     teamIdToEdit = teamId;
     input.value = currentName;
@@ -286,7 +320,9 @@ function openDeleteTeamModal(teamId, teamName) {
     const nameElement = document.getElementById("delete-team-name");
     const modalElement = document.getElementById("deleteTeamModal");
 
-    if (!nameElement || !modalElement) return;
+    if (!nameElement || !modalElement) {
+        return;
+    }
 
     teamIdToDelete = teamId;
     nameElement.textContent = `"${teamName}"`;
@@ -298,11 +334,18 @@ function openDeleteTeamModal(teamId, teamName) {
     deleteTeamModalInstance.show();
 }
 
+/* =========================
+   Rendering
+========================= */
+
 // Rendert die Spielerliste im DOM.
 function renderPlayers(players) {
     const isAdmin = window.IS_ADMIN === true || window.IS_ADMIN === "true";
     const playerList = document.getElementById("player-list");
-    if (!playerList) return;
+
+    if (!playerList) {
+        return;
+    }
 
     playerList.innerHTML = "";
 
@@ -354,6 +397,7 @@ function renderPlayers(players) {
                 </div>
             </div>
         `;
+
         playerList.appendChild(li);
     });
 }
@@ -362,7 +406,10 @@ function renderPlayers(players) {
 function renderTeams(teams) {
     const isAdmin = window.IS_ADMIN === true || window.IS_ADMIN === "true";
     const teamList = document.getElementById("team-list");
-    if (!teamList) return;
+
+    if (!teamList) {
+        return;
+    }
 
     teamList.innerHTML = "";
 
@@ -380,16 +427,16 @@ function renderTeams(teams) {
         li.className = "list-group-item d-flex justify-content-between align-items-center";
 
         const editButtonHtml = `
-                <button
-                    type="button"
-                    class="btn btn-sm btn-outline-dark edit-team-btn"
-                    style="width: 48px; height: 48px;"
-                    data-team-id="${team.id}"
-                    data-team-name="${team.name}"
-                >
-                    <i class="bi bi-pencil"></i>
-                </button>
-            `;
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-dark edit-team-btn"
+                style="width: 48px; height: 48px;"
+                data-team-id="${team.id}"
+                data-team-name="${team.name}"
+            >
+                <i class="bi bi-pencil"></i>
+            </button>
+        `;
 
         const deleteButtonHtml = isAdmin
             ? `
@@ -423,12 +470,18 @@ function renderTeams(teams) {
     });
 }
 
+/* =========================
+   Initialisierung
+========================= */
+
 // Initialisiert den Bereich zum Anlegen neuer Spieler.
 function initPlayerSection() {
     const createPlayerBtn = document.getElementById("create-player-btn");
     const playerNameInput = document.getElementById("player-name");
 
-    if (!createPlayerBtn || !playerNameInput) return;
+    if (!createPlayerBtn || !playerNameInput) {
+        return;
+    }
 
     createPlayerBtn.addEventListener("click", createPlayer);
 

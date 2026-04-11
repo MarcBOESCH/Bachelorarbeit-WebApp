@@ -1,26 +1,8 @@
 let currentEvaluationDetailSystem = "elo";
 
-function getRatingConfig(systemName) {
-    const config = {
-        elo: {
-            emptyId: "elo-ratings-empty",
-            wrapperId: "elo-ratings-wrapper",
-            bodyId: "elo-ratings-body"
-        },
-        glicko2: {
-            emptyId: "glicko2-ratings-empty",
-            wrapperId: "glicko2-ratings-wrapper",
-            bodyId: "glicko2-ratings-body"
-        },
-        trueskill: {
-            emptyId: "trueskill-ratings-empty",
-            wrapperId: "trueskill-ratings-wrapper",
-            bodyId: "trueskill-ratings-body"
-        }
-    };
-
-    return config[systemName] || null;
-}
+/* =========================
+   Hilfsfunktionen
+========================= */
 
 function formatNumber(value) {
     if (value === null || value === undefined) {
@@ -52,15 +34,80 @@ function getSortableRatingValue(player, systemName) {
     return -999999;
 }
 
+function getRatingConfig(systemName) {
+    const config = {
+        elo: {
+            emptyId: "elo-ratings-empty",
+            wrapperId: "elo-ratings-wrapper",
+            bodyId: "elo-ratings-body"
+        },
+        glicko2: {
+            emptyId: "glicko2-ratings-empty",
+            wrapperId: "glicko2-ratings-wrapper",
+            bodyId: "glicko2-ratings-body"
+        },
+        trueskill: {
+            emptyId: "trueskill-ratings-empty",
+            wrapperId: "trueskill-ratings-wrapper",
+            bodyId: "trueskill-ratings-body"
+        }
+    };
+
+    return config[systemName] || null;
+}
+
+function getEvaluationConfig(systemName) {
+    const config = {
+        elo: {
+            emptyId: "evaluation-elo-empty",
+            contentId: "evaluation-elo-content",
+            accuracyId: "evaluation-elo-accuracy",
+            correctId: "evaluation-elo-correct",
+            totalId: "evaluation-elo-total",
+            brierId: "evaluation-elo-brier",
+            logLossId: "evaluation-elo-logloss"
+        },
+        glicko2: {
+            emptyId: "evaluation-glicko2-empty",
+            contentId: "evaluation-glicko2-content",
+            accuracyId: "evaluation-glicko2-accuracy",
+            correctId: "evaluation-glicko2-correct",
+            totalId: "evaluation-glicko2-total",
+            brierId: "evaluation-glicko2-brier",
+            logLossId: "evaluation-glicko2-logloss"
+        },
+        trueskill: {
+            emptyId: "evaluation-trueskill-empty",
+            contentId: "evaluation-trueskill-content",
+            accuracyId: "evaluation-trueskill-accuracy",
+            correctId: "evaluation-trueskill-correct",
+            totalId: "evaluation-trueskill-total",
+            brierId: "evaluation-trueskill-brier",
+            logLossId: "evaluation-trueskill-logloss"
+        }
+    };
+
+    return config[systemName] || null;
+}
+
+/* =========================
+   Ratings Rendering
+========================= */
+
 function renderRatingsForSystem(systemName, ratings) {
     const config = getRatingConfig(systemName);
-    if (!config) return;
+
+    if (!config) {
+        return;
+    }
 
     const emptyState = document.getElementById(config.emptyId);
     const wrapper = document.getElementById(config.wrapperId);
     const tbody = document.getElementById(config.bodyId);
 
-    if (!emptyState || !wrapper || !tbody) return;
+    if (!emptyState || !wrapper || !tbody) {
+        return;
+    }
 
     tbody.innerHTML = "";
 
@@ -106,6 +153,10 @@ function renderRatingsForSystem(systemName, ratings) {
         tbody.appendChild(row);
     });
 }
+
+/* =========================
+   Ratings API
+========================= */
 
 async function loadRatingsForSystem(systemName) {
     try {
@@ -162,61 +213,16 @@ async function processRatingsForSystem(systemName) {
     }
 }
 
-function initRatingsSection() {
-    const processEloBtn = document.getElementById("process-elo-btn");
-    const processGlicko2Btn = document.getElementById("process-glicko2-btn");
-    const processTrueSkillBtn = document.getElementById("process-trueskill-btn");
-
-    if (processEloBtn) {
-        processEloBtn.addEventListener("click", () => processRatingsForSystem("elo"));
-    }
-
-    if (processGlicko2Btn) {
-        processGlicko2Btn.addEventListener("click", () => processRatingsForSystem("glicko2"));
-    }
-
-    if (processTrueSkillBtn) {
-        processTrueSkillBtn.addEventListener("click", () => processRatingsForSystem("trueskill"));
-    }
-}
-
-function getEvaluationConfig(systemName) {
-    const config = {
-        elo: {
-            emptyId: "evaluation-elo-empty",
-            contentId: "evaluation-elo-content",
-            accuracyId: "evaluation-elo-accuracy",
-            correctId: "evaluation-elo-correct",
-            totalId: "evaluation-elo-total",
-            brierId: "evaluation-elo-brier",
-            logLossId: "evaluation-elo-logloss"
-        },
-        glicko2: {
-            emptyId: "evaluation-glicko2-empty",
-            contentId: "evaluation-glicko2-content",
-            accuracyId: "evaluation-glicko2-accuracy",
-            correctId: "evaluation-glicko2-correct",
-            totalId: "evaluation-glicko2-total",
-            brierId: "evaluation-glicko2-brier",
-            logLossId: "evaluation-glicko2-logloss"
-        },
-        trueskill: {
-            emptyId: "evaluation-trueskill-empty",
-            contentId: "evaluation-trueskill-content",
-            accuracyId: "evaluation-trueskill-accuracy",
-            correctId: "evaluation-trueskill-correct",
-            totalId: "evaluation-trueskill-total",
-            brierId: "evaluation-trueskill-brier",
-            logLossId: "evaluation-trueskill-logloss"
-        }
-    };
-
-    return config[systemName] || null;
-}
+/* =========================
+   Evaluation Rendering
+========================= */
 
 function renderEvaluation(systemName, data) {
     const config = getEvaluationConfig(systemName);
-    if (!config) return;
+
+    if (!config) {
+        return;
+    }
 
     const emptyState = document.getElementById(config.emptyId);
     const content = document.getElementById(config.contentId);
@@ -226,7 +232,9 @@ function renderEvaluation(systemName, data) {
     const brier = document.getElementById(config.brierId);
     const logLoss = document.getElementById(config.logLossId);
 
-    if (!emptyState || !content || !accuracy || !correct || !total || !brier || !logLoss) return;
+    if (!emptyState || !content || !accuracy || !correct || !total || !brier || !logLoss) {
+        return;
+    }
 
     if (!data || !data.total_predictions || data.total_predictions === 0) {
         emptyState.classList.remove("d-none");
@@ -244,37 +252,14 @@ function renderEvaluation(systemName, data) {
     logLoss.textContent = formatNumber(data.log_loss);
 }
 
-async function loadEvaluationForSystem(systemName) {
-    try {
-        const response = await fetch(`/evaluation/${systemName}`);
-
-        if (!response.ok) {
-            const text = await response.text();
-            console.error(`Fehlerhafte Antwort /evaluation/${systemName}:`, response.status, text);
-            showToast(`Fehler beim Laden der Evaluation für ${systemName} (${response.status}).`, "error");
-            return;
-        }
-
-        const data = await response.json();
-        renderEvaluation(systemName, data);
-    } catch (error) {
-        console.error(`Fehler beim Laden der Evaluation für ${systemName}:`, error);
-        showToast(`Evaluation für ${systemName} konnte nicht geladen werden.`, "error");
-    }
-}
-
-async function loadAllEvaluations() {
-    await loadEvaluationForSystem("elo");
-    await loadEvaluationForSystem("glicko2");
-    await loadEvaluationForSystem("trueskill");
-}
-
 function renderEvaluationDetails(data) {
     const emptyState = document.getElementById("evaluation-details-empty");
     const wrapper = document.getElementById("evaluation-details-wrapper");
     const tbody = document.getElementById("evaluation-details-body");
 
-    if (!emptyState || !wrapper || !tbody) return;
+    if (!emptyState || !wrapper || !tbody) {
+        return;
+    }
 
     tbody.innerHTML = "";
 
@@ -309,6 +294,35 @@ function renderEvaluationDetails(data) {
     });
 }
 
+/* =========================
+   Evaluation API
+========================= */
+
+async function loadEvaluationForSystem(systemName) {
+    try {
+        const response = await fetch(`/evaluation/${systemName}`);
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error(`Fehlerhafte Antwort /evaluation/${systemName}:`, response.status, text);
+            showToast(`Fehler beim Laden der Evaluation für ${systemName} (${response.status}).`, "error");
+            return;
+        }
+
+        const data = await response.json();
+        renderEvaluation(systemName, data);
+    } catch (error) {
+        console.error(`Fehler beim Laden der Evaluation für ${systemName}:`, error);
+        showToast(`Evaluation für ${systemName} konnte nicht geladen werden.`, "error");
+    }
+}
+
+async function loadAllEvaluations() {
+    await loadEvaluationForSystem("elo");
+    await loadEvaluationForSystem("glicko2");
+    await loadEvaluationForSystem("trueskill");
+}
+
 async function loadEvaluationDetails(systemName = currentEvaluationDetailSystem) {
     try {
         const response = await fetch(`/evaluation/${systemName}`);
@@ -328,10 +342,34 @@ async function loadEvaluationDetails(systemName = currentEvaluationDetailSystem)
     }
 }
 
+/* =========================
+   Initialisierung
+========================= */
+
+function initRatingsSection() {
+    const processEloBtn = document.getElementById("process-elo-btn");
+    const processGlicko2Btn = document.getElementById("process-glicko2-btn");
+    const processTrueSkillBtn = document.getElementById("process-trueskill-btn");
+
+    if (processEloBtn) {
+        processEloBtn.addEventListener("click", () => processRatingsForSystem("elo"));
+    }
+
+    if (processGlicko2Btn) {
+        processGlicko2Btn.addEventListener("click", () => processRatingsForSystem("glicko2"));
+    }
+
+    if (processTrueSkillBtn) {
+        processTrueSkillBtn.addEventListener("click", () => processRatingsForSystem("trueskill"));
+    }
+}
+
 function initEvaluationDetailsSection() {
     const select = document.getElementById("evaluation-detail-system-select");
 
-    if (!select) return;
+    if (!select) {
+        return;
+    }
 
     currentEvaluationDetailSystem = select.value;
 
