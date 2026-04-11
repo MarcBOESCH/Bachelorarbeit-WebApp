@@ -70,8 +70,7 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
         score_team_a=score_team_a,
         score_team_b=score_team_b,
         point_diff=point_diff,
-        winner_team=winner_team,
-        rating_processed=False
+        winner_team=winner_team
     )
 
     try:
