@@ -7,16 +7,16 @@ from models.team import Team
 
 def create_player(name):
     if not isinstance(name, str):
-        return False, "Name muss ein Text sein", None
+        return False, "Name muss ein Text sein.", None
 
     cleaned_name = name.strip()
 
     if not cleaned_name:
-        return False, "Name darf nicht leer sein", None
+        return False, "Name darf nicht leer sein.", None
 
     existing_player = Player.query.filter_by(name=cleaned_name).first()
     if existing_player:
-        return False, "Spieler existiert bereits", None
+        return False, "Spieler existiert bereits.", None
 
     player = Player(name=cleaned_name)
     db.session.add(player)
@@ -60,7 +60,10 @@ def delete_player(player_id):
     ).first()
 
     if is_used_in_team:
-        return False, "Spieler kann nicht gelöscht werden, da er bereits in einem Team verwendet wird."
+        return (
+            False,
+            "Spieler kann nicht gelöscht werden, da er bereits in einem Team verwendet wird."
+        )
 
     db.session.delete(player)
     db.session.commit()
