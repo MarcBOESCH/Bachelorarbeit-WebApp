@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
@@ -13,6 +14,8 @@ class BaseConfig:
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_REFRESH_EACH_REQUEST = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
     USER_PIN = os.environ.get("USER_PIN")

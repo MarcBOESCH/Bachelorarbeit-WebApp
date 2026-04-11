@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Seite nicht gefunden - Jass App{% endblock %}
+
+{% block content %}
+    <section class="page-header">
+        <h1>404</h1>
+        <p>Die angeforderte Seite wurde nicht gefunden.</p>
+    </section>
+
+    <section class="app-card section-spacing">
+        <div class="app-card-body text-center">
+            <div class="mb-3">
+                <i class="bi bi-compass display-4" style="color: var(--color-brand);"></i>
+            </div>
+
+            <h2 class="mb-2">Hier gibt es nichts zu holen</h2>
+            <p class="text-muted mb-4">
+                Vielleicht wurde der Link geändert oder die Seite existiert nicht mehr.
+            </p>
+
+            <div class="action-group">
+                <a href="{{ url_for('matches.player_selection_page') }}" class="btn btn-dark">
+                    Zur Match-Auswahl
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

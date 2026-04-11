@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, redirect, url_for, session, render_template
 
 from config import config_by_name
-from extensions import db
+from extensions import db, migrate
 from routes import register_blueprints
 
 
@@ -25,11 +25,8 @@ def create_app():
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+    migrate.init_app(app, db)
     register_blueprints(app)
-
-    with app.app_context():
-        import models
-        db.create_all()
 
     return app
 
@@ -68,10 +65,12 @@ def login():
         pin = request.form.get("pin")
 
         if pin == USER_PIN:
+            session.permanent = True
             session["role"] = "user"
             return redirect(url_for("matches.player_selection_page"))
 
         if pin == ADMIN_PIN:
+            session.permanent = True
             session["role"] = "admin"
             return redirect(url_for("matches.player_selection_page"))
 
@@ -84,6 +83,16 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    return render_template("500.html"), 500
 
 
 if __name__ == "__main__":
