@@ -5,6 +5,18 @@ from services.rating_service import process_match_for_system
 
 MAX_POINTS = 1000
 
+
+def trigger_live_elo_update(match):
+    """
+    Verarbeitet direkt nach dem Speichern eines Matches das Live-Elo.
+    Fehler im Elo-Update sollen das bereits gespeicherte Match nicht verwerfen.
+    """
+    try:
+        process_match_for_system(match, "elo")
+    except Exception:
+        db.session.rollback()
+
+
 def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     if not isinstance(score_team_a, int) or not isinstance(score_team_b, int):
         return False, "Die Scores müssen Ganzzahlen sein.", None
@@ -21,7 +33,11 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     )
 
     if not has_valid_winner:
-        return False, "Das Match darf erst gespeichert werden, wenn ein Team die Gewinnpunktzahl erreicht hat.", None
+        return (
+            False,
+            "Das Match darf erst gespeichert werden, wenn ein Team die Gewinnpunktzahl erreicht hat.",
+            None
+        )
 
     team_a = Team.query.get(team_a_id)
     team_b = Team.query.get(team_b_id)
@@ -29,7 +45,6 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     if not team_a or not team_b:
         return False, "Mindestens eines der Teams existiert nicht.", None
 
-    # Verhindern, dass jemand gegen sich selbst spielt
     players_a = {team_a.player1_id, team_a.player2_id}
     players_b = {team_b.player1_id, team_b.player2_id}
     if players_a.intersection(players_b):
@@ -38,7 +53,6 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     winner_team = "A" if score_team_a > score_team_b else "B"
     point_diff = abs(score_team_a - score_team_b)
 
-    # Dubletten-Schutz (Verhindert mehrfaches Klicken des Speichern-Buttons)
     last_match = Match.query.order_by(Match.played_at.desc()).first()
     if last_match:
         same_scores = (
@@ -63,18 +77,14 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     try:
         db.session.add(match)
         db.session.commit()
-
-        # Elo Update antriggern
-        try:
-            process_match_for_system(match, "elo")
-        except Exception as e:
-            print(f"Automatisches Elo-Update fehlgeschlagen: {e}")
-
     except Exception:
         db.session.rollback()
         return False, "Das Match konnte aufgrund eines Datenbankfehlers nicht gespeichert werden.", None
 
+    trigger_live_elo_update(match)
+
     return True, None, match
+
 
 def get_all_matches():
     return Match.query.order_by(Match.played_at.desc()).all()
