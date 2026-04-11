@@ -1,4 +1,5 @@
 from sqlalchemy import func
+
 from extensions import db
 
 
@@ -7,7 +8,7 @@ class Team(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
-    
+
     player1_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False)
     player2_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False)
 

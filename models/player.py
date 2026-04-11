@@ -1,5 +1,7 @@
 from sqlalchemy import func
+
 from extensions import db
+
 
 class Player(db.Model):
     __tablename__ = "players"
@@ -11,7 +13,7 @@ class Player(db.Model):
     ratings = db.relationship(
         "PlayerRating",
         back_populates="player",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):

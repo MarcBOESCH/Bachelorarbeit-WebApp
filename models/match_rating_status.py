@@ -1,5 +1,3 @@
-
-
 from extensions import db
 
 

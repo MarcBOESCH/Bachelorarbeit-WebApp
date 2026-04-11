@@ -23,7 +23,7 @@ class Match(db.Model):
     rating_status_entries = db.relationship(
         "MatchRatingStatus",
         back_populates="match",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):

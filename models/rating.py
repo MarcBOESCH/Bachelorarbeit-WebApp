@@ -9,7 +9,7 @@ class PlayerRating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False)
-    system_name = db.Column(db.String(20), nullable=False)  # elo, glicko2, trueskill
+    system_name = db.Column(db.String(20), nullable=False)
 
     rating = db.Column(db.Float, nullable=True)
     rating_deviation = db.Column(db.Float, nullable=True)
@@ -23,7 +23,7 @@ class PlayerRating(db.Model):
         db.DateTime,
         default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=False,
     )
 
     player = db.relationship("Player", back_populates="ratings")
