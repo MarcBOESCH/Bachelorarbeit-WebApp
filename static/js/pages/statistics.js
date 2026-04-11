@@ -8,6 +8,10 @@ let currentTeamSortColumn = "elo";
 let currentTeamSortAsc = false;
 let currentTeamSearchTerm = "";
 
+/* =========================
+   Hilfsfunktionen
+========================= */
+
 function formatNumber(value) {
     const number = Number(value ?? 0);
 
@@ -25,6 +29,10 @@ function getTopPlayer(stats, compareFn) {
 
     return [...stats].sort(compareFn)[0];
 }
+
+/* =========================
+   Summary / Top Cards
+========================= */
 
 function renderStatsSummary(stats) {
     const totalPlayersElement = document.getElementById("stats-total-players");
@@ -47,7 +55,10 @@ function renderStatsSummary(stats) {
         return;
     }
 
-    const topMatchesPlayer = getTopPlayer(stats, (a, b) => (b.matches_played ?? 0) - (a.matches_played ?? 0));
+    const topMatchesPlayer = getTopPlayer(
+        stats,
+        (a, b) => (b.matches_played ?? 0) - (a.matches_played ?? 0)
+    );
 
     const topWinRatePlayer = getTopPlayer(stats, (a, b) => {
         const winRateDiff = (b.win_rate ?? 0) - (a.win_rate ?? 0);
@@ -59,7 +70,10 @@ function renderStatsSummary(stats) {
         return (b.matches_played ?? 0) - (a.matches_played ?? 0);
     });
 
-    const topDiffPlayer = getTopPlayer(stats, (a, b) => (b.avg_point_diff ?? 0) - (a.avg_point_diff ?? 0));
+    const topDiffPlayer = getTopPlayer(
+        stats,
+        (a, b) => (b.avg_point_diff ?? 0) - (a.avg_point_diff ?? 0)
+    );
 
     totalPlayersElement.textContent = stats.length;
     mostMatchesNameElement.textContent = topMatchesPlayer?.name ?? "-";
@@ -70,11 +84,16 @@ function renderStatsSummary(stats) {
     bestDiffValueElement.textContent = formatNumber(topDiffPlayer?.avg_point_diff ?? 0);
 }
 
+/* =========================
+   Table Controls
+========================= */
+
 function initTableControls() {
     const searchInput = document.getElementById("stats-search-input");
+
     if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
-            currentSearchTerm = e.target.value.toLowerCase().trim();
+        searchInput.addEventListener("input", event => {
+            currentSearchTerm = event.target.value.toLowerCase().trim();
             processAndRenderTable();
         });
     }
@@ -98,9 +117,10 @@ function initTableControls() {
 
 function initTeamTableControls() {
     const searchInput = document.getElementById("team-stats-search-input");
+
     if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
-            currentTeamSearchTerm = e.target.value.toLowerCase().trim();
+        searchInput.addEventListener("input", event => {
+            currentTeamSearchTerm = event.target.value.toLowerCase().trim();
             processAndRenderTeamTable();
         });
     }
@@ -122,11 +142,23 @@ function initTeamTableControls() {
     });
 }
 
+/* =========================
+   Podium
+========================= */
+
 function updatePodium(sortedData) {
     const podiumCard = document.getElementById("podium-card");
-    if (!podiumCard) return;
 
-    if (currentSearchTerm !== "" || currentSortAsc || currentSortColumn === "name" || sortedData.length < 3) {
+    if (!podiumCard) {
+        return;
+    }
+
+    if (
+        currentSearchTerm !== "" ||
+        currentSortAsc ||
+        currentSortColumn === "name" ||
+        sortedData.length < 3
+    ) {
         podiumCard.style.display = "none";
         return;
     }
@@ -142,10 +174,18 @@ function updatePodium(sortedData) {
         elo: "Elo-Rating"
     };
 
-    document.getElementById("podium-subtitle").textContent = `nach ${columnTitles[currentSortColumn]}`;
+    const subtitle = document.getElementById("podium-subtitle");
+    if (subtitle) {
+        subtitle.textContent = `nach ${columnTitles[currentSortColumn]}`;
+    }
 
     const fillPodiumStep = (rank, player) => {
         const stepElement = document.getElementById(`podium-${rank}`);
+
+        if (!stepElement) {
+            return;
+        }
+
         if (!player) {
             stepElement.style.visibility = "hidden";
             return;
@@ -154,13 +194,18 @@ function updatePodium(sortedData) {
         stepElement.style.visibility = "visible";
         document.getElementById(`podium-${rank}-name`).textContent = player.name;
 
-        let val = player[currentSortColumn];
-        let displayVal = formatNumber(val);
+        let value = player[currentSortColumn];
+        let displayValue = formatNumber(value);
 
-        if (currentSortColumn === "win_rate") displayVal += " %";
-        if (currentSortColumn === "avg_point_diff" && val > 0) displayVal = "+" + displayVal;
+        if (currentSortColumn === "win_rate") {
+            displayValue += " %";
+        }
 
-        document.getElementById(`podium-${rank}-stat`).textContent = displayVal;
+        if (currentSortColumn === "avg_point_diff" && value > 0) {
+            displayValue = `+${displayValue}`;
+        }
+
+        document.getElementById(`podium-${rank}-stat`).textContent = displayValue;
     };
 
     fillPodiumStep(1, sortedData[0]);
@@ -168,47 +213,61 @@ function updatePodium(sortedData) {
     fillPodiumStep(3, sortedData[2]);
 }
 
+/* =========================
+   Player Table
+========================= */
+
 function processAndRenderTable() {
     const tbody = document.getElementById("player-stats-body");
-    if (!tbody) return;
 
-    let processedData = allStatsData.filter(player =>
-        player.name.toLowerCase().includes(currentSearchTerm)
-    );
+    if (!tbody) {
+        return;
+    }
 
-    processedData.sort((a, b) => {
-        let valA = a[currentSortColumn];
-        let valB = b[currentSortColumn];
+    const processedData = allStatsData
+        .filter(player => player.name.toLowerCase().includes(currentSearchTerm))
+        .sort((a, b) => {
+            let valueA = a[currentSortColumn];
+            let valueB = b[currentSortColumn];
 
-        if (valA === null || valA === undefined) valA = typeof a[currentSortColumn] === "string" ? "" : 0;
-        if (valB === null || valB === undefined) valB = typeof b[currentSortColumn] === "string" ? "" : 0;
-
-        if (valA !== valB) {
-            if (typeof valA === "string") {
-                return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            if (valueA === null || valueA === undefined) {
+                valueA = typeof a[currentSortColumn] === "string" ? "" : 0;
             }
 
-            return currentSortAsc ? (valA - valB) : (valB - valA);
-        }
-
-        if (currentSortColumn !== "avg_point_diff") {
-            const diffA = a.avg_point_diff ?? 0;
-            const diffB = b.avg_point_diff ?? 0;
-            if (diffA !== diffB) {
-                return diffB - diffA;
+            if (valueB === null || valueB === undefined) {
+                valueB = typeof b[currentSortColumn] === "string" ? "" : 0;
             }
-        }
 
-        if (currentSortColumn !== "matches_played") {
-            const matchesA = a.matches_played ?? 0;
-            const matchesB = b.matches_played ?? 0;
-            if (matchesA !== matchesB) {
-                return matchesB - matchesA;
+            if (valueA !== valueB) {
+                if (typeof valueA === "string") {
+                    return currentSortAsc
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+                }
+
+                return currentSortAsc ? valueA - valueB : valueB - valueA;
             }
-        }
 
-        return 0;
-    });
+            if (currentSortColumn !== "avg_point_diff") {
+                const diffA = a.avg_point_diff ?? 0;
+                const diffB = b.avg_point_diff ?? 0;
+
+                if (diffA !== diffB) {
+                    return diffB - diffA;
+                }
+            }
+
+            if (currentSortColumn !== "matches_played") {
+                const matchesA = a.matches_played ?? 0;
+                const matchesB = b.matches_played ?? 0;
+
+                if (matchesA !== matchesB) {
+                    return matchesB - matchesA;
+                }
+            }
+
+            return 0;
+        });
 
     updatePodium(processedData);
     tbody.innerHTML = "";
@@ -218,7 +277,7 @@ function processAndRenderTable() {
         return;
     }
 
-    processedData.forEach((player) => {
+    processedData.forEach(player => {
         const row = document.createElement("tr");
         const diffValue = player.avg_point_diff > 0
             ? `+${formatNumber(player.avg_point_diff)}`
@@ -238,48 +297,64 @@ function processAndRenderTable() {
     });
 }
 
+/* =========================
+   Team Table
+========================= */
+
 function processAndRenderTeamTable() {
     const tbody = document.getElementById("team-stats-body");
-    if (!tbody) return;
 
-    let processedData = allTeamStatsData.filter(team =>
-        team.name.toLowerCase().includes(currentTeamSearchTerm) ||
-        team.player_names.toLowerCase().includes(currentTeamSearchTerm)
-    );
+    if (!tbody) {
+        return;
+    }
 
-    processedData.sort((a, b) => {
-        let valA = a[currentTeamSortColumn];
-        let valB = b[currentTeamSortColumn];
+    const processedData = allTeamStatsData
+        .filter(team =>
+            team.name.toLowerCase().includes(currentTeamSearchTerm) ||
+            team.player_names.toLowerCase().includes(currentTeamSearchTerm)
+        )
+        .sort((a, b) => {
+            let valueA = a[currentTeamSortColumn];
+            let valueB = b[currentTeamSortColumn];
 
-        if (valA === null || valA === undefined) valA = typeof a[currentTeamSortColumn] === "string" ? "" : 0;
-        if (valB === null || valB === undefined) valB = typeof b[currentTeamSortColumn] === "string" ? "" : 0;
-
-        if (valA !== valB) {
-            if (typeof valA === "string") {
-                return currentTeamSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            if (valueA === null || valueA === undefined) {
+                valueA = typeof a[currentTeamSortColumn] === "string" ? "" : 0;
             }
 
-            return currentTeamSortAsc ? (valA - valB) : (valB - valA);
-        }
-
-        if (currentTeamSortColumn !== "avg_point_diff") {
-            const diffA = a.avg_point_diff ?? 0;
-            const diffB = b.avg_point_diff ?? 0;
-            if (diffA !== diffB) {
-                return diffB - diffA;
+            if (valueB === null || valueB === undefined) {
+                valueB = typeof b[currentTeamSortColumn] === "string" ? "" : 0;
             }
-        }
 
-        if (currentTeamSortColumn !== "matches_played") {
-            const matchesA = a.matches_played ?? 0;
-            const matchesB = b.matches_played ?? 0;
-            if (matchesA !== matchesB) {
-                return matchesB - matchesA;
+            if (valueA !== valueB) {
+                if (typeof valueA === "string") {
+                    return currentTeamSortAsc
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+                }
+
+                return currentTeamSortAsc ? valueA - valueB : valueB - valueA;
             }
-        }
 
-        return 0;
-    });
+            if (currentTeamSortColumn !== "avg_point_diff") {
+                const diffA = a.avg_point_diff ?? 0;
+                const diffB = b.avg_point_diff ?? 0;
+
+                if (diffA !== diffB) {
+                    return diffB - diffA;
+                }
+            }
+
+            if (currentTeamSortColumn !== "matches_played") {
+                const matchesA = a.matches_played ?? 0;
+                const matchesB = b.matches_played ?? 0;
+
+                if (matchesA !== matchesB) {
+                    return matchesB - matchesA;
+                }
+            }
+
+            return 0;
+        });
 
     tbody.innerHTML = "";
 
@@ -288,7 +363,7 @@ function processAndRenderTeamTable() {
         return;
     }
 
-    processedData.forEach((team) => {
+    processedData.forEach(team => {
         const row = document.createElement("tr");
         const diffValue = team.avg_point_diff > 0
             ? `+${formatNumber(team.avg_point_diff)}`
@@ -309,11 +384,17 @@ function processAndRenderTeamTable() {
     });
 }
 
+/* =========================
+   Page Rendering
+========================= */
+
 function renderPlayerStats(stats) {
     const emptyState = document.getElementById("player-stats-empty");
     const content = document.getElementById("player-stats-content");
 
-    if (!emptyState || !content) return;
+    if (!emptyState || !content) {
+        return;
+    }
 
     if (!stats || stats.length === 0) {
         emptyState.classList.remove("d-none");
@@ -333,7 +414,9 @@ function renderTeamStats(stats) {
     const emptyState = document.getElementById("team-stats-empty");
     const wrapper = document.getElementById("team-stats-wrapper");
 
-    if (!emptyState || !wrapper) return;
+    if (!emptyState || !wrapper) {
+        return;
+    }
 
     allTeamStatsData = stats ?? [];
 
@@ -348,6 +431,10 @@ function renderTeamStats(stats) {
 
     processAndRenderTeamTable();
 }
+
+/* =========================
+   Daten laden
+========================= */
 
 async function loadPlayerStats() {
     try {
@@ -387,11 +474,15 @@ async function loadTeamStats() {
     }
 }
 
+/* =========================
+   Initialisierung
+========================= */
+
 function initStatisticsPage() {
-    loadPlayerStats();
-    loadTeamStats();
     initTableControls();
     initTeamTableControls();
+    loadPlayerStats();
+    loadTeamStats();
 }
 
 document.addEventListener("DOMContentLoaded", initStatisticsPage);

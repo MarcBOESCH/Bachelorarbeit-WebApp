@@ -609,6 +609,19 @@ canvas {
     word-break: break-word;
 }
 
+.score-team-header-top {
+    gap: 6px;
+}
+
+.score-team-players {
+    width: 100%;
+    min-width: 0;
+    line-height: 1.35;
+    letter-spacing: 0.2px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 .score-value {
     font-size: var(--font-size-score);
     line-height: 1;
@@ -643,6 +656,17 @@ canvas {
     justify-content: center;
     gap: 12px;
     margin-bottom: 20px;
+}
+
+.match-summary-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.match-summary-actions .btn {
+    width: auto;
+    min-width: 220px;
 }
 
 .summary-item {
@@ -1030,6 +1054,10 @@ canvas {
 @media (max-width: 768px) {
     .score-team-header h2 {
         font-size: 1.0rem;
+    }
+
+    .score-team-players {
+        font-size: 0.82rem;
     }
 
     .snake-board {

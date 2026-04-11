@@ -17,7 +17,7 @@ let selectionMode = "players";
 let createTeamFromPlayersTarget = "";
 
 /* =========================
-   Daten laden und Initialisierung
+   Daten laden
 ========================= */
 
 async function loadData() {
@@ -42,8 +42,8 @@ async function loadData() {
 
         refreshPlayerModeDropdownLocks();
         updateExistingTeamInfo();
-        updateStartMatchButtonState();
         updateMatchPreview();
+        updateStartMatchButtonState();
     } catch (error) {
         console.error("Fehler beim Laden:", error);
         showToast("Daten konnten nicht geladen werden.", "error");
@@ -63,7 +63,9 @@ function findPlayerById(playerId) {
 }
 
 function findExistingTeamByPlayers(player1Id, player2Id) {
-    if (!player1Id || !player2Id) return null;
+    if (!player1Id || !player2Id) {
+        return null;
+    }
 
     return allTeams.find(team =>
         (String(team.player1_id) === String(player1Id) && String(team.player2_id) === String(player2Id)) ||
@@ -86,7 +88,10 @@ function getSelectedPlayersForSide(teamLetter) {
 }
 
 function getPlayersFromTeam(team) {
-    if (!team) return [];
+    if (!team) {
+        return [];
+    }
+
     return [String(team.player1_id), String(team.player2_id)];
 }
 
@@ -121,8 +126,8 @@ function initTomSelects() {
         onChange: value => {
             updatePlayerInfo("a", value);
             updateCrossDropdownLocks();
-            updateStartMatchButtonState();
             updateMatchPreview();
+            updateStartMatchButtonState();
         }
     });
 
@@ -131,14 +136,16 @@ function initTomSelects() {
         onChange: value => {
             updatePlayerInfo("b", value);
             updateCrossDropdownLocks();
-            updateStartMatchButtonState();
             updateMatchPreview();
+            updateStartMatchButtonState();
         }
     });
 }
 
 function updateCrossDropdownLocks() {
-    if (!tomSelectA || !tomSelectB) return;
+    if (!tomSelectA || !tomSelectB) {
+        return;
+    }
 
     const teamAId = tomSelectA.getValue();
     const teamBId = tomSelectB.getValue();
@@ -171,7 +178,9 @@ function updatePlayerInfo(teamLetter, teamId) {
     const infoDiv = document.getElementById(`team-${teamLetter}-players-info`);
     const team = findTeamById(teamId);
 
-    if (!infoDiv) return;
+    if (!infoDiv) {
+        return;
+    }
 
     if (team) {
         infoDiv.querySelector(".player-names").textContent = team.player_names;
@@ -226,6 +235,7 @@ async function createPlayerFromInput(input) {
 
         return newPlayer;
     } catch (error) {
+        console.error("Fehler beim Erstellen des Spielers:", error);
         showToast("Verbindung zum Server fehlgeschlagen.", "error");
         return null;
     }
@@ -287,7 +297,9 @@ function refreshPlayerModeDropdownLocks() {
         playerSelectTeamB2
     ].filter(Boolean);
 
-    if (selects.length === 0) return;
+    if (selects.length === 0) {
+        return;
+    }
 
     const selectedValues = {
         a1: playerSelectTeamA1?.getValue() || "",
@@ -304,7 +316,9 @@ function refreshPlayerModeDropdownLocks() {
     ].filter(Boolean);
 
     const syncOptionsForSelect = (selectInstance, ownValue) => {
-        if (!selectInstance) return;
+        if (!selectInstance) {
+            return;
+        }
 
         selectInstance.clearOptions();
 
@@ -406,7 +420,7 @@ function updateExistingTeamInfo() {
 }
 
 /* =========================
-   Match-Vorschau und Button-State
+   Match-Vorschau
 ========================= */
 
 function updateMatchPreview() {
@@ -417,7 +431,9 @@ function updateMatchPreview() {
     const previewTeamBName = document.getElementById("preview-team-b-name");
     const previewTeamBPlayers = document.getElementById("preview-team-b-players");
 
-    if (!previewCard || !previewContainer) return;
+    if (!previewCard || !previewContainer) {
+        return;
+    }
 
     let teamA = null;
     let teamB = null;
@@ -445,11 +461,21 @@ function updateMatchPreview() {
 
     previewCard.classList.remove("d-none");
 
-    previewTeamAName.textContent = teamA ? teamA.name : "-";
-    previewTeamAPlayers.textContent = teamA ? teamA.player_names : "-";
+    if (previewTeamAName) {
+        previewTeamAName.textContent = teamA ? teamA.name : "-";
+    }
 
-    previewTeamBName.textContent = teamB ? teamB.name : "-";
-    previewTeamBPlayers.textContent = teamB ? teamB.player_names : "-";
+    if (previewTeamAPlayers) {
+        previewTeamAPlayers.textContent = teamA ? teamA.player_names : "-";
+    }
+
+    if (previewTeamBName) {
+        previewTeamBName.textContent = teamB ? teamB.name : "-";
+    }
+
+    if (previewTeamBPlayers) {
+        previewTeamBPlayers.textContent = teamB ? teamB.player_names : "-";
+    }
 
     previewContainer.classList.toggle("ready", Boolean(teamA && teamB));
 }
@@ -469,7 +495,9 @@ function initSelectionModeToggle() {
     const playerSelectionView = document.getElementById("player-selection-view");
     const teamSelectionView = document.getElementById("team-selection-view");
 
-    if (!btnPlayers || !btnTeams || !playerSelectionView || !teamSelectionView) return;
+    if (!btnPlayers || !btnTeams || !playerSelectionView || !teamSelectionView) {
+        return;
+    }
 
     function setSelectionMode(mode) {
         selectionMode = mode;
@@ -494,7 +522,7 @@ function initSelectionModeToggle() {
 }
 
 /* =========================
-   Modal: Team erstellen
+   Team erstellen Modal
 ========================= */
 
 function getBlockedPlayerIdsForModal() {
@@ -518,7 +546,9 @@ function getBlockedPlayerIdsForModal() {
 }
 
 function refreshModalPlayerLocks() {
-    if (!modalTomSelectP1 || !modalTomSelectP2) return;
+    if (!modalTomSelectP1 || !modalTomSelectP2) {
+        return;
+    }
 
     const blockedIds = getBlockedPlayerIdsForModal();
     const selectedP1 = modalTomSelectP1.getValue() || "";
@@ -550,8 +580,12 @@ function refreshModalPlayerLocks() {
 function initModalSelects() {
     const select1 = document.getElementById("new-team-p1");
     const select2 = document.getElementById("new-team-p2");
+    const saveNewTeamBtn = document.getElementById("save-new-team-btn");
+    const newTeamNameInput = document.getElementById("new-team-name");
 
-    if (!select1 || !select2) return;
+    if (!select1 || !select2 || !saveNewTeamBtn || !newTeamNameInput) {
+        return;
+    }
 
     const baseConfig = {
         valueField: "id",
@@ -583,17 +617,12 @@ function initModalSelects() {
     modalTomSelectP1 = new TomSelect("#new-team-p1", baseConfig);
     modalTomSelectP2 = new TomSelect("#new-team-p2", baseConfig);
 
-    modalTomSelectP1.on("change", () => {
-        refreshModalPlayerLocks();
-    });
+    modalTomSelectP1.on("change", refreshModalPlayerLocks);
+    modalTomSelectP2.on("change", refreshModalPlayerLocks);
 
-    modalTomSelectP2.on("change", () => {
-        refreshModalPlayerLocks();
-    });
+    saveNewTeamBtn.addEventListener("click", saveNewTeam);
 
-    document.getElementById("save-new-team-btn").addEventListener("click", saveNewTeam);
-
-    document.getElementById("new-team-name").addEventListener("keydown", event => {
+    newTeamNameInput.addEventListener("keydown", event => {
         if (event.key === "Enter") {
             event.preventDefault();
             saveNewTeam();
@@ -637,7 +666,11 @@ window.openCreateTeamFromPlayersModal = function (teamLetter) {
 window.openNewTeamModal = function (teamLetter) {
     currentModalTeam = teamLetter.toLowerCase();
     createTeamFromPlayersTarget = createTeamFromPlayersTarget || "";
-    document.getElementById("new-team-name").value = "";
+
+    const modalNameInput = document.getElementById("new-team-name");
+    if (modalNameInput) {
+        modalNameInput.value = "";
+    }
 
     if (modalTomSelectP1) {
         modalTomSelectP1.clear(true);
@@ -656,9 +689,10 @@ window.openNewTeamModal = function (teamLetter) {
 };
 
 async function saveNewTeam() {
-    const name = document.getElementById("new-team-name").value.trim();
-    const p1Id = modalTomSelectP1.getValue();
-    const p2Id = modalTomSelectP2.getValue();
+    const nameInput = document.getElementById("new-team-name");
+    const name = nameInput?.value.trim() || "";
+    const p1Id = modalTomSelectP1?.getValue();
+    const p2Id = modalTomSelectP2?.getValue();
 
     if (!name || !p1Id || !p2Id) {
         showToast("Bitte alle Felder ausfüllen.", "error");
@@ -675,7 +709,7 @@ async function saveNewTeam() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                name: name,
+                name,
                 player1_id: p1Id,
                 player2_id: p2Id
             })
@@ -693,33 +727,39 @@ async function saveNewTeam() {
 
         const newTeam = {
             id: data.id,
-            name: name,
+            name,
             player1_id: p1Id,
             player2_id: p2Id,
             player_names: `${player1.name} & ${player2.name}`
         };
 
         allTeams.push(newTeam);
-        tomSelectA.addOption(newTeam);
-        tomSelectB.addOption(newTeam);
+        tomSelectA?.addOption(newTeam);
+        tomSelectB?.addOption(newTeam);
 
-        if (currentModalTeam === "a") tomSelectA.setValue(newTeam.id);
-        if (currentModalTeam === "b") tomSelectB.setValue(newTeam.id);
+        if (currentModalTeam === "a") {
+            tomSelectA?.setValue(newTeam.id);
+        }
 
-        updatePlayerInfo("a", tomSelectA.getValue());
-        updatePlayerInfo("b", tomSelectB.getValue());
+        if (currentModalTeam === "b") {
+            tomSelectB?.setValue(newTeam.id);
+        }
+
+        updatePlayerInfo("a", tomSelectA?.getValue());
+        updatePlayerInfo("b", tomSelectB?.getValue());
         updateCrossDropdownLocks();
-        updateMatchPreview();
         updateExistingTeamInfo();
+        updateMatchPreview();
         updateStartMatchButtonState();
 
         createTeamFromPlayersTarget = "";
         refreshModalPlayerLocks();
         refreshPlayerModeDropdownLocks();
 
-        bootstrap.Modal.getInstance(document.getElementById("newTeamModal")).hide();
+        bootstrap.Modal.getInstance(document.getElementById("newTeamModal"))?.hide();
         showToast("Team erfolgreich erstellt!", "success");
     } catch (error) {
+        console.error("Fehler beim Erstellen des Teams:", error);
         showToast("Verbindung zum Server fehlgeschlagen.", "error");
     }
 }
@@ -818,6 +858,7 @@ async function submitPlayerSelection(event) {
 
         window.location.href = "/match";
     } catch (error) {
+        console.error("Fehler beim Starten des Matches:", error);
         showToast("Verbindung zum Server fehlgeschlagen.", "error");
     }
 }
@@ -839,5 +880,9 @@ function initPlayerSelectionForm() {
         startButton.addEventListener("click", submitPlayerSelection);
     }
 }
+
+/* =========================
+   Initialisierung
+========================= */
 
 document.addEventListener("DOMContentLoaded", loadData);

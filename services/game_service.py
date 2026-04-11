@@ -1,4 +1,5 @@
 from flask import session
+from models.team import Team
 
 BUTTON_VALUES = {
     "score_20": 20,
@@ -18,6 +19,7 @@ def create_new_game_state():
         "team_name_b": "Team B",
         "team_a_id": None,
         "team_b_id": None,
+        "players": [],
         "score_a": 0,
         "score_b": 0,
         "max_points": 1000,
@@ -79,6 +81,43 @@ def start_new_game(team_name_a, team_name_b, team_a_id, team_b_id):
     game["team_name_b"] = team_name_b
     game["team_a_id"] = team_a_id
     game["team_b_id"] = team_b_id
+
+    team_a = Team.query.get(team_a_id)
+    team_b = Team.query.get(team_b_id)
+
+    game["players"] = []
+
+    if team_a:
+        game["players"].extend([
+            {
+                "team": "A",
+                "team_slot": 1,
+                "player_id": team_a.player1.id,
+                "player_name": team_a.player1.name
+            },
+            {
+                "team": "A",
+                "team_slot": 2,
+                "player_id": team_a.player2.id,
+                "player_name": team_a.player2.name
+            }
+        ])
+
+    if team_b:
+        game["players"].extend([
+            {
+                "team": "B",
+                "team_slot": 1,
+                "player_id": team_b.player1.id,
+                "player_name": team_b.player1.name
+            },
+            {
+                "team": "B",
+                "team_slot": 2,
+                "player_id": team_b.player2.id,
+                "player_name": team_b.player2.name
+            }
+        ])
 
     save_game_state(game)
     return game

@@ -20,26 +20,28 @@
 
                 <div class="score-teams-wrapper" style="margin-bottom: 0;">
                     <div class="team-column">
-                        <div class="score-team-header mb-0" style="gap: 2px;">
+                        <div class="score-team-header score-team-header-top mb-0">
                             <h2 class="mb-0">{{ game.team_name_a }}</h2>
 
-                            <div class="text-muted small fw-semibold mb-2" style="letter-spacing: 0.5px;">
+                            <div class="score-team-players text-muted small fw-semibold">
                                 {% for p in game.players if p.team == 'A' %}
-                                    {{ p.get('player_name', 'Unbekannt') }}{% if not loop.last %} &amp; {% endif %}
+                                {{ p.get('player_name', 'Unbekannt') }}{% if not loop.last %} &amp; {% endif %}
                                 {% endfor %}
                             </div>
 
                             <p class="score-value mt-2" id="score-a">{{ game.score_a }}</p>
                         </div>
                     </div>
+
                     <div class="team-divider"></div>
+
                     <div class="team-column">
-                        <div class="score-team-header mb-0" style="gap: 2px;">
+                        <div class="score-team-header score-team-header-top mb-0">
                             <h2 class="mb-0">{{ game.team_name_b }}</h2>
 
-                            <div class="text-muted small fw-semibold mb-2" style="letter-spacing: 0.5px;">
+                            <div class="score-team-players text-muted small fw-semibold">
                                 {% for p in game.players if p.team == 'B' %}
-                                    {{ p.get('player_name', 'Unbekannt') }}{% if not loop.last %} &amp; {% endif %}
+                                {{ p.get('player_name', 'Unbekannt') }}{% if not loop.last %} &amp; {% endif %}
                                 {% endfor %}
                             </div>
 
@@ -192,8 +194,8 @@
 
             </div>
 
-            <div class="action-group mt-2">
-                <button id="reset-btn" type="button" class="btn btn-dark  fw-semibold">
+            <div class="match-summary-actions mt-2">
+                <button id="reset-btn" type="button" class="btn btn-dark fw-semibold">
                     Neues Spiel
                 </button>
             </div>
