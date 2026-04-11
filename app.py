@@ -15,7 +15,7 @@ def create_app():
     app.config.from_object(config_class)
 
     if env_name == "production":
-        required_keys = ["SECRET_KEY", "USER_PIN", "ADMIN_PIN"]
+        required_keys = ["SECRET_KEY", "USER_PIN", "ADMIN_PIN", "DATABASE_URL"]
         missing = [key for key in required_keys if not app.config.get(key)]
         if missing:
             raise RuntimeError(
