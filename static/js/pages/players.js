@@ -7,6 +7,10 @@ let playerIdToEdit = null;
 let playerIdToDelete = null;
 let teamIdToEdit = null;
 let teamIdToDelete = null;
+let allPlayersData = [];
+let currentPlayerSearchTerm = "";
+let allTeamsData = [];
+let currentTeamSearchTerm = "";
 
 /* =========================
    Daten laden
@@ -347,18 +351,23 @@ function renderPlayers(players) {
         return;
     }
 
+    allPlayersData = players ?? [];
     playerList.innerHTML = "";
 
-    if (!players || players.length === 0) {
+    const filteredPlayers = allPlayersData.filter(player =>
+        player.name.toLowerCase().includes(currentPlayerSearchTerm)
+    );
+
+    if (!filteredPlayers || filteredPlayers.length === 0) {
         playerList.innerHTML = `
             <li class="list-group-item text-muted">
-                Noch keine Spieler vorhanden.
+                Keine passenden Spieler gefunden.
             </li>
         `;
         return;
     }
 
-    players.forEach(player => {
+    filteredPlayers.forEach(player => {
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
 
@@ -402,6 +411,19 @@ function renderPlayers(players) {
     });
 }
 
+function initPlayerSearch() {
+    const searchInput = document.getElementById("player-search-input");
+
+    if (!searchInput) {
+        return;
+    }
+
+    searchInput.addEventListener("input", event => {
+        currentPlayerSearchTerm = event.target.value.toLowerCase().trim();
+        renderPlayers(allPlayersData);
+    });
+}
+
 // Rendert die Teamliste im DOM.
 function renderTeams(teams) {
     const isAdmin = window.IS_ADMIN === true || window.IS_ADMIN === "true";
@@ -411,9 +433,14 @@ function renderTeams(teams) {
         return;
     }
 
+    allTeamsData = teams ?? [];
     teamList.innerHTML = "";
 
-    if (!teams || teams.length === 0) {
+    const filteredTeams = allTeamsData.filter(team =>
+        team.name.toLowerCase().includes(currentTeamSearchTerm)
+    );
+
+    if (!filteredTeams || filteredTeams.length === 0) {
         teamList.innerHTML = `
             <li class="list-group-item text-muted">
                 Noch keine Teams vorhanden.
@@ -422,7 +449,7 @@ function renderTeams(teams) {
         return;
     }
 
-    teams.forEach(team => {
+    filteredTeams.forEach(team => {
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
 
@@ -467,6 +494,19 @@ function renderTeams(teams) {
         `;
 
         teamList.appendChild(li);
+    });
+}
+
+function initTeamSearch() {
+    const searchInput = document.getElementById("team-search-input");
+
+    if (!searchInput) {
+        return;
+    }
+
+    searchInput.addEventListener("input", event => {
+        currentTeamSearchTerm = event.target.value.toLowerCase().trim();
+        renderTeams(allTeamsData);
     });
 }
 
@@ -630,6 +670,8 @@ function initPlayersPage() {
     initPlayerSection();
     initPlayerModals();
     initPlayerActionEvents();
+    initPlayerSearch();
+    initTeamSearch();
     loadPlayers();
     loadTeams();
 }
