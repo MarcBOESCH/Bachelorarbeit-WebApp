@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from flask import Flask, request, redirect, url_for, session, render_template
 
