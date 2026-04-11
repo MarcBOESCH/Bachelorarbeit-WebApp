@@ -61,6 +61,32 @@ body.app-shell {
     background: var(--color-bg);
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0;
+    color: var(--color-text);
+}
+
+p {
+    margin: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+    display: block;
+    max-width: 100%;
+}
+
+.text-muted {
+    color: var(--color-text-muted) !important;
+}
+
 /* =========================
    Layout
 ========================= */
@@ -85,36 +111,26 @@ body.app-shell {
         var(--page-padding-x);
 }
 
-@media (min-width: 768px) {
-    .app-content {
-        margin-left: var(--sidebar-width);
-    }
-
-    .content-wrapper {
-        padding:
-            28px
-            24px
-            28px
-            24px;
-    }
+.section-spacing {
+    margin-bottom: 16px;
 }
 
 /* =========================
-   Sidebar / Nav
+   Sidebar / Navigation
 ========================= */
 
 .app-sidebar {
-    width: var(--sidebar-width);
-    min-width: var(--sidebar-width);
-    height: 100dvh;
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 1020;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    height: 100dvh;
     padding: 24px 18px;
-    background: #ffffff;
+    background: var(--color-surface);
     border-inline-end: 1px solid var(--color-border);
     overflow-y: auto;
 }
@@ -172,7 +188,7 @@ body.app-shell {
 }
 
 /* =========================
-   Mobile Bottom Nav
+   Mobile Bottom Navigation
 ========================= */
 
 .mobile-bottom-nav {
@@ -200,13 +216,13 @@ body.app-shell {
     font-weight: 600;
 }
 
-.mobile-nav-link i{
-    font-size: 1.25rem;
-    width: 56px;
-    height: 32px;
+.mobile-nav-link i {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 56px;
+    height: 32px;
+    font-size: 1.25rem;
     border-radius: 16px;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -222,58 +238,8 @@ body.app-shell {
 }
 
 /* =========================
-   Base Elements
+   Generic Cards / Sections
 ========================= */
-
-h1, h2, h3, h4, h5, h6 {
-    margin: 0;
-    color: var(--color-text);
-}
-
-p {
-    margin: 0;
-}
-
-img,
-svg,
-video,
-canvas {
-    display: block;
-    max-width: 100%;
-}
-
-.text-muted {
-    color: var(--color-text-muted) !important;
-}
-
-/* =========================
-   Page Header
-========================= */
-
-.page-header {
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.page-header h1 {
-    font-size: var(--font-size-page-title);
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 8px;
-}
-
-.page-header p {
-    color: var(--color-text-muted);
-    font-size: 1rem;
-}
-
-/* =========================
-   Generic Sections / Cards
-========================= */
-
-.section-spacing {
-    margin-bottom: 16px;
-}
 
 .app-card {
     background: var(--color-surface);
@@ -286,14 +252,31 @@ canvas {
     padding: 18px;
 }
 
+.page-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.page-header h1 {
+    margin-bottom: 8px;
+    font-size: var(--font-size-page-title);
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.page-header p {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+}
+
 .section-header {
     margin-bottom: 16px;
 }
 
 .section-header h2 {
+    margin-bottom: 4px;
     font-size: 1.2rem;
     font-weight: 700;
-    margin-bottom: 4px;
 }
 
 .section-header p {
@@ -305,6 +288,12 @@ canvas {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+.action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 /* =========================
@@ -329,7 +318,7 @@ canvas {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     box-shadow: none;
-    background: #fff;
+    background: var(--color-surface);
 }
 
 .form-control:focus,
@@ -363,29 +352,19 @@ canvas {
     background: var(--color-brand-dark);
 }
 
+.btn-outline-dark,
 .score-btn {
+    border: 2px solid var(--color-brand);
+    background: transparent;
+    color: var(--color-brand);
+    transition: background-color 0.2s ease, color 0.2s ease;
     width: 100%;
-    border: 2px solid var(--color-brand);
-    background: transparent;
-    color: var(--color-brand);
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.score-btn:hover,
-.score-btn:active {
-    background: var(--color-brand);
-    color: #fff;
-}
-
-.btn-outline-dark {
-    border: 2px solid var(--color-brand);
-    background: transparent;
-    color: var(--color-brand);
-    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-outline-dark:hover,
-.btn-outline-dark:focus {
+.btn-outline-dark:focus,
+.score-btn:hover,
+.score-btn:active {
     background: var(--color-brand);
     border-color: var(--color-brand);
     color: #fff;
@@ -408,14 +387,28 @@ canvas {
     touch-action: manipulation;
 }
 
+.btn-toggle {
+    border: 1px solid var(--color-brand);
+    background: var(--color-surface);
+    color: var(--color-brand);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+.btn-toggle.active {
+    background: var(--color-brand);
+    color: #fff;
+}
+
 /* =========================
-   Toast Benachrichtigungen
+   Toast Notifications
 ========================= */
 
 .toast-container {
     position: fixed;
     top: 15px;
-    left: 50% ;
+    left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
     display: flex;
@@ -428,15 +421,14 @@ canvas {
 .app-toast {
     min-width: 280px;
     padding: 14px 20px;
+    border: 2px solid var(--color-brand);
     border-radius: var(--radius-md);
     background-color: var(--color-surface);
     color: var(--color-text);
     box-shadow: var(--shadow-sm);
     font-weight: 600;
     font-size: 0.95rem;
-    border: 2px solid var(--color-brand);
     pointer-events: auto;
-
     opacity: 0;
     transform: translateY(-15px);
     animation: slideIn 0.3s forwards ease-out;
@@ -455,20 +447,47 @@ canvas {
 }
 
 @keyframes slideIn {
-    to { opacity: 1; transform: translateY(0); }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideOut {
-    to { opacity: 0; transform: translateY(-15px); }
+    to {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
 }
 
 /* =========================
-   Player Selection / Match Preview
+   Player Selection / Preview
 ========================= */
 
-.selection-mode-toggle {
+.selection-mode-toggle,
+.score-mode-toggle {
     display: flex;
     justify-content: center;
+}
+
+.score-mode-toggle {
+    gap: 0.75rem;
+    margin: 1rem 0 1.25rem;
+}
+
+.team-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+}
+
+.team-title {
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
 .match-preview {
@@ -531,42 +550,9 @@ canvas {
     color: var(--color-brand);
 }
 
-@media (min-width: 768px) {
-    .match-preview {
-        flex-direction: row;
-        justify-content: center;
-        align-items: stretch;
-    }
-
-    .match-preview-team {
-        max-width: 280px;
-    }
-
-    .match-preview-vs {
-        display: flex;
-        align-items: center;
-        padding-inline: 8px;
-    }
-}
-
 /* =========================
    Match Page
 ========================= */
-
-.team-setup {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 14px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-soft);
-}
-
-.team-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-}
 
 .score-section {
     display: flex;
@@ -579,27 +565,6 @@ canvas {
     overflow: hidden;
 }
 
-.score-team-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 18px;
-    text-align: center;
-}
-
-.score-team-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.score-value {
-    font-size: var(--font-size-score);
-    line-height: 1;
-    font-weight: 800;
-    color: var(--color-brand);
-}
-
 .score-teams-wrapper {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -607,19 +572,48 @@ canvas {
     align-items: start;
 }
 
-.team-divider {
-    width: 2px;
-    background-color: var(--color-border);
-    align-self: stretch;
-    border-radius: 2px;
-    opacity: 0.5;
-}
-
 .team-column {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    min-width: 0;
+}
+
+.team-divider {
+    align-self: stretch;
+    width: 2px;
+    background-color: var(--color-border);
+    border-radius: 2px;
+    opacity: 0.5;
+}
+
+.score-team-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    text-align: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.score-team-header h2 {
+    width: 100%;
+    min-width: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.score-value {
+    font-size: var(--font-size-score);
+    line-height: 1;
+    font-weight: 800;
+    color: var(--color-brand);
 }
 
 .score-button-col {
@@ -641,164 +635,6 @@ canvas {
     align-items: center;
     gap: 15px;
     margin-top: 25px;
-}
-
-.score-mode-toggle {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    margin: 1rem 0 1.25rem;
-}
-
-.btn-toggle {
-    border: 1px solid #14643d;
-    background: #fff;
-    color: #14643d;
-    border-radius: 999px;
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-}
-
-.btn-toggle.active {
-    background: #14643d;
-    color: #fff;
-}
-
-.snake-target-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-    margin: 1.25rem 0 0.5rem;
-}
-
-.snake-target-label {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #495057;
-}
-
-.snake-target-value {
-    min-width: 88px;
-    padding: 0.55rem 1rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.75rem;
-    background: #fff;
-    font-weight: 700;
-    text-align: center;
-}
-
-.snake-board {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    margin: 1.5rem auto;
-    aspect-ratio: 1 / 1;
-}
-
-.snake-shape {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.snake-s-path,
-.snake-center-line {
-    fill: none;
-    stroke: #111;
-    stroke-width: 6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/* =========================
-   Snake Board V2
-========================= */
-
-.snake-hotspot-area {
-    fill: transparent;
-    cursor: pointer;
-    transition: fill 0.2s ease;
-}
-
-/* Leichter Indikator, wo man klicken kann */
-.snake-hotspot-area:hover {
-    fill: rgba(15, 81, 50, 0.05);
-}
-
-.snake-tallies-layer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.snake-tally-group {
-    position: absolute;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    width: 44%; /* <--- Nimmt jetzt 44% der Gesamtbreite ein (fast die ganze Linie) */
-    transform: translateY(-50%);
-}
-
-.snake-tally-group.left {
-    right: 53%;
-    left: auto;
-    flex-direction: row-reverse; /* Wächst von innen nach außen */
-    justify-content: flex-start;
-}
-
-.snake-tally-group.right {
-    left: 53%;
-    right: auto;
-    flex-direction: row; /* Wächst von innen nach außen */
-    justify-content: flex-start;
-}
-
-.snake-tally {
-    width: 8px;
-    height: 48px;
-    background: #111;
-    border-radius: 4px;
-    transform: rotate(10deg); /* Leicht schräg wie handgezeichnet */
-}
-
-.snake-rest {
-    position: absolute;
-    bottom: 0;
-    font-size: 3rem;
-    font-weight: 800;
-    color: #111;
-}
-
-.snake-rest.left {
-    left: 25%;
-    transform: translateX(-50%);
-}
-
-.snake-rest.right {
-    right: 25%;
-    transform: translateX(50%);
-}
-
-@media (max-width: 768px) {
-    .snake-board {
-        max-width: 420px;
-    }
-
-    .snake-tally {
-        width: 6px;
-        height: 38px;
-    }
-
-    .snake-rest {
-        font-size: 2.2rem;
-    }
-
-    body:has(input:focus) .mobile-bottom-nav {
-        display: none;
-    }
 }
 
 .match-summary-grid {
@@ -832,6 +668,127 @@ canvas {
     color: var(--color-brand);
 }
 
+/* =========================
+   Snake Board
+========================= */
+
+.snake-board {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 1.5rem auto;
+    aspect-ratio: 1 / 1;
+}
+
+.snake-shape {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.snake-s-path,
+.snake-center-line {
+    fill: none;
+    stroke: #111;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.snake-hotspot-area {
+    fill: transparent;
+    cursor: pointer;
+    transition: fill 0.2s ease;
+}
+
+.snake-hotspot-area:hover {
+    fill: rgba(15, 81, 50, 0.05);
+}
+
+.snake-tallies-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.snake-tally-group {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    width: 44%;
+    transform: translateY(-50%);
+}
+
+.snake-tally-group.left {
+    right: 53%;
+    left: auto;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+}
+
+.snake-tally-group.right {
+    left: 53%;
+    right: auto;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.snake-tally {
+    width: 8px;
+    height: 48px;
+    background: #111;
+    border-radius: 4px;
+    transform: rotate(10deg);
+}
+
+.snake-rest {
+    position: absolute;
+    bottom: 0;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #111;
+}
+
+.snake-rest.left {
+    left: 25%;
+    transform: translateX(-50%);
+}
+
+.snake-rest.right {
+    right: 25%;
+    transform: translateX(50%);
+}
+
+.snake-target-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 1.25rem 0 0.5rem;
+}
+
+.snake-target-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.snake-target-value {
+    min-width: 88px;
+    padding: 0.55rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.75rem;
+    background: #fff;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* =========================
+   Status / Utility Blocks
+========================= */
+
 .status-stack {
     display: flex;
     flex-direction: column;
@@ -863,13 +820,10 @@ canvas {
     text-align: right;
 }
 
-.action-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+/* =========================
+   Podium
+========================= */
 
-/* --- Siegerpodest --- */
 .podium-container {
     display: flex;
     align-items: flex-end;
@@ -893,61 +847,87 @@ canvas {
 }
 
 .podium-step {
-    width: 100%;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    width: 100%;
     padding-top: 12px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
     font-size: 2rem;
     font-weight: 800;
     color: rgba(255, 255, 255, 0.7);
-    box-shadow: inset 0 -10px 20px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Edle Farbverläufe für die Medaillen-Farben */
-.podium-gold .podium-step { height: 130px; background: linear-gradient(135deg, #F9D423 0%, #FF4E50 100%); }
-.podium-silver .podium-step { height: 95px; background: linear-gradient(135deg, #E0EAFC 0%, #CFDEF3 100%); color: rgba(0,0,0,0.3); }
-.podium-bronze .podium-step { height: 70px; background: linear-gradient(135deg, #D4A373 0%, #A98467 100%); }
+.podium-gold .podium-step {
+    height: 130px;
+    background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%);
+}
+
+.podium-silver .podium-step {
+    height: 95px;
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    color: rgba(0, 0, 0, 0.3);
+}
+
+.podium-bronze .podium-step {
+    height: 70px;
+    background: linear-gradient(135deg, #d4a373 0%, #a98467 100%);
+}
 
 .podium-avatar {
-    width: 50px;
-    height: 50px;
-    background-color: var(--color-brand-dark);
-    color: white;
-    border-radius: 50%;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 50px;
+    height: 50px;
+    margin-bottom: 8px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background-color: var(--color-brand-dark);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     font-weight: 800;
     font-size: 1.2rem;
-    margin-bottom: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    border: 3px solid white;
-    z-index: 2;
 }
 
 .podium-gold .podium-avatar {
     width: 64px;
     height: 64px;
-    font-size: 1.5rem;
+    border: 4px solid #f9d423;
     background-color: var(--color-brand);
-    border: 4px solid #F9D423; /* Goldener Rand für Platz 1 */
+    font-size: 1.5rem;
 }
 
-.podium-name { font-weight: 700; text-align: center; margin-bottom: 2px; }
-.podium-stat { font-size: 0.9rem; color: #6c757d; margin-bottom: 10px; text-align: center; font-weight: 600;}
-.podium-gold .podium-stat { color: var(--color-brand-dark); font-size: 1rem;}
+.podium-name {
+    margin-bottom: 2px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.podium-stat {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+    font-weight: 600;
+}
+
+.podium-gold .podium-stat {
+    color: var(--color-brand-dark);
+    font-size: 1rem;
+}
 
 /* =========================
-   Player Selection Modal
+   Modal
 ========================= */
 
 .modal-header {
-    padding-top: 16px;
-    justify-content: center;
     position: relative;
+    justify-content: center;
+    padding-top: 16px;
     text-align: center;
     border-bottom: 0;
 }
@@ -959,8 +939,8 @@ canvas {
 
 .btn-close {
     position: absolute;
-    right: 16px;
     top: 16px;
+    right: 16px;
     margin: 0;
 }
 
@@ -973,15 +953,22 @@ canvas {
     min-width: 140px;
 }
 
-
 /* =========================
-   Desktop Enhancements
+   Desktop
 ========================= */
 
 @media (min-width: 768px) {
     :root {
         --font-size-page-title: 2.5rem;
         --font-size-score: 4.5rem;
+    }
+
+    .app-content {
+        margin-left: var(--sidebar-width);
+    }
+
+    .content-wrapper {
+        padding: 28px 24px;
     }
 
     .section-spacing {
@@ -1007,17 +994,20 @@ canvas {
         flex: 1;
     }
 
-    .match-summary-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .action-group {
+    .match-preview {
         flex-direction: row;
         justify-content: center;
+        align-items: stretch;
     }
 
-    .toast-container {
-        left: calc(50% + (var(--sidebar-width) / 2));
+    .match-preview-team {
+        max-width: 280px;
+    }
+
+    .match-preview-vs {
+        display: flex;
+        align-items: center;
+        padding-inline: 8px;
     }
 
     .match-summary-grid {
@@ -1028,8 +1018,39 @@ canvas {
         min-width: 140px;
     }
 
+    .toast-container {
+        left: calc(50% + (var(--sidebar-width) / 2));
+    }
+
     .modal {
         padding-left: var(--sidebar-width) !important;
+    }
+}
+
+/* =========================
+   Mobile Adjustments
+========================= */
+
+@media (max-width: 768px) {
+    .score-team-header h2 {
+        font-size: 1.0rem;
+    }
+
+    .snake-board {
+        max-width: 420px;
+    }
+
+    .snake-tally {
+        width: 6px;
+        height: 38px;
+    }
+
+    .snake-rest {
+        font-size: 2.2rem;
+    }
+
+    body:has(input:focus) .mobile-bottom-nav {
+        display: none;
     }
 }
 
