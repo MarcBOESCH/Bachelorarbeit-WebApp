@@ -1,11 +1,13 @@
 import datetime
-import trueskill
 
+import trueskill
 from glicko2 import Player as Glicko2Player
+
 from extensions import db
 from models.match import Match
-from models.rating import PlayerRating
 from models.match_rating_status import MatchRatingStatus
+from models.rating import PlayerRating
+
 
 SUPPORTED_SYSTEMS = {"elo", "glicko2", "trueskill"}
 
@@ -18,6 +20,107 @@ TRUESKILL_ENV = trueskill.TrueSkill(
 )
 
 
+def get_or_create_player_rating(player_id, system_name):
+    if system_name not in SUPPORTED_SYSTEMS:
+        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+
+    rating_entry = PlayerRating.query.filter_by(
+        player_id=player_id,
+        system_name=system_name
+    ).first()
+
+    if rating_entry:
+        return rating_entry
+
+    if system_name == "elo":
+        rating_entry = PlayerRating(
+            player_id=player_id,
+            system_name="elo",
+            rating=1500.0,
+            matches_played=0
+        )
+    elif system_name == "glicko2":
+        rating_entry = PlayerRating(
+            player_id=player_id,
+            system_name="glicko2",
+            rating=1500.0,
+            rating_deviation=350.0,
+            volatility=0.06,
+            matches_played=0
+        )
+    elif system_name == "trueskill":
+        rating_entry = PlayerRating(
+            player_id=player_id,
+            system_name="trueskill",
+            mu=25.0,
+            sigma=8.333,
+            matches_played=0
+        )
+    else:
+        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+
+    db.session.add(rating_entry)
+    db.session.commit()
+
+    return rating_entry
+
+
+def get_match_player_ratings(match, system_name):
+    return [
+        {
+            "player_id": match.team_a.player1_id,
+            "player_name": match.team_a.player1.name,
+            "team": "A",
+            "team_slot": 1,
+            "rating_entry": get_or_create_player_rating(match.team_a.player1_id, system_name)
+        },
+        {
+            "player_id": match.team_a.player2_id,
+            "player_name": match.team_a.player2.name,
+            "team": "A",
+            "team_slot": 2,
+            "rating_entry": get_or_create_player_rating(match.team_a.player2_id, system_name)
+        },
+        {
+            "player_id": match.team_b.player1_id,
+            "player_name": match.team_b.player1.name,
+            "team": "B",
+            "team_slot": 1,
+            "rating_entry": get_or_create_player_rating(match.team_b.player1_id, system_name)
+        },
+        {
+            "player_id": match.team_b.player2_id,
+            "player_name": match.team_b.player2.name,
+            "team": "B",
+            "team_slot": 2,
+            "rating_entry": get_or_create_player_rating(match.team_b.player2_id, system_name)
+        }
+    ]
+
+
+def split_match_ratings_by_team(match, system_name):
+    entries = get_match_player_ratings(match, system_name)
+    team_a = [entry for entry in entries if entry["team"] == "A"]
+    team_b = [entry for entry in entries if entry["team"] == "B"]
+    return team_a, team_b
+
+
+def calculate_team_average_rating(team_entries):
+    ratings = [entry["rating_entry"].rating for entry in team_entries]
+    return sum(ratings) / len(ratings)
+
+
+def calculate_elo_expected_score(team_a_rating, team_b_rating):
+    return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
+
+
+def calculate_team_average_glicko2_values(team_entries):
+    avg_rating = sum(entry["rating_entry"].rating for entry in team_entries) / len(team_entries)
+    avg_rd = sum(entry["rating_entry"].rating_deviation for entry in team_entries) / len(team_entries)
+    avg_vol = sum(entry["rating_entry"].volatility for entry in team_entries) / len(team_entries)
+    return avg_rating, avg_rd, avg_vol
+
+
 def build_trueskill_rating(rating_entry):
     return TRUESKILL_ENV.create_rating(
         mu=rating_entry.mu,
@@ -25,67 +128,99 @@ def build_trueskill_rating(rating_entry):
     )
 
 
-def process_trueskill_match(match):
-    team_a, team_b = split_match_ratings_by_team(match, "trueskill")
+def get_or_create_match_rating_status(match_id, system_name):
+    if system_name not in SUPPORTED_SYSTEMS:
+        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+
+    status_entry = MatchRatingStatus.query.filter_by(
+        match_id=match_id,
+        system_name=system_name
+    ).first()
+
+    if status_entry:
+        return status_entry
+
+    status_entry = MatchRatingStatus(
+        match_id=match_id,
+        system_name=system_name,
+        processed=False
+    )
+
+    db.session.add(status_entry)
+    db.session.commit()
+
+    return status_entry
+
+
+def get_unprocessed_matches_for_system(system_name):
+    if system_name not in SUPPORTED_SYSTEMS:
+        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+
+    matches = Match.query.order_by(Match.played_at.asc()).all()
+    result = []
+
+    for match in matches:
+        status_entry = MatchRatingStatus.query.filter_by(
+            match_id=match.id,
+            system_name=system_name
+        ).first()
+
+        if not status_entry or not status_entry.processed:
+            result.append(match)
+
+    return result
+
+
+def mark_match_as_processed_for_system(match, system_name):
+    status_entry = get_or_create_match_rating_status(match.id, system_name)
+    status_entry.processed = True
+    status_entry.processed_at = datetime.datetime.now()
+
+
+def process_elo_match(match, k_factor=32):
+    team_a, team_b = split_match_ratings_by_team(match, "elo")
 
     if len(team_a) != 2 or len(team_b) != 2:
-        raise ValueError("Ein TrueSkill-Match muss genau 2 Spieler pro Team haben.")
+        raise ValueError("Ein Elo-Match muss genau 2 Spieler pro Team haben.")
 
-    team_a_ratings = [
-        build_trueskill_rating(entry["rating_entry"])
-        for entry in team_a
-    ]
-    team_b_ratings = [
-        build_trueskill_rating(entry["rating_entry"])
-        for entry in team_b
-    ]
+    team_a_rating = calculate_team_average_rating(team_a)
+    team_b_rating = calculate_team_average_rating(team_b)
 
-    if match.winner_team == "A":
-        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
-    else:
-        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[1, 0])
+    expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
+    expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
 
-    new_team_a_ratings, new_team_b_ratings = rated_teams
+    actual_a = 1.0 if match.winner_team == "A" else 0.0
+    actual_b = 1.0 if match.winner_team == "B" else 0.0
 
-    for entry, new_rating in zip(team_a, new_team_a_ratings):
+    mov_multiplier = 1.0 + (match.point_diff / 500.0)
+    adjusted_k = k_factor * mov_multiplier
+
+    delta_a = adjusted_k * (actual_a - expected_a)
+    delta_b = adjusted_k * (actual_b - expected_b)
+
+    for entry in team_a:
         rating = entry["rating_entry"]
-        rating.mu = new_rating.mu
-        rating.sigma = new_rating.sigma
+        rating.rating += delta_a
         rating.matches_played += 1
 
-    for entry, new_rating in zip(team_b, new_team_b_ratings):
+    for entry in team_b:
         rating = entry["rating_entry"]
-        rating.mu = new_rating.mu
-        rating.sigma = new_rating.sigma
+        rating.rating += delta_b
         rating.matches_played += 1
 
-    mark_match_as_processed_for_system(match, "trueskill")
+    mark_match_as_processed_for_system(match, "elo")
     db.session.commit()
 
     return {
         "match_id": match.id,
         "winner_team": match.winner_team,
-        "team_a_mu_before": [round(r.mu, 4) for r in team_a_ratings],
-        "team_b_mu_before": [round(r.mu, 4) for r in team_b_ratings],
-        "team_a_mu_after": [round(r.mu, 4) for r in new_team_a_ratings],
-        "team_b_mu_after": [round(r.mu, 4) for r in new_team_b_ratings]
+        "team_a_rating_before": round(team_a_rating, 2),
+        "team_b_rating_before": round(team_b_rating, 2),
+        "expected_a": round(expected_a, 4),
+        "expected_b": round(expected_b, 4),
+        "delta_a": round(delta_a, 2),
+        "delta_b": round(delta_b, 2)
     }
-
-
-def build_glicko2_player(rating_entry):
-    return Glicko2Player(
-        rating=rating_entry.rating,
-        rd=rating_entry.rating_deviation,
-        vol=rating_entry.volatility
-    )
-
-
-def calculate_team_average_glicko2_values(team_entries):
-    avg_rating = sum(entry["rating_entry"].rating for entry in team_entries) / len(team_entries)
-    avg_rd = sum(entry["rating_entry"].rating_deviation for entry in team_entries) / len(team_entries)
-    avg_vol = sum(entry["rating_entry"].volatility for entry in team_entries) / len(team_entries)
-
-    return avg_rating, avg_rd, avg_vol
 
 
 def process_glicko2_match(match):
@@ -115,7 +250,6 @@ def process_glicko2_match(match):
         team_a_result = 0
         team_b_result = 1
 
-    # Vorher-Werte des Gegners sichern, damit beide Teams gegen denselben Pre-Match-Stand gerechnet werden
     team_a_opponent_rating = team_b_rating
     team_a_opponent_rd = team_b_rd
 
@@ -169,117 +303,51 @@ def process_glicko2_match(match):
     }
 
 
+def process_trueskill_match(match):
+    team_a, team_b = split_match_ratings_by_team(match, "trueskill")
 
-def get_or_create_player_rating(player_id, system_name):
-    if system_name not in SUPPORTED_SYSTEMS:
-        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
+    if len(team_a) != 2 or len(team_b) != 2:
+        raise ValueError("Ein TrueSkill-Match muss genau 2 Spieler pro Team haben.")
 
-    rating_entry = PlayerRating.query.filter_by(
-        player_id=player_id,
-        system_name=system_name
-    ).first()
+    team_a_ratings = [
+        build_trueskill_rating(entry["rating_entry"])
+        for entry in team_a
+    ]
+    team_b_ratings = [
+        build_trueskill_rating(entry["rating_entry"])
+        for entry in team_b
+    ]
 
-    if rating_entry:
-        return rating_entry
+    if match.winner_team == "A":
+        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
+    else:
+        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[1, 0])
 
-    if system_name == "elo":
-        rating_entry = PlayerRating(
-            player_id=player_id,
-            system_name="elo",
-            rating=1500.0,
-            matches_played=0
-        )
+    new_team_a_ratings, new_team_b_ratings = rated_teams
 
-    elif system_name == "glicko2":
-        rating_entry = PlayerRating(
-            player_id=player_id,
-            system_name="glicko2",
-            rating=1500.0,
-            rating_deviation=350.0,
-            volatility=0.06,
-            matches_played=0
-        )
+    for entry, new_rating in zip(team_a, new_team_a_ratings):
+        rating = entry["rating_entry"]
+        rating.mu = new_rating.mu
+        rating.sigma = new_rating.sigma
+        rating.matches_played += 1
 
-    elif system_name == "trueskill":
-        rating_entry = PlayerRating(
-            player_id=player_id,
-            system_name="trueskill",
-            mu=25.0,
-            sigma=8.333,
-            matches_played=0
-        )
+    for entry, new_rating in zip(team_b, new_team_b_ratings):
+        rating = entry["rating_entry"]
+        rating.mu = new_rating.mu
+        rating.sigma = new_rating.sigma
+        rating.matches_played += 1
 
-    db.session.add(rating_entry)
+    mark_match_as_processed_for_system(match, "trueskill")
     db.session.commit()
 
-    return rating_entry
-
-
-def split_match_ratings_by_team(match, system_name):
-    entries = get_match_player_ratings(match, system_name)
-
-    team_a = [entry for entry in entries if entry["team"] == "A"]
-    team_b = [entry for entry in entries if entry["team"] == "B"]
-
-    return team_a, team_b
-
-
-def calculate_elo_expected_score(team_a_rating, team_b_rating):
-    return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
-
-
-def calculate_team_average_rating(team_entries):
-    ratings = [entry["rating_entry"].rating for entry in team_entries]
-    return sum(ratings) / len(ratings)
-
-
-def get_or_create_match_rating_status(match_id, system_name):
-    if system_name not in SUPPORTED_SYSTEMS:
-        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
-
-    status_entry = MatchRatingStatus.query.filter_by(
-        match_id=match_id,
-        system_name=system_name
-    ).first()
-
-    if status_entry:
-        return status_entry
-
-    status_entry = MatchRatingStatus(
-        match_id=match_id,
-        system_name=system_name,
-        processed=False
-    )
-
-    db.session.add(status_entry)
-    db.session.commit()
-
-    return status_entry
-
-
-def get_unprocessed_matches_for_system(system_name):
-    if system_name not in SUPPORTED_SYSTEMS:
-        raise ValueError(f"Unbekanntes Rating-System: {system_name}")
-
-    matches = Match.query.order_by(Match.played_at.asc()).all()
-    result = []
-
-    for match in matches:
-        status_entry = MatchRatingStatus.query.filter_by(
-            match_id=match.id,
-            system_name=system_name
-        ).first()
-
-        if not status_entry or not status_entry.processed:
-            result.append(match)
-
-    return result
-
-
-def mark_match_as_processed_for_system(match, system_name):
-    status_entry = get_or_create_match_rating_status(match.id, system_name)
-    status_entry.processed = True
-    status_entry.processed_at = datetime.datetime.now()
+    return {
+        "match_id": match.id,
+        "winner_team": match.winner_team,
+        "team_a_mu_before": [round(r.mu, 4) for r in team_a_ratings],
+        "team_b_mu_before": [round(r.mu, 4) for r in team_b_ratings],
+        "team_a_mu_after": [round(r.mu, 4) for r in new_team_a_ratings],
+        "team_b_mu_after": [round(r.mu, 4) for r in new_team_b_ratings]
+    }
 
 
 def process_match_for_system(match, system_name):
@@ -303,109 +371,10 @@ def process_all_unprocessed_matches_for_system(system_name):
     results = []
 
     for match in matches:
-        result = process_match_for_system(match, system_name)
-        results.append(result)
+        results.append(process_match_for_system(match, system_name))
 
     return results
 
-
-def process_elo_match(match, k_factor=32):
-    team_a, team_b = split_match_ratings_by_team(match, "elo")
-
-    if len(team_a) != 2 or len(team_b) != 2:
-        raise ValueError("Ein Elo-Match muss genau 2 Spieler pro Team haben.")
-
-    team_a_rating = calculate_team_average_rating(team_a)
-    team_b_rating = calculate_team_average_rating(team_b)
-
-    expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
-    expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
-
-    actual_a = 1.0 if match.winner_team == "A" else 0.0
-    actual_b = 1.0 if match.winner_team == "B" else 0.0
-
-    # --- NEU: Margin of Victory (MoV) Multiplikator ---
-    # diff = 0 -> 1x K-Faktor
-    # diff = 500 -> 2x K-Faktor
-    # diff = 1000 -> 3x K-Faktor
-    mov_multiplier = 1.0 + (match.point_diff / 500.0)
-    adjusted_k = k_factor * mov_multiplier
-    # --------------------------------------------------
-
-    delta_a = adjusted_k * (actual_a - expected_a)
-    delta_b = adjusted_k * (actual_b - expected_b)
-
-    for entry in team_a:
-        rating = entry["rating_entry"]
-        rating.rating += delta_a
-        rating.matches_played += 1
-
-    for entry in team_b:
-        rating = entry["rating_entry"]
-        rating.rating += delta_b
-        rating.matches_played += 1
-
-    mark_match_as_processed_for_system(match, "elo")
-    db.session.commit()
-
-    return {
-        "match_id": match.id,
-        "winner_team": match.winner_team,
-        "team_a_rating_before": round(team_a_rating, 2),
-        "team_b_rating_before": round(team_b_rating, 2),
-        "expected_a": round(expected_a, 4),
-        "expected_b": round(expected_b, 4),
-        "delta_a": round(delta_a, 2),
-        "delta_b": round(delta_b, 2)
-    }
-
-def process_all_unprocessed_elo_matches():
-    matches = get_unprocessed_matches_for_system("elo")
-    results = []
-
-    for match in matches:
-        result = process_elo_match(match)
-        results.append(result)
-
-    return results
-
-
-def get_match_player_ratings(match, system_name):
-    ratings = []
-
-    # Team A Spieler
-    ratings.append({
-        "player_id": match.team_a.player1_id,
-        "player_name": match.team_a.player1.name,
-        "team": "A",
-        "team_slot": 1,
-        "rating_entry": get_or_create_player_rating(match.team_a.player1_id, system_name)
-    })
-    ratings.append({
-        "player_id": match.team_a.player2_id,
-        "player_name": match.team_a.player2.name,
-        "team": "A",
-        "team_slot": 2,
-        "rating_entry": get_or_create_player_rating(match.team_a.player2_id, system_name)
-    })
-
-    # Team B Spieler
-    ratings.append({
-        "player_id": match.team_b.player1_id,
-        "player_name": match.team_b.player1.name,
-        "team": "B",
-        "team_slot": 1,
-        "rating_entry": get_or_create_player_rating(match.team_b.player1_id, system_name)
-    })
-    ratings.append({
-        "player_id": match.team_b.player2_id,
-        "player_name": match.team_b.player2.name,
-        "team": "B",
-        "team_slot": 2,
-        "rating_entry": get_or_create_player_rating(match.team_b.player2_id, system_name)
-    })
-
-    return ratings
 
 def get_player_ratings_for_system(system_name):
     if system_name not in SUPPORTED_SYSTEMS:
@@ -414,7 +383,6 @@ def get_player_ratings_for_system(system_name):
     rating_entries = PlayerRating.query.filter_by(system_name=system_name).all()
 
     result = []
-
     for entry in rating_entries:
         result.append({
             "player_id": entry.player_id,
