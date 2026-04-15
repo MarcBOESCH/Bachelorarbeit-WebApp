@@ -5,6 +5,10 @@ from datetime import timedelta
 class BaseConfig:
     SQLALCHEMY_DATABASE_URI = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
