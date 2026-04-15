@@ -46,7 +46,7 @@ ADMIN_PIN = app.config["ADMIN_PIN"]
 
 @app.before_request
 def require_login():
-    allowed_endpoints = ["login", "static"]
+    allowed_endpoints = ["login", "static", "apple_touch_icon"]
 
     if request.endpoint not in allowed_endpoints and "role" not in session:
         return redirect(url_for("login"))
