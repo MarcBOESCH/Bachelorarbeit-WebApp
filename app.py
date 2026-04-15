@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from flask import Flask, request, redirect, url_for, session, render_template
+from flask import Flask, request, redirect, url_for, session, render_template, send_from_directory
 
 from config import config_by_name
 from extensions import db, migrate
@@ -90,6 +90,11 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+
+@app.route('/apple-touch-icon.png')
+def apple_touch_icon():
+    return send_from_directory('static/icons', 'apple-touch-icon.png')
 
 
 @app.errorhandler(404)
