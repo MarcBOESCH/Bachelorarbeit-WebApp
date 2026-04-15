@@ -46,19 +46,17 @@ ADMIN_PIN = app.config["ADMIN_PIN"]
 
 @app.before_request
 def require_login():
-    allowed_endpoints = ["login", "static", "apple_touch_icon", "index"]
-
     if request.endpoint is None:
         return
 
-    if request.endpoint in allowed_endpoints:
+    if request.endpoint == "index":
         return
 
-    if request.path == "/":
+    if request.endpoint in ["static", "apple_touch_icon"]:
         return
 
-    if "role" not in session:
-        return redirect(url_for("login"))
+    if "role" not in session and request.method == "GET":
+        return redirect(url_for("index"))
 
     admin_endpoints = [
         "ratings.ratings_page",
@@ -73,31 +71,28 @@ def require_login():
         return redirect(url_for("matches.match_page"))
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    if "role" in session:
-        return redirect(url_for("matches.match_page"))
-    return render_template("login.html")
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
     error = None
+
+    if "role" in session:
+        return redirect(url_for("matches.player_selection_page"))
 
     if request.method == "POST":
         pin = request.form.get("pin")
 
         if pin == USER_PIN:
-            session.permanent = True
             session["role"] = "user"
-            return redirect(url_for("matches.player_selection_page"))
-
-        if pin == ADMIN_PIN:
             session.permanent = True
-            session["role"] = "admin"
             return redirect(url_for("matches.player_selection_page"))
 
-        error = "Falscher PIN."
+        elif pin == ADMIN_PIN:
+            session["role"] = "admin"
+            session.permanent = True
+            return redirect(url_for("matches.player_selection_page"))
+
+        else:
+            error = "Falscher PIN."
 
     return render_template("login.html", error=error)
 
@@ -105,7 +100,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("login"))
+    return redirect(url_for("index"))
 
 
 @app.route('/apple-touch-icon.png')

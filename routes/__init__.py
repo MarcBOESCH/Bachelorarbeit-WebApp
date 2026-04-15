@@ -1,4 +1,3 @@
-from routes.main_routes import main_bp
 from routes.match_routes import match_page_bp
 from routes.player_routes import players_page_bp
 from routes.history_routes import history_page_bp
@@ -9,7 +8,6 @@ from routes.team_routes import team_api_bp
 
 
 def register_blueprints(app):
-    app.register_blueprint(main_bp)
     app.register_blueprint(match_page_bp)
     app.register_blueprint(players_page_bp)
     app.register_blueprint(history_page_bp)
