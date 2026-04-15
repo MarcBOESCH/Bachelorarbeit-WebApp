@@ -46,9 +46,18 @@ ADMIN_PIN = app.config["ADMIN_PIN"]
 
 @app.before_request
 def require_login():
-    allowed_endpoints = ["login", "static", "apple_touch_icon"]
+    allowed_endpoints = ["login", "static", "apple_touch_icon", "index"]
 
-    if request.endpoint not in allowed_endpoints and "role" not in session:
+    if request.endpoint is None:
+        return
+
+    if request.endpoint in allowed_endpoints:
+        return
+
+    if request.path == "/":
+        return
+
+    if "role" not in session:
         return redirect(url_for("login"))
 
     admin_endpoints = [
@@ -62,6 +71,13 @@ def require_login():
 
     if request.endpoint in admin_endpoints and session.get("role") != "admin":
         return redirect(url_for("matches.match_page"))
+
+
+@app.route("/")
+def index():
+    if "role" in session:
+        return redirect(url_for("matches.match_page"))
+    return render_template("login.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
