@@ -189,6 +189,49 @@ def distribute_team_delta_by_rd(team_entries, team_delta):
     return distributed
 
 
+def aggregate_trueskill_team_state(team_entries):
+    mus = [entry["rating_entry"].mu for entry in team_entries]
+    sigmas = [entry["rating_entry"].sigma for entry in team_entries]
+
+    team_mu = sum(mus)
+    team_sigma = math.sqrt(sum(sigma ** 2 for sigma in sigmas))
+
+    return {
+        "mu": team_mu,
+        "sigma": team_sigma,
+    }
+
+
+def calculate_trueskill_win_probability(team_a_state, team_b_state):
+    delta_mu = team_a_state["mu"] - team_b_state["mu"]
+    sum_sigma_sq = team_a_state["sigma"] ** 2 + team_b_state["sigma"] ** 2
+
+    players_per_team = 2
+    performance_variance = players_per_team * (TRUESKILL_ENV.beta ** 2)
+
+    denominator = math.sqrt(sum_sigma_sq + 2 * performance_variance)
+
+    return TRUESKILL_ENV.cdf(delta_mu / denominator)
+
+
+def calculate_trueskill_exposed_rating(mu, sigma, k=3.0):
+    return mu - k * sigma
+
+
+def calculate_trueskill_team_update(team_a_ratings, team_b_ratings, winner_team):
+    if winner_team == "A":
+        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
+    else:
+        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[1, 0])
+
+    new_team_a_ratings, new_team_b_ratings = rated_teams
+
+    return {
+        "team_a_after": new_team_a_ratings,
+        "team_b_after": new_team_b_ratings,
+    }
+
+
 def calculate_log_loss(probability, actual_outcome):
     clipped_probability = min(max(probability, 1e-6), 1 - 1e-6)
     return -(

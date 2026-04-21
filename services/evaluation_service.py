@@ -14,6 +14,9 @@ from services.rating_utils import (
     aggregate_glicko2_team_state,
     calculate_glicko2_team_update,
     distribute_team_delta_by_rd,
+    aggregate_trueskill_team_state,
+    calculate_trueskill_team_update,
+    calculate_trueskill_win_probability,
     calculate_log_loss,
 )
 
@@ -54,6 +57,23 @@ def build_glicko2_team_proxy(team_entries, player_states):
                 rating=player_states[entry.player_id]["rating"],
                 rating_deviation=player_states[entry.player_id]["rd"],
                 volatility=player_states[entry.player_id]["vol"],
+            )
+        }
+        for entry in team_entries
+    ]
+
+
+def build_trueskill_team_proxy(team_entries, player_states):
+    class RatingEntryProxy:
+        def __init__(self, mu, sigma):
+            self.mu = mu
+            self.sigma = sigma
+
+    return [
+        {
+            "rating_entry": RatingEntryProxy(
+                mu=player_states[entry.player_id].mu,
+                sigma=player_states[entry.player_id].sigma,
             )
         }
         for entry in team_entries
@@ -267,8 +287,8 @@ def evaluate_glicko2_predictions():
                     "vol": DEFAULT_GLICKO2_VOL,
                 }
 
-        team_a_proxy = build_glicko2_team_proxy(team_a_entries, player_states)
-        team_b_proxy = build_glicko2_team_proxy(team_b_entries, player_states)
+        team_a_proxy = build_trueskill_team_proxy(team_a_entries, player_states)
+        team_b_proxy = build_trueskill_team_proxy(team_b_entries, player_states)
 
         team_a_state = aggregate_glicko2_team_state(team_a_proxy)
         team_b_state = aggregate_glicko2_team_state(team_b_proxy)
@@ -354,11 +374,38 @@ def evaluate_trueskill_predictions():
                     sigma=DEFAULT_TRUESKILL_SIGMA,
                 )
 
-        team_a_mu = sum(player_states[entry.player_id].mu for entry in team_a_entries) / 2
-        team_b_mu = sum(player_states[entry.player_id].mu for entry in team_b_entries) / 2
+        team_a_proxy = [
+            {
+                "rating_entry": type(
+                    "RatingEntryProxy",
+                    (),
+                    {
+                        "mu": player_states[entry.player_id].mu,
+                        "sigma": player_states[entry.player_id].sigma,
+                    },
+                )()
+            }
+            for entry in team_a_entries
+        ]
+        team_b_proxy = [
+            {
+                "rating_entry": type(
+                    "RatingEntryProxy",
+                    (),
+                    {
+                        "mu": player_states[entry.player_id].mu,
+                        "sigma": player_states[entry.player_id].sigma,
+                    },
+                )()
+            }
+            for entry in team_b_entries
+        ]
 
-        expected_a = calculate_elo_expected_score(team_a_mu, team_b_mu)
-        expected_b = calculate_elo_expected_score(team_b_mu, team_a_mu)
+        team_a_state = aggregate_trueskill_team_state(team_a_proxy)
+        team_b_state = aggregate_trueskill_team_state(team_b_proxy)
+
+        expected_a = calculate_trueskill_win_probability(team_a_state, team_b_state)
+        expected_b = 1.0 - expected_a
 
         predicted_winner = "A" if expected_a >= expected_b else "B"
         actual_winner = match.winner_team
@@ -389,12 +436,14 @@ def evaluate_trueskill_predictions():
         team_a_ratings = [player_states[entry.player_id] for entry in team_a_entries]
         team_b_ratings = [player_states[entry.player_id] for entry in team_b_entries]
 
-        if actual_winner == "A":
-            rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
-        else:
-            rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[1, 0])
+        update_result = calculate_trueskill_team_update(
+            team_a_ratings=team_a_ratings,
+            team_b_ratings=team_b_ratings,
+            winner_team=actual_winner,
+        )
 
-        new_team_a_ratings, new_team_b_ratings = rated_teams
+        new_team_a_ratings = update_result["team_a_after"]
+        new_team_b_ratings = update_result["team_b_after"]
 
         for entry, new_rating in zip(team_a_entries, new_team_a_ratings):
             player_states[entry.player_id] = new_rating

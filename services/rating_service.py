@@ -1,6 +1,5 @@
 import datetime
-
-from glicko2 import Player as Glicko2Player
+import math
 
 from extensions import db
 from models.match import Match
@@ -20,6 +19,9 @@ from services.rating_utils import (
     aggregate_glicko2_team_state,
     calculate_glicko2_team_update,
     distribute_team_delta_by_rd,
+    aggregate_trueskill_team_state,
+    calculate_trueskill_team_update,
+    calculate_trueskill_exposed_rating,
 )
 
 SUPPORTED_SYSTEMS = SUPPORTED_RATING_SYSTEMS
@@ -326,12 +328,17 @@ def process_trueskill_match(match):
     team_a_ratings = [build_trueskill_rating(entry["rating_entry"]) for entry in team_a]
     team_b_ratings = [build_trueskill_rating(entry["rating_entry"]) for entry in team_b]
 
-    if match.winner_team == "A":
-        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[0, 1])
-    else:
-        rated_teams = TRUESKILL_ENV.rate([team_a_ratings, team_b_ratings], ranks=[1, 0])
+    team_a_state_before = aggregate_trueskill_team_state(team_a)
+    team_b_state_before = aggregate_trueskill_team_state(team_b)
 
-    new_team_a_ratings, new_team_b_ratings = rated_teams
+    update_result = calculate_trueskill_team_update(
+        team_a_ratings=team_a_ratings,
+        team_b_ratings=team_b_ratings,
+        winner_team=match.winner_team,
+    )
+
+    new_team_a_ratings = update_result["team_a_after"]
+    new_team_b_ratings = update_result["team_b_after"]
 
     for entry, new_rating in zip(team_a, new_team_a_ratings):
         rating = entry["rating_entry"]
@@ -348,13 +355,26 @@ def process_trueskill_match(match):
     mark_match_as_processed_for_system(match, "trueskill")
     db.session.commit()
 
+    team_a_state_after = {
+        "mu": sum(r.mu for r in new_team_a_ratings),
+        "sigma": math.sqrt(sum(r.sigma ** 2 for r in new_team_a_ratings)),
+    }
+    team_b_state_after = {
+        "mu": sum(r.mu for r in new_team_b_ratings),
+        "sigma": math.sqrt(sum(r.sigma ** 2 for r in new_team_b_ratings)),
+    }
+
     return {
         "match_id": match.id,
         "winner_team": match.winner_team,
-        "team_a_mu_before": [round(r.mu, 4) for r in team_a_ratings],
-        "team_b_mu_before": [round(r.mu, 4) for r in team_b_ratings],
-        "team_a_mu_after": [round(r.mu, 4) for r in new_team_a_ratings],
-        "team_b_mu_after": [round(r.mu, 4) for r in new_team_b_ratings]
+        "team_a_mu_before": round(team_a_state_before["mu"], 4),
+        "team_b_mu_before": round(team_b_state_before["mu"], 4),
+        "team_a_sigma_before": round(team_a_state_before["sigma"], 4),
+        "team_b_sigma_before": round(team_b_state_before["sigma"], 4),
+        "team_a_mu_after": round(team_a_state_after["mu"], 4),
+        "team_b_mu_after": round(team_b_state_after["mu"], 4),
+        "team_a_sigma_after": round(team_a_state_after["sigma"], 4),
+        "team_b_sigma_after": round(team_b_state_after["sigma"], 4),
     }
 
 
@@ -401,7 +421,10 @@ def get_player_ratings_for_system(system_name):
             "rating_deviation": round(entry.rating_deviation, 2) if entry.rating_deviation is not None else None,
             "volatility": round(entry.volatility, 4) if entry.volatility is not None else None,
             "mu": round(entry.mu, 4) if entry.mu is not None else None,
-            "sigma": round(entry.sigma, 4) if entry.sigma is not None else None
+            "sigma": round(entry.sigma, 4) if entry.sigma is not None else None,
+            "exposed_rating": round(
+                calculate_trueskill_exposed_rating(entry.mu, entry.sigma), 4
+            ) if entry.mu is not None and entry.sigma is not None else None,
         })
 
     if system_name in {"elo", "elo_margin", "glicko2"}:
@@ -411,7 +434,7 @@ def get_player_ratings_for_system(system_name):
         )
     elif system_name == "trueskill":
         result.sort(
-            key=lambda item: item["mu"] if item["mu"] is not None else -999999,
+            key=lambda item: item["exposed_rating"] if item["exposed_rating"] is not None else -999999,
             reverse=True
         )
 
