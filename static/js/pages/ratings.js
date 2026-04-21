@@ -28,7 +28,7 @@ function getSortableRatingValue(player, systemName) {
     }
 
     if (systemName === "trueskill") {
-        return player.mu ?? -999999;
+        return player.exposed_rating ?? player.mu ?? -999999;
     }
 
     return -999999;
@@ -159,6 +159,7 @@ function renderRatingsForSystem(systemName, ratings) {
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${player.player_name}</td>
+                <td>${formatNumber(player.exposed_rating)}</td>
                 <td>${formatNumber(player.mu)}</td>
                 <td>${formatNumber(player.sigma)}</td>
             `;
