@@ -333,13 +333,13 @@ def evaluate_glicko2_predictions():
 
         for entry, delta in zip(team_a_entries, distributed_a):
             player_states[entry.player_id]["rating"] += delta["rating"]
-            player_states[entry.player_id]["rd"] += delta["rd"]
-            player_states[entry.player_id]["vol"] += delta["vol"]
+            player_states[entry.player_id]["rd"] = max(1e-6, player_states[entry.player_id]["rd"] + delta["rd"])
+            player_states[entry.player_id]["vol"] = max(1e-6, player_states[entry.player_id]["vol"] + delta["vol"])
 
         for entry, delta in zip(team_b_entries, distributed_b):
             player_states[entry.player_id]["rating"] += delta["rating"]
-            player_states[entry.player_id]["rd"] += delta["rd"]
-            player_states[entry.player_id]["vol"] += delta["vol"]
+            player_states[entry.player_id]["rd"] = max(1e-6, player_states[entry.player_id]["rd"] + delta["rd"])
+            player_states[entry.player_id]["vol"] = max(1e-6, player_states[entry.player_id]["vol"] + delta["vol"])
 
     return build_result_payload(
         "glicko2",

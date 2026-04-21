@@ -5,7 +5,123 @@
 {% block content %}
     <h1 class="fw-bold mb-4">Ratings & Evaluation</h1>
 
-    <div class="d-flex flex-column gap-4">
+    <div class="row g-4">
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Elo Evaluation</h2>
+                    <div id="evaluation-elo-empty" class="text-muted">
+                        Noch keine Evaluationsdaten vorhanden.
+                    </div>
+                    <div id="evaluation-elo-content" class="d-none">
+                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-accuracy">-</span>%</p>
+                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-correct">-</span></p>
+                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-total">-</span></p>
+                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-elo-brier">-</span></p>
+                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-elo-logloss">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Elo Margin Evaluation</h2>
+                    <div id="evaluation-elo-margin-empty" class="text-muted">
+                        Noch keine Evaluationsdaten vorhanden.
+                    </div>
+                    <div id="evaluation-elo-margin-content" class="d-none">
+                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-margin-accuracy">-</span>%</p>
+                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-margin-correct">-</span></p>
+                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-margin-total">-</span></p>
+                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-elo-margin-brier">-</span></p>
+                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-elo-margin-logloss">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4 mt-1">
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Glicko-2 Evaluation</h2>
+                    <div id="evaluation-glicko2-empty" class="text-muted">
+                        Noch keine Evaluationsdaten vorhanden.
+                    </div>
+                    <div id="evaluation-glicko2-content" class="d-none">
+                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-glicko2-accuracy">-</span>%</p>
+                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-glicko2-correct">-</span></p>
+                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-glicko2-total">-</span></p>
+                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-glicko2-brier">-</span></p>
+                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-glicko2-logloss">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">TrueSkill Evaluation</h2>
+                    <div id="evaluation-trueskill-empty" class="text-muted">
+                        Noch keine Evaluationsdaten vorhanden.
+                    </div>
+                    <div id="evaluation-trueskill-content" class="d-none">
+                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-trueskill-accuracy">-</span>%</p>
+                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-trueskill-correct">-</span></p>
+                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-trueskill-total">-</span></p>
+                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-trueskill-brier">-</span></p>
+                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-trueskill-logloss">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h2 class="h4 mb-0">Evaluationsdetails</h2>
+
+                        <select id="evaluation-detail-system-select" class="form-select" style="max-width: 220px;">
+                            <option value="elo">Elo</option>
+                            <option value="elo_margin">Elo Margin</option>
+                            <option value="glicko2">Glicko-2</option>
+                            <option value="trueskill">TrueSkill</option>
+                        </select>
+                    </div>
+
+                    <div id="evaluation-details-empty" class="text-muted">
+                        Noch keine Evaluationsdetails vorhanden.
+                    </div>
+
+                    <div class="table-responsive d-none" id="evaluation-details-wrapper">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Match-ID</th>
+                                    <th>Prognose</th>
+                                    <th>Tatsächlich</th>
+                                    <th>Confidence A</th>
+                                    <th>Confidence B</th>
+                                    <th>Brier-Score</th>
+                                    <th>Log-Loss</th>
+                                    <th>Ergebnis</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evaluation-details-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column gap-4 mt-4">
 
         <div>
             <div class="card shadow-sm h-100">
@@ -126,122 +242,6 @@
                                 </tr>
                             </thead>
                             <tbody id="trueskill-ratings-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mt-1">
-        <div class="col">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h4 mb-3">Elo Evaluation</h2>
-                    <div id="evaluation-elo-empty" class="text-muted">
-                        Noch keine Evaluationsdaten vorhanden.
-                    </div>
-                    <div id="evaluation-elo-content" class="d-none">
-                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-accuracy">-</span>%</p>
-                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-correct">-</span></p>
-                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-total">-</span></p>
-                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-elo-brier">-</span></p>
-                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-elo-logloss">-</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h4 mb-3">Elo Margin Evaluation</h2>
-                    <div id="evaluation-elo-margin-empty" class="text-muted">
-                        Noch keine Evaluationsdaten vorhanden.
-                    </div>
-                    <div id="evaluation-elo-margin-content" class="d-none">
-                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-margin-accuracy">-</span>%</p>
-                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-margin-correct">-</span></p>
-                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-margin-total">-</span></p>
-                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-elo-margin-brier">-</span></p>
-                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-elo-margin-logloss">-</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row g-4 mt-1">
-        <div class="col">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h4 mb-3">Glicko-2 Evaluation</h2>
-                    <div id="evaluation-glicko2-empty" class="text-muted">
-                        Noch keine Evaluationsdaten vorhanden.
-                    </div>
-                    <div id="evaluation-glicko2-content" class="d-none">
-                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-glicko2-accuracy">-</span>%</p>
-                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-glicko2-correct">-</span></p>
-                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-glicko2-total">-</span></p>
-                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-glicko2-brier">-</span></p>
-                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-glicko2-logloss">-</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h4 mb-3">TrueSkill Evaluation</h2>
-                    <div id="evaluation-trueskill-empty" class="text-muted">
-                        Noch keine Evaluationsdaten vorhanden.
-                    </div>
-                    <div id="evaluation-trueskill-content" class="d-none">
-                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-trueskill-accuracy">-</span>%</p>
-                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-trueskill-correct">-</span></p>
-                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-trueskill-total">-</span></p>
-                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-trueskill-brier">-</span></p>
-                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-trueskill-logloss">-</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mt-1">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                        <h2 class="h4 mb-0">Evaluationsdetails</h2>
-
-                        <select id="evaluation-detail-system-select" class="form-select" style="max-width: 220px;">
-                            <option value="elo">Elo</option>
-                            <option value="elo_margin">Elo Margin</option>
-                            <option value="glicko2">Glicko-2</option>
-                            <option value="trueskill">TrueSkill</option>
-                        </select>
-                    </div>
-
-                    <div id="evaluation-details-empty" class="text-muted">
-                        Noch keine Evaluationsdetails vorhanden.
-                    </div>
-
-                    <div class="table-responsive d-none" id="evaluation-details-wrapper">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Match-ID</th>
-                                    <th>Prognose</th>
-                                    <th>Tatsächlich</th>
-                                    <th>Confidence A</th>
-                                    <th>Confidence B</th>
-                                    <th>Brier-Score</th>
-                                    <th>Log-Loss</th>
-                                    <th>Ergebnis</th>
-                                </tr>
-                            </thead>
-                            <tbody id="evaluation-details-body"></tbody>
                         </table>
                     </div>
                 </div>

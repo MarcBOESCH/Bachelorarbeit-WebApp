@@ -289,15 +289,15 @@ def process_glicko2_match(match):
     for entry, delta in zip(team_a, distributed_a):
         rating = entry["rating_entry"]
         rating.rating += delta["rating"]
-        rating.rating_deviation += delta["rd"]
-        rating.volatility += delta["vol"]
+        rating.rating_deviation = max(1e-6, rating.rating_deviation + delta["rd"])
+        rating.volatility = max(1e-6, rating.volatility + delta["vol"])
         rating.matches_played += 1
 
     for entry, delta in zip(team_b, distributed_b):
         rating = entry["rating_entry"]
         rating.rating += delta["rating"]
-        rating.rating_deviation += delta["rd"]
-        rating.volatility += delta["vol"]
+        rating.rating_deviation = max(1e-6, rating.rating_deviation + delta["rd"])
+        rating.volatility = max(1e-6, rating.volatility + delta["vol"])
         rating.matches_played += 1
 
     mark_match_as_processed_for_system(match, "glicko2")
