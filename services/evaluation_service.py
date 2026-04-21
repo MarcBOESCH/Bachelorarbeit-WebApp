@@ -1,5 +1,3 @@
-from glicko2 import Player as Glicko2Player
-
 from models.match import Match
 from services.rating_utils import (
     SUPPORTED_RATING_SYSTEMS,
@@ -13,6 +11,9 @@ from services.rating_utils import (
     calculate_elo_expected_score,
     calculate_elo_update,
     calculate_elo_margin_update,
+    aggregate_glicko2_team_state,
+    calculate_glicko2_team_update,
+    distribute_team_delta_by_rd,
     calculate_log_loss,
 )
 
@@ -37,6 +38,26 @@ def build_match_teams(match):
         MockPlayerEntry(match.team_b.player2_id, "B", 2),
     ]
     return team_a_entries, team_b_entries
+
+
+def build_glicko2_team_proxy(team_entries, player_states):
+    class RatingEntryProxy:
+        def __init__(self, rating, rating_deviation, volatility):
+            self.rating = rating
+            self.rating_deviation = rating_deviation
+            self.volatility = volatility
+
+    return [
+        {
+            "player_id": entry.player_id,
+            "rating_entry": RatingEntryProxy(
+                rating=player_states[entry.player_id]["rating"],
+                rating_deviation=player_states[entry.player_id]["rd"],
+                volatility=player_states[entry.player_id]["vol"],
+            )
+        }
+        for entry in team_entries
+    ]
 
 
 def build_result_payload(
@@ -246,17 +267,14 @@ def evaluate_glicko2_predictions():
                     "vol": DEFAULT_GLICKO2_VOL,
                 }
 
-        team_a_rating = sum(player_states[entry.player_id]["rating"] for entry in team_a_entries) / 2
-        team_b_rating = sum(player_states[entry.player_id]["rating"] for entry in team_b_entries) / 2
+        team_a_proxy = build_glicko2_team_proxy(team_a_entries, player_states)
+        team_b_proxy = build_glicko2_team_proxy(team_b_entries, player_states)
 
-        team_a_rd = sum(player_states[entry.player_id]["rd"] for entry in team_a_entries) / 2
-        team_b_rd = sum(player_states[entry.player_id]["rd"] for entry in team_b_entries) / 2
+        team_a_state = aggregate_glicko2_team_state(team_a_proxy)
+        team_b_state = aggregate_glicko2_team_state(team_b_proxy)
 
-        team_a_vol = sum(player_states[entry.player_id]["vol"] for entry in team_a_entries) / 2
-        team_b_vol = sum(player_states[entry.player_id]["vol"] for entry in team_b_entries) / 2
-
-        expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
-        expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
+        expected_a = calculate_elo_expected_score(team_a_state["rating"], team_b_state["rating"])
+        expected_b = calculate_elo_expected_score(team_b_state["rating"], team_a_state["rating"])
 
         predicted_winner = "A" if expected_a >= expected_b else "B"
         actual_winner = match.winner_team
@@ -284,59 +302,24 @@ def evaluate_glicko2_predictions():
             "correct": is_correct,
         })
 
-        team_a_player = Glicko2Player(
-            rating=team_a_rating,
-            rd=team_a_rd,
-            vol=team_a_vol,
-        )
-        team_b_player = Glicko2Player(
-            rating=team_b_rating,
-            rd=team_b_rd,
-            vol=team_b_vol,
+        update_result = calculate_glicko2_team_update(
+            team_a_state=team_a_state,
+            team_b_state=team_b_state,
+            winner_team=actual_winner,
         )
 
-        if actual_winner == "A":
-            team_a_result = 1
-            team_b_result = 0
-        else:
-            team_a_result = 0
-            team_b_result = 1
+        distributed_a = distribute_team_delta_by_rd(team_a_proxy, update_result["delta_a"])
+        distributed_b = distribute_team_delta_by_rd(team_b_proxy, update_result["delta_b"])
 
-        team_a_opponent_rating = team_b_rating
-        team_a_opponent_rd = team_b_rd
+        for entry, delta in zip(team_a_entries, distributed_a):
+            player_states[entry.player_id]["rating"] += delta["rating"]
+            player_states[entry.player_id]["rd"] += delta["rd"]
+            player_states[entry.player_id]["vol"] += delta["vol"]
 
-        team_b_opponent_rating = team_a_rating
-        team_b_opponent_rd = team_a_rd
-
-        team_a_player.update_player(
-            [team_a_opponent_rating],
-            [team_a_opponent_rd],
-            [team_a_result],
-        )
-        team_b_player.update_player(
-            [team_b_opponent_rating],
-            [team_b_opponent_rd],
-            [team_b_result],
-        )
-
-        delta_a_rating = team_a_player.rating - team_a_rating
-        delta_b_rating = team_b_player.rating - team_b_rating
-
-        delta_a_rd = team_a_player.rd - team_a_rd
-        delta_b_rd = team_b_player.rd - team_b_rd
-
-        delta_a_vol = team_a_player.vol - team_a_vol
-        delta_b_vol = team_b_player.vol - team_b_vol
-
-        for entry in team_a_entries:
-            player_states[entry.player_id]["rating"] += delta_a_rating
-            player_states[entry.player_id]["rd"] += delta_a_rd
-            player_states[entry.player_id]["vol"] += delta_a_vol
-
-        for entry in team_b_entries:
-            player_states[entry.player_id]["rating"] += delta_b_rating
-            player_states[entry.player_id]["rd"] += delta_b_rd
-            player_states[entry.player_id]["vol"] += delta_b_vol
+        for entry, delta in zip(team_b_entries, distributed_b):
+            player_states[entry.player_id]["rating"] += delta["rating"]
+            player_states[entry.player_id]["rd"] += delta["rd"]
+            player_states[entry.player_id]["vol"] += delta["vol"]
 
     return build_result_payload(
         "glicko2",

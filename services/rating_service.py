@@ -17,6 +17,9 @@ from services.rating_utils import (
     TRUESKILL_ENV,
     calculate_elo_update,
     calculate_elo_margin_update,
+    aggregate_glicko2_team_state,
+    calculate_glicko2_team_update,
+    distribute_team_delta_by_rd,
 )
 
 SUPPORTED_SYSTEMS = SUPPORTED_RATING_SYSTEMS
@@ -34,7 +37,7 @@ def get_or_create_player_rating(player_id, system_name):
     if rating_entry:
         return rating_entry
 
-    if system_name in {"elo", "elo_margin",}:
+    if system_name in {"elo", "elo_margin"}:
         rating_entry = PlayerRating(
             player_id=player_id,
             system_name=system_name,
@@ -109,13 +112,6 @@ def split_match_ratings_by_team(match, system_name):
 def calculate_team_average_rating(team_entries):
     ratings = [entry["rating_entry"].rating for entry in team_entries]
     return sum(ratings) / len(ratings)
-
-
-def calculate_team_average_glicko2_values(team_entries):
-    avg_rating = sum(entry["rating_entry"].rating for entry in team_entries) / len(team_entries)
-    avg_rd = sum(entry["rating_entry"].rating_deviation for entry in team_entries) / len(team_entries)
-    avg_vol = sum(entry["rating_entry"].volatility for entry in team_entries) / len(team_entries)
-    return avg_rating, avg_rd, avg_vol
 
 
 def build_trueskill_rating(rating_entry):
@@ -276,41 +272,30 @@ def process_glicko2_match(match):
     if len(team_a) != 2 or len(team_b) != 2:
         raise ValueError("Ein Glicko-2-Match muss genau 2 Spieler pro Team haben.")
 
-    team_a_rating, team_a_rd, team_a_vol = calculate_team_average_glicko2_values(team_a)
-    team_b_rating, team_b_rd, team_b_vol = calculate_team_average_glicko2_values(team_b)
+    team_a_state = aggregate_glicko2_team_state(team_a)
+    team_b_state = aggregate_glicko2_team_state(team_b)
 
-    team_a_player = Glicko2Player(rating=team_a_rating, rd=team_a_rd, vol=team_a_vol)
-    team_b_player = Glicko2Player(rating=team_b_rating, rd=team_b_rd, vol=team_b_vol)
+    update_result = calculate_glicko2_team_update(
+        team_a_state=team_a_state,
+        team_b_state=team_b_state,
+        winner_team=match.winner_team,
+    )
 
-    if match.winner_team == "A":
-        team_a_result = 1
-        team_b_result = 0
-    else:
-        team_a_result = 0
-        team_b_result = 1
+    distributed_a = distribute_team_delta_by_rd(team_a, update_result["delta_a"])
+    distributed_b = distribute_team_delta_by_rd(team_b, update_result["delta_b"])
 
-    team_a_player.update_player([team_b_rating], [team_b_rd], [team_a_result])
-    team_b_player.update_player([team_a_rating], [team_a_rd], [team_b_result])
-
-    delta_a_rating = team_a_player.rating - team_a_rating
-    delta_b_rating = team_b_player.rating - team_b_rating
-    delta_a_rd = team_a_player.rd - team_a_rd
-    delta_b_rd = team_b_player.rd - team_b_rd
-    delta_a_vol = team_a_player.vol - team_a_vol
-    delta_b_vol = team_b_player.vol - team_b_vol
-
-    for entry in team_a:
+    for entry, delta in zip(team_a, distributed_a):
         rating = entry["rating_entry"]
-        rating.rating += delta_a_rating
-        rating.rating_deviation += delta_a_rd
-        rating.volatility += delta_a_vol
+        rating.rating += delta["rating"]
+        rating.rating_deviation += delta["rd"]
+        rating.volatility += delta["vol"]
         rating.matches_played += 1
 
-    for entry in team_b:
+    for entry, delta in zip(team_b, distributed_b):
         rating = entry["rating_entry"]
-        rating.rating += delta_b_rating
-        rating.rating_deviation += delta_b_rd
-        rating.volatility += delta_b_vol
+        rating.rating += delta["rating"]
+        rating.rating_deviation += delta["rd"]
+        rating.volatility += delta["vol"]
         rating.matches_played += 1
 
     mark_match_as_processed_for_system(match, "glicko2")
@@ -319,10 +304,16 @@ def process_glicko2_match(match):
     return {
         "match_id": match.id,
         "winner_team": match.winner_team,
-        "team_a_rating_before": round(team_a_rating, 2),
-        "team_b_rating_before": round(team_b_rating, 2),
-        "team_a_rating_after": round(team_a_player.rating, 2),
-        "team_b_rating_after": round(team_b_player.rating, 2)
+        "team_a_rating_before": round(team_a_state["rating"], 2),
+        "team_b_rating_before": round(team_b_state["rating"], 2),
+        "team_a_rating_after": round(update_result["team_a_after"]["rating"], 2),
+        "team_b_rating_after": round(update_result["team_b_after"]["rating"], 2),
+        "team_a_rd_before": round(team_a_state["rd"], 2),
+        "team_b_rd_before": round(team_b_state["rd"], 2),
+        "team_a_rd_after": round(update_result["team_a_after"]["rd"], 2),
+        "team_b_rd_after": round(update_result["team_b_after"]["rd"], 2),
+        "team_a_weights": [round(delta["weight"], 4) for delta in distributed_a],
+        "team_b_weights": [round(delta["weight"], 4) for delta in distributed_b],
     }
 
 
@@ -413,7 +404,7 @@ def get_player_ratings_for_system(system_name):
             "sigma": round(entry.sigma, 4) if entry.sigma is not None else None
         })
 
-    if system_name in {"elo", "elo_margin","glicko2"}:
+    if system_name in {"elo", "elo_margin", "glicko2"}:
         result.sort(
             key=lambda item: item["rating"] if item["rating"] is not None else -999999,
             reverse=True

@@ -1,6 +1,7 @@
 import math
 
 import trueskill
+from glicko2 import Player as Glicko2Player
 
 
 SUPPORTED_RATING_SYSTEMS = {"elo", "elo_margin", "glicko2", "trueskill"}
@@ -82,6 +83,110 @@ def calculate_elo_margin_update(
         "delta_b": delta_b,
         "margin_multiplier": margin_multiplier,
     }
+
+
+def aggregate_glicko2_team_state(team_entries):
+    ratings = [entry["rating_entry"].rating for entry in team_entries]
+    rds = [entry["rating_entry"].rating_deviation for entry in team_entries]
+    vols = [entry["rating_entry"].volatility for entry in team_entries]
+
+    team_rating = sum(ratings) / len(ratings)
+
+    # Teamleistung basiert auf dem Mittelwert der Einzelstärken.
+    # Deshalb wird auch die Unsicherheit des Teammittels approximiert:
+    # sqrt(sum(variance)) / n
+    team_rd = math.sqrt(sum(rd ** 2 for rd in rds)) / len(rds)
+    team_vol = math.sqrt(sum(vol ** 2 for vol in vols)) / len(vols)
+
+    return {
+        "rating": team_rating,
+        "rd": team_rd,
+        "vol": team_vol,
+    }
+
+
+def calculate_rd_based_weights(team_entries):
+    rds = [max(entry["rating_entry"].rating_deviation, 1e-6) for entry in team_entries]
+    total_rd = sum(rds)
+
+    if total_rd <= 0:
+        uniform_weight = 1.0 / len(team_entries)
+        return [uniform_weight for _ in team_entries]
+
+    return [rd / total_rd for rd in rds]
+
+
+def calculate_glicko2_team_update(team_a_state, team_b_state, winner_team):
+    team_a_player = Glicko2Player(
+        rating=team_a_state["rating"],
+        rd=team_a_state["rd"],
+        vol=team_a_state["vol"],
+    )
+    team_b_player = Glicko2Player(
+        rating=team_b_state["rating"],
+        rd=team_b_state["rd"],
+        vol=team_b_state["vol"],
+    )
+
+    if winner_team == "A":
+        team_a_result = 1
+        team_b_result = 0
+    else:
+        team_a_result = 0
+        team_b_result = 1
+
+    team_a_player.update_player(
+        [team_b_state["rating"]],
+        [team_b_state["rd"]],
+        [team_a_result],
+    )
+    team_b_player.update_player(
+        [team_a_state["rating"]],
+        [team_a_state["rd"]],
+        [team_b_result],
+    )
+
+    return {
+        "team_a_before": team_a_state,
+        "team_b_before": team_b_state,
+        "team_a_after": {
+            "rating": team_a_player.rating,
+            "rd": team_a_player.rd,
+            "vol": team_a_player.vol,
+        },
+        "team_b_after": {
+            "rating": team_b_player.rating,
+            "rd": team_b_player.rd,
+            "vol": team_b_player.vol,
+        },
+        "delta_a": {
+            "rating": team_a_player.rating - team_a_state["rating"],
+            "rd": team_a_player.rd - team_a_state["rd"],
+            "vol": team_a_player.vol - team_a_state["vol"],
+        },
+        "delta_b": {
+            "rating": team_b_player.rating - team_b_state["rating"],
+            "rd": team_b_player.rd - team_b_state["rd"],
+            "vol": team_b_player.vol - team_b_state["vol"],
+        },
+    }
+
+
+def distribute_team_delta_by_rd(team_entries, team_delta):
+    weights = calculate_rd_based_weights(team_entries)
+    team_size = len(team_entries)
+
+    distributed = []
+    for entry, weight in zip(team_entries, weights):
+        distributed.append({
+            "player_id": entry["player_id"],
+            "weight": weight,
+            "rating": team_delta["rating"] * team_size * weight,
+            "rd": team_delta["rd"] * team_size * weight,
+            "vol": team_delta["vol"] * team_size * weight,
+        })
+
+    return distributed
 
 
 def calculate_log_loss(probability, actual_outcome):
