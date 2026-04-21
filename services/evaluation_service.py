@@ -11,6 +11,7 @@ from services.rating_utils import (
     DEFAULT_TRUESKILL_SIGMA,
     TRUESKILL_ENV,
     calculate_elo_expected_score,
+    calculate_elo_update,
     calculate_log_loss,
 )
 
@@ -112,15 +113,15 @@ def evaluate_elo_predictions():
             "correct": is_correct,
         })
 
-        actual_a = 1.0 if actual_winner == "A" else 0.0
-        actual_b = 1.0 if actual_winner == "B" else 0.0
+        elo_result = calculate_elo_update(
+            team_a_rating=team_a_rating,
+            team_b_rating=team_b_rating,
+            winner_team=actual_winner,
+            k_factor=32,
+        )
 
-        k_factor = 32
-        mov_multiplier = 1.0 + (match.point_diff / 500.0)
-        adjusted_k = k_factor * mov_multiplier
-
-        delta_a = adjusted_k * (actual_a - expected_a)
-        delta_b = adjusted_k * (actual_b - expected_b)
+        delta_a = elo_result["delta_a"]
+        delta_b = elo_result["delta_b"]
 
         for entry in team_a_entries:
             player_ratings[entry.player_id] += delta_a

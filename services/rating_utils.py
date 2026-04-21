@@ -26,6 +26,24 @@ def calculate_elo_expected_score(team_a_rating, team_b_rating):
     return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
 
 
+def calculate_elo_update(team_a_rating, team_b_rating, winner_team, k_factor=32):
+    expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
+    expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
+
+    actual_a = 1.0 if winner_team == "A" else 0.0
+    actual_b = 1.0 if winner_team == "B" else 0.0
+
+    delta_a = k_factor * (actual_a - expected_a)
+    delta_b = k_factor * (actual_b - expected_b)
+
+    return {
+        "expected_a": expected_a,
+        "expected_b": expected_b,
+        "delta_a": delta_a,
+        "delta_b": delta_b,
+    }
+
+
 def calculate_log_loss(probability, actual_outcome):
     clipped_probability = min(max(probability, 1e-6), 1 - 1e-6)
     return -(

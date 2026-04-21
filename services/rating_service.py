@@ -15,7 +15,8 @@ from services.rating_utils import (
     DEFAULT_TRUESKILL_MU,
     DEFAULT_TRUESKILL_SIGMA,
     TRUESKILL_ENV,
-    calculate_elo_expected_score
+    calculate_elo_expected_score,
+    calculate_elo_update,
 )
 
 SUPPORTED_SYSTEMS = SUPPORTED_RATING_SYSTEMS
@@ -181,17 +182,17 @@ def process_elo_match(match, k_factor=32):
     team_a_rating = calculate_team_average_rating(team_a)
     team_b_rating = calculate_team_average_rating(team_b)
 
-    expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
-    expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
+    elo_result = calculate_elo_update(
+        team_a_rating=team_a_rating,
+        team_b_rating=team_b_rating,
+        winner_team=match.winner_team,
+        k_factor=k_factor,
+    )
 
-    actual_a = 1.0 if match.winner_team == "A" else 0.0
-    actual_b = 1.0 if match.winner_team == "B" else 0.0
-
-    mov_multiplier = 1.0 + (match.point_diff / 500.0)
-    adjusted_k = k_factor * mov_multiplier
-
-    delta_a = adjusted_k * (actual_a - expected_a)
-    delta_b = adjusted_k * (actual_b - expected_b)
+    delta_a = elo_result["delta_a"]
+    delta_b = elo_result["delta_b"]
+    expected_a = elo_result["expected_a"]
+    expected_b = elo_result["expected_b"]
 
     for entry in team_a:
         rating = entry["rating_entry"]
