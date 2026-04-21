@@ -23,7 +23,7 @@ function formatNumber(value) {
 }
 
 function getSortableRatingValue(player, systemName) {
-    if (systemName === "elo" || systemName === "glicko2") {
+    if (systemName === "elo" || systemName === "elo_margin" || systemName === "glicko2") {
         return player.rating ?? -999999;
     }
 
@@ -40,6 +40,11 @@ function getRatingConfig(systemName) {
             emptyId: "elo-ratings-empty",
             wrapperId: "elo-ratings-wrapper",
             bodyId: "elo-ratings-body"
+        },
+        elo_margin: {
+            emptyId: "elo-margin-ratings-empty",
+            wrapperId: "elo-margin-ratings-wrapper",
+            bodyId: "elo-margin-ratings-body"
         },
         glicko2: {
             emptyId: "glicko2-ratings-empty",
@@ -66,6 +71,15 @@ function getEvaluationConfig(systemName) {
             totalId: "evaluation-elo-total",
             brierId: "evaluation-elo-brier",
             logLossId: "evaluation-elo-logloss"
+        },
+        elo_margin: {
+            emptyId: "evaluation-elo-margin-empty",
+            contentId: "evaluation-elo-margin-content",
+            accuracyId: "evaluation-elo-margin-accuracy",
+            correctId: "evaluation-elo-margin-correct",
+            totalId: "evaluation-elo-margin-total",
+            brierId: "evaluation-elo-margin-brier",
+            logLossId: "evaluation-elo-margin-logloss"
         },
         glicko2: {
             emptyId: "evaluation-glicko2-empty",
@@ -127,7 +141,7 @@ function renderRatingsForSystem(systemName, ratings) {
     sortedRatings.forEach((player, index) => {
         const row = document.createElement("tr");
 
-        if (systemName === "elo") {
+        if (systemName === "elo" || systemName === "elo_margin") {
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${player.player_name}</td>
@@ -179,6 +193,7 @@ async function loadRatingsForSystem(systemName) {
 
 async function loadAllRatings() {
     await loadRatingsForSystem("elo");
+    await loadRatingsForSystem("elo_margin");
     await loadRatingsForSystem("glicko2");
     await loadRatingsForSystem("trueskill");
 }
@@ -319,6 +334,7 @@ async function loadEvaluationForSystem(systemName) {
 
 async function loadAllEvaluations() {
     await loadEvaluationForSystem("elo");
+    await loadEvaluationForSystem("elo_margin");
     await loadEvaluationForSystem("glicko2");
     await loadEvaluationForSystem("trueskill");
 }
@@ -348,11 +364,16 @@ async function loadEvaluationDetails(systemName = currentEvaluationDetailSystem)
 
 function initRatingsSection() {
     const processEloBtn = document.getElementById("process-elo-btn");
+    const processEloMarginBtn = document.getElementById("process-elo-margin-btn");
     const processGlicko2Btn = document.getElementById("process-glicko2-btn");
     const processTrueSkillBtn = document.getElementById("process-trueskill-btn");
 
     if (processEloBtn) {
         processEloBtn.addEventListener("click", () => processRatingsForSystem("elo"));
+    }
+
+    if (processEloMarginBtn) {
+        processEloMarginBtn.addEventListener("click", () => processRatingsForSystem("elo_margin"));
     }
 
     if (processGlicko2Btn) {

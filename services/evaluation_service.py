@@ -12,6 +12,7 @@ from services.rating_utils import (
     TRUESKILL_ENV,
     calculate_elo_expected_score,
     calculate_elo_update,
+    calculate_elo_margin_update,
     calculate_log_loss,
 )
 
@@ -131,6 +132,88 @@ def evaluate_elo_predictions():
 
     return build_result_payload(
         "elo",
+        total_predictions,
+        correct_predictions,
+        total_brier_score,
+        total_log_loss,
+        prediction_details,
+    )
+
+
+def evaluate_elo_margin_predictions():
+    matches = Match.query.order_by(Match.played_at.asc()).all()
+
+    player_ratings = {}
+    correct_predictions = 0
+    total_predictions = 0
+    prediction_details = []
+    total_brier_score = 0.0
+    total_log_loss = 0.0
+
+    for match in matches:
+        team_a_entries, team_b_entries = build_match_teams(match)
+
+        if len(team_a_entries) != 2 or len(team_b_entries) != 2:
+            continue
+
+        for entry in team_a_entries + team_b_entries:
+            if entry.player_id not in player_ratings:
+                player_ratings[entry.player_id] = DEFAULT_ELO_RATING
+
+        team_a_rating = sum(player_ratings[entry.player_id] for entry in team_a_entries) / 2
+        team_b_rating = sum(player_ratings[entry.player_id] for entry in team_b_entries) / 2
+
+        expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
+        expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
+
+        predicted_winner = "A" if expected_a >= expected_b else "B"
+        actual_winner = match.winner_team
+        is_correct = predicted_winner == actual_winner
+
+        actual_a_binary = 1.0 if actual_winner == "A" else 0.0
+        brier_score = (expected_a - actual_a_binary) ** 2
+        log_loss = calculate_log_loss(expected_a, actual_a_binary)
+
+        total_brier_score += brier_score
+        total_log_loss += log_loss
+        total_predictions += 1
+
+        if is_correct:
+            correct_predictions += 1
+
+        prediction_details.append({
+            "match_id": match.id,
+            "predicted_winner": predicted_winner,
+            "actual_winner": actual_winner,
+            "confidence_a": round(expected_a, 4),
+            "confidence_b": round(expected_b, 4),
+            "brier_score": round(brier_score, 6),
+            "log_loss": round(log_loss, 6),
+            "point_diff": match.point_diff,
+            "correct": is_correct,
+        })
+
+        elo_result = calculate_elo_margin_update(
+            team_a_rating=team_a_rating,
+            team_b_rating=team_b_rating,
+            winner_team=actual_winner,
+            point_diff=match.point_diff,
+            k_factor=32,
+            cap=500,
+            alpha=0.5,
+        )
+
+        delta_a = elo_result["delta_a"]
+        delta_b = elo_result["delta_b"]
+
+        for entry in team_a_entries:
+            player_ratings[entry.player_id] += delta_a
+
+        for entry in team_b_entries:
+            player_ratings[entry.player_id] += delta_b
+
+    return build_result_payload(
+        "elo_margin",
         total_predictions,
         correct_predictions,
         total_brier_score,
@@ -352,6 +435,9 @@ def evaluate_predictions_for_system(system_name):
 
     if system_name == "elo":
         return evaluate_elo_predictions()
+
+    if system_name == "elo_margin":
+        return evaluate_elo_margin_predictions()
 
     if system_name == "glicko2":
         return evaluate_glicko2_predictions()

@@ -15,8 +15,8 @@ from services.rating_utils import (
     DEFAULT_TRUESKILL_MU,
     DEFAULT_TRUESKILL_SIGMA,
     TRUESKILL_ENV,
-    calculate_elo_expected_score,
     calculate_elo_update,
+    calculate_elo_margin_update,
 )
 
 SUPPORTED_SYSTEMS = SUPPORTED_RATING_SYSTEMS
@@ -34,10 +34,10 @@ def get_or_create_player_rating(player_id, system_name):
     if rating_entry:
         return rating_entry
 
-    if system_name == "elo":
+    if system_name in {"elo", "elo_margin",}:
         rating_entry = PlayerRating(
             player_id=player_id,
-            system_name="elo",
+            system_name=system_name,
             rating=DEFAULT_ELO_RATING,
             matches_played=0
         )
@@ -219,6 +219,57 @@ def process_elo_match(match, k_factor=32):
     }
 
 
+def process_elo_margin_match(match, k_factor=32, cap=500, alpha=0.5):
+    team_a, team_b = split_match_ratings_by_team(match, "elo_margin")
+
+    if len(team_a) != 2 or len(team_b) != 2:
+        raise ValueError("Ein Elo-Margin-Match muss genau 2 Spieler pro Team haben.")
+
+    team_a_rating = calculate_team_average_rating(team_a)
+    team_b_rating = calculate_team_average_rating(team_b)
+
+    elo_result = calculate_elo_margin_update(
+        team_a_rating=team_a_rating,
+        team_b_rating=team_b_rating,
+        winner_team=match.winner_team,
+        point_diff=match.point_diff,
+        k_factor=k_factor,
+        cap=cap,
+        alpha=alpha,
+    )
+
+    delta_a = elo_result["delta_a"]
+    delta_b = elo_result["delta_b"]
+    expected_a = elo_result["expected_a"]
+    expected_b = elo_result["expected_b"]
+    margin_multiplier = elo_result["margin_multiplier"]
+
+    for entry in team_a:
+        rating = entry["rating_entry"]
+        rating.rating += delta_a
+        rating.matches_played += 1
+
+    for entry in team_b:
+        rating = entry["rating_entry"]
+        rating.rating += delta_b
+        rating.matches_played += 1
+
+    mark_match_as_processed_for_system(match, "elo_margin")
+    db.session.commit()
+
+    return {
+        "match_id": match.id,
+        "winner_team": match.winner_team,
+        "team_a_rating_before": round(team_a_rating, 2),
+        "team_b_rating_before": round(team_b_rating, 2),
+        "expected_a": round(expected_a, 4),
+        "expected_b": round(expected_b, 4),
+        "delta_a": round(delta_a, 2),
+        "delta_b": round(delta_b, 2),
+        "margin_multiplier": round(margin_multiplier, 4),
+    }
+
+
 def process_glicko2_match(match):
     team_a, team_b = split_match_ratings_by_team(match, "glicko2")
 
@@ -319,6 +370,8 @@ def process_trueskill_match(match):
 def process_match_for_system(match, system_name):
     if system_name == "elo":
         return process_elo_match(match)
+    if system_name == "elo_margin":
+        return process_elo_margin_match(match)
     if system_name == "glicko2":
         return process_glicko2_match(match)
     if system_name == "trueskill":
@@ -360,7 +413,7 @@ def get_player_ratings_for_system(system_name):
             "sigma": round(entry.sigma, 4) if entry.sigma is not None else None
         })
 
-    if system_name in {"elo", "glicko2"}:
+    if system_name in {"elo", "elo_margin","glicko2"}:
         result.sort(
             key=lambda item: item["rating"] if item["rating"] is not None else -999999,
             reverse=True

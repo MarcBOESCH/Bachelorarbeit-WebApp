@@ -3,7 +3,7 @@ import math
 import trueskill
 
 
-SUPPORTED_RATING_SYSTEMS = {"elo", "glicko2", "trueskill"}
+SUPPORTED_RATING_SYSTEMS = {"elo", "elo_margin", "glicko2", "trueskill"}
 
 DEFAULT_ELO_RATING = 1500.0
 DEFAULT_GLICKO2_RATING = 1500.0
@@ -41,6 +41,46 @@ def calculate_elo_update(team_a_rating, team_b_rating, winner_team, k_factor=32)
         "expected_b": expected_b,
         "delta_a": delta_a,
         "delta_b": delta_b,
+    }
+
+
+def calculate_margin_multiplier(point_diff, cap=500, alpha=0.5):
+    clipped = min(max(point_diff, 0), cap)
+    normalized = math.log1p(clipped) / math.log1p(cap)
+    return 1.0 + alpha * normalized
+
+
+def calculate_elo_margin_update(
+    team_a_rating,
+    team_b_rating,
+    winner_team,
+    point_diff,
+    k_factor=32,
+    cap=500,
+    alpha=0.5,
+):
+    base_result = calculate_elo_update(
+        team_a_rating=team_a_rating,
+        team_b_rating=team_b_rating,
+        winner_team=winner_team,
+        k_factor=k_factor,
+    )
+
+    margin_multiplier = calculate_margin_multiplier(
+        point_diff=point_diff,
+        cap=cap,
+        alpha=alpha,
+    )
+
+    delta_a = base_result["delta_a"] * margin_multiplier
+    delta_b = base_result["delta_b"] * margin_multiplier
+
+    return {
+        "expected_a": base_result["expected_a"],
+        "expected_b": base_result["expected_b"],
+        "delta_a": delta_a,
+        "delta_b": delta_b,
+        "margin_multiplier": margin_multiplier,
     }
 
 

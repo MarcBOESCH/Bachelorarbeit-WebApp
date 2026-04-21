@@ -42,6 +42,37 @@
             <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                        <h2 class="h4 mb-0">Elo Margin</h2>
+                        <button id="process-elo-margin-btn" class="btn btn-dark btn-sm" type="button">
+                            Verarbeiten
+                        </button>
+                    </div>
+
+                    <div id="elo-margin-ratings-empty" class="text-muted">
+                        Noch keine Elo-Ratings mit Margin of Victory vorhanden.
+                    </div>
+
+                    <div class="table-responsive d-none" id="elo-margin-ratings-wrapper">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Rang</th>
+                                    <th>Spieler</th>
+                                    <th>Elo Margin</th>
+                                    <th>Matches</th>
+                                </tr>
+                            </thead>
+                            <tbody id="elo-margin-ratings-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
                         <h2 class="h4 mb-0">Glicko-2</h2>
                         <button id="process-glicko2-btn" class="btn btn-dark btn-sm" type="button">
                             Verarbeiten
@@ -123,6 +154,24 @@
         <div class="col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
+                    <h2 class="h4 mb-3">Elo Margin Evaluation</h2>
+                    <div id="evaluation-elo-margin-empty" class="text-muted">
+                        Noch keine Evaluationsdaten vorhanden.
+                    </div>
+                    <div id="evaluation-elo-margin-content" class="d-none">
+                        <p class="mb-1"><strong>Accuracy:</strong> <span id="evaluation-elo-margin-accuracy">-</span>%</p>
+                        <p class="mb-1"><strong>Korrekt:</strong> <span id="evaluation-elo-margin-correct">-</span></p>
+                        <p class="mb-0"><strong>Gesamt:</strong> <span id="evaluation-elo-margin-total">-</span></p>
+                        <p class="mb-0"><strong>Brier Score:</strong> <span id="evaluation-elo-margin-brier">-</span></p>
+                        <p class="mb-0"><strong>Log Loss:</strong> <span id="evaluation-elo-margin-logloss">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
                     <h2 class="h4 mb-3">Glicko-2 Evaluation</h2>
                     <div id="evaluation-glicko2-empty" class="text-muted">
                         Noch keine Evaluationsdaten vorhanden.
@@ -166,6 +215,7 @@
 
                         <select id="evaluation-detail-system-select" class="form-select" style="max-width: 220px;">
                             <option value="elo">Elo</option>
+                            <option value="elo_margin">Elo Margin</option>
                             <option value="glicko2">Glicko-2</option>
                             <option value="trueskill">TrueSkill</option>
                         </select>
