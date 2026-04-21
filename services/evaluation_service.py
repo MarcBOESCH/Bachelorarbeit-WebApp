@@ -287,8 +287,8 @@ def evaluate_glicko2_predictions():
                     "vol": DEFAULT_GLICKO2_VOL,
                 }
 
-        team_a_proxy = build_trueskill_team_proxy(team_a_entries, player_states)
-        team_b_proxy = build_trueskill_team_proxy(team_b_entries, player_states)
+        team_a_proxy = build_glicko2_team_proxy(team_a_entries, player_states)
+        team_b_proxy = build_glicko2_team_proxy(team_b_entries, player_states)
 
         team_a_state = aggregate_glicko2_team_state(team_a_proxy)
         team_b_state = aggregate_glicko2_team_state(team_b_proxy)
@@ -374,32 +374,8 @@ def evaluate_trueskill_predictions():
                     sigma=DEFAULT_TRUESKILL_SIGMA,
                 )
 
-        team_a_proxy = [
-            {
-                "rating_entry": type(
-                    "RatingEntryProxy",
-                    (),
-                    {
-                        "mu": player_states[entry.player_id].mu,
-                        "sigma": player_states[entry.player_id].sigma,
-                    },
-                )()
-            }
-            for entry in team_a_entries
-        ]
-        team_b_proxy = [
-            {
-                "rating_entry": type(
-                    "RatingEntryProxy",
-                    (),
-                    {
-                        "mu": player_states[entry.player_id].mu,
-                        "sigma": player_states[entry.player_id].sigma,
-                    },
-                )()
-            }
-            for entry in team_b_entries
-        ]
+        team_a_proxy = build_trueskill_team_proxy(team_a_entries, player_states)
+        team_b_proxy = build_trueskill_team_proxy(team_b_entries, player_states)
 
         team_a_state = aggregate_trueskill_team_state(team_a_proxy)
         team_b_state = aggregate_trueskill_team_state(team_b_proxy)
