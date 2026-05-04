@@ -233,7 +233,8 @@ def calculate_trueskill_team_update(team_a_ratings, team_b_ratings, winner_team)
 
 
 def calculate_log_loss(probability, actual_outcome):
-    clipped_probability = min(max(probability, 1e-6), 1 - 1e-6)
+    epsilon = 1e-15
+    clipped_probability = min(max(probability, epsilon), 1 - epsilon)
     return -(
         actual_outcome * math.log(clipped_probability) +
         (1 - actual_outcome) * math.log(1 - clipped_probability)
