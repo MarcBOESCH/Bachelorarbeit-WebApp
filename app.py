@@ -10,6 +10,16 @@ from extensions import db, migrate
 from routes import register_blueprints
 
 
+def build_static_url(app, filename):
+    path = os.path.join(app.static_folder, filename)
+    version = int(os.path.getmtime(path)) if os.path.exists(path) else None
+
+    if version is None:
+        return url_for("static", filename=filename)
+
+    return url_for("static", filename=filename, v=version)
+
+
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
 
@@ -34,6 +44,12 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     register_blueprints(app)
+
+    @app.context_processor
+    def inject_static_url():
+        return {
+            "static_url": lambda filename: build_static_url(app, filename)
+        }
 
     return app
 

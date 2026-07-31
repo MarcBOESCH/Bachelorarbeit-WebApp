@@ -237,7 +237,7 @@
 
     <div id="four-twenty-win-overlay" class="four-twenty-win-overlay d-none" aria-hidden="true">
         <img
-                src="{{ url_for('static', filename='media/four-twenty-win.gif') }}"
+                src="{{ static_url('media/four-twenty-win.gif') }}"
                 alt=""
                 class="four-twenty-win-image"
         >
@@ -252,5 +252,5 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
-    <script src="{{ url_for('static', filename='js/pages/match.js') }}"></script>
+    <script src="{{ static_url('js/pages/match.js') }}"></script>
 {% endblock %}
