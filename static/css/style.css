@@ -592,60 +592,6 @@ canvas {
     cursor: pointer;
 }
 
-@media (max-width: 767.98px) {
-    .match-control-panel {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        margin: 0 auto 1.5rem;
-    }
-
-    .match-control-panel .score-mode-toggle {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-        width: min(100%, 360px);
-        margin: 0;
-        padding: 5px;
-        border: 1px solid var(--color-border);
-        border-radius: 999px;
-        background: var(--color-surface-soft);
-    }
-
-    .match-control-panel .score-mode-toggle .btn-toggle {
-        min-height: 48px;
-        padding: 0.55rem 0.85rem;
-        border-color: transparent;
-        background: transparent;
-        box-shadow: none;
-        font-size: 1rem;
-        font-weight: 800;
-    }
-
-    .match-control-panel .score-mode-toggle .btn-toggle.active {
-        box-shadow: 0 6px 14px rgba(15, 81, 50, 0.16);
-    }
-
-    .match-control-panel .score-entry-options {
-        width: 100%;
-        margin: 0;
-    }
-
-    .match-control-panel .score-entry-switch {
-        justify-content: space-between;
-        width: min(100%, 360px);
-        min-height: 52px;
-        padding: 10px 14px;
-        border-radius: 999px;
-    }
-
-    .match-control-panel .score-entry-switch .form-check-label {
-        order: -1;
-        line-height: 1;
-    }
-}
-
 .match-mode-options {
     display: flex;
     justify-content: center;
