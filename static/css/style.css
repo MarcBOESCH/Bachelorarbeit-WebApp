@@ -593,7 +593,7 @@ canvas {
 }
 
 @media (max-width: 767.98px) {
-    .score-section .match-control-panel {
+    .match-control-panel {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -601,7 +601,7 @@ canvas {
         margin: 0 auto 1.5rem;
     }
 
-    .score-section .score-mode-toggle {
+    .match-control-panel .score-mode-toggle {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
@@ -613,7 +613,7 @@ canvas {
         background: var(--color-surface-soft);
     }
 
-    .score-section .score-mode-toggle .btn-toggle {
+    .match-control-panel .score-mode-toggle .btn-toggle {
         min-height: 48px;
         padding: 0.55rem 0.85rem;
         border-color: transparent;
@@ -623,16 +623,16 @@ canvas {
         font-weight: 800;
     }
 
-    .score-section .score-mode-toggle .btn-toggle.active {
+    .match-control-panel .score-mode-toggle .btn-toggle.active {
         box-shadow: 0 6px 14px rgba(15, 81, 50, 0.16);
     }
 
-    .score-section .score-entry-options {
+    .match-control-panel .score-entry-options {
         width: 100%;
         margin: 0;
     }
 
-    .score-section .score-entry-switch {
+    .match-control-panel .score-entry-switch {
         justify-content: space-between;
         width: min(100%, 360px);
         min-height: 52px;
@@ -640,44 +640,9 @@ canvas {
         border-radius: 999px;
     }
 
-    .score-section .score-entry-switch .form-check-label {
+    .match-control-panel .score-entry-switch .form-check-label {
         order: -1;
         line-height: 1;
-    }
-
-    .score-section .score-entry-switch .form-check-input {
-        position: relative;
-        width: 3.15rem;
-        height: 1.7rem;
-        border: 0;
-        background-color: #d9dedb;
-        background-image: none;
-        border-radius: 999px;
-        box-shadow: inset 0 0 0 1px rgba(31, 35, 40, 0.08);
-        appearance: none;
-        -webkit-appearance: none;
-    }
-
-    .score-section .score-entry-switch .form-check-input::before {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: calc(1.7rem - 6px);
-        height: calc(1.7rem - 6px);
-        border-radius: 50%;
-        background: var(--color-surface);
-        box-shadow: 0 2px 6px rgba(16, 24, 40, 0.18);
-        transition: transform 0.18s ease;
-    }
-
-    .score-section .score-entry-switch .form-check-input:checked {
-        background-color: var(--color-brand);
-        box-shadow: inset 0 0 0 1px rgba(15, 81, 50, 0.18);
-    }
-
-    .score-section .score-entry-switch .form-check-input:checked::before {
-        transform: translateX(1.45rem);
     }
 }
 
