@@ -152,7 +152,7 @@ function setMatchInputsDisabled(disabled) {
         undoBtn.disabled = disabled;
     }
 
-    ["manual-score-a", "manual-score-b", "manual-submit-btn"].forEach(id => {
+    ["manual-score-a", "manual-score-b", "manual-submit-btn", "double-points-toggle"].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.disabled = disabled;
@@ -228,7 +228,8 @@ async function handleScoreButtonClick(event) {
 
     await sendAction({
         action: `score_${points}`,
-        team
+        team,
+        double_points: isDoublePointsEnabled()
     });
 }
 
@@ -270,11 +271,16 @@ async function handleManualSubmit() {
             return;
         }
 
-        await sendAction({
+        const result = await sendAction({
             action: "manual_input",
             team: "A",
-            value: pointsA
+            value: pointsA,
+            double_points: isDoublePointsEnabled()
         });
+
+        if (!result) {
+            return;
+        }
     }
 
     if (valueB !== "") {
@@ -288,18 +294,37 @@ async function handleManualSubmit() {
             return;
         }
 
-        await sendAction({
+        const result = await sendAction({
             action: "manual_input",
             team: "B",
-            value: pointsB
+            value: pointsB,
+            double_points: isDoublePointsEnabled()
         });
+
+        if (!result) {
+            return;
+        }
     }
+
+    resetDoublePointsToggle();
 
     inputA.value = "";
     inputB.value = "";
 
     inputA.blur();
     inputB.blur();
+}
+
+function isDoublePointsEnabled() {
+    return document.getElementById("double-points-toggle")?.checked ?? false;
+}
+
+function resetDoublePointsToggle() {
+    const toggle = document.getElementById("double-points-toggle");
+
+    if (toggle) {
+        toggle.checked = false;
+    }
 }
 
 /* =========================

@@ -149,6 +149,7 @@ def action_route():
 
     action = data.get("action")
     team = data.get("team")
+    double_points = bool(data.get("double_points"))
 
     if action == "new_game":
         reset_game()
@@ -173,14 +174,14 @@ def action_route():
         except (TypeError, ValueError):
             return jsonify({"error": "Ungültiger Zahlenwert."}), 400
 
-        success, error = add_manual_points(game, team, value)
+        success, error = add_manual_points(game, team, value, double_points=double_points)
         if not success:
             return jsonify({"error": error}), 400
 
         return jsonify(game), 200
 
     if action in BUTTON_VALUES:
-        success, error = add_points(game, team, action)
+        success, error = add_points(game, team, action, double_points=double_points)
         if not success:
             return jsonify({"error": error}), 400
 

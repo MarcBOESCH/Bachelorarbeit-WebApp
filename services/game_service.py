@@ -143,7 +143,7 @@ def lock_saved_match(game):
     save_game_state(game)
 
 
-def add_points(game, team, action):
+def add_points(game, team, action, double_points=False):
     """Fügt Punkte über die Schnellwahl-Buttons hinzu."""
     if is_match_locked(game):
         return False, "Das Match wurde bereits gespeichert und kann nicht weiter verändert werden."
@@ -154,7 +154,8 @@ def add_points(game, team, action):
     if action not in BUTTON_VALUES:
         return False, "Ungültige Aktion."
 
-    points = BUTTON_VALUES[action]
+    multiplier = 2 if double_points else 1
+    points = BUTTON_VALUES[action] * multiplier
 
     if team == "A":
         game["undo_a"].append(game["score_a"])
@@ -169,7 +170,7 @@ def add_points(game, team, action):
     return True, None
 
 
-def add_manual_points(game, team, value):
+def add_manual_points(game, team, value, double_points=False):
     """
     Regeln:
     - 257: gewähltes Team erhält 257 Punkte
@@ -197,20 +198,22 @@ def add_manual_points(game, team, value):
         game["undo_a"].append(game["score_a"])
         game["history"].append("manual")
 
+    multiplier = 2 if double_points else 1
+
     if value == MATCH_POINTS:
         if team == "A":
-            game["score_a"] += MATCH_POINTS
+            game["score_a"] += MATCH_POINTS * multiplier
         else:
-            game["score_b"] += MATCH_POINTS
+            game["score_b"] += MATCH_POINTS * multiplier
 
         save_game_state(game)
         return True, None
 
     if value == 0:
         if team == "A":
-            game["score_b"] += MATCH_POINTS
+            game["score_b"] += MATCH_POINTS * multiplier
         else:
-            game["score_a"] += MATCH_POINTS
+            game["score_a"] += MATCH_POINTS * multiplier
 
         save_game_state(game)
         return True, None
@@ -218,11 +221,11 @@ def add_manual_points(game, team, value):
     other_value = MAX_ROUND_POINTS - value
 
     if team == "A":
-        game["score_a"] += value
-        game["score_b"] += other_value
+        game["score_a"] += value * multiplier
+        game["score_b"] += other_value * multiplier
     else:
-        game["score_b"] += value
-        game["score_a"] += other_value
+        game["score_b"] += value * multiplier
+        game["score_a"] += other_value * multiplier
 
     save_game_state(game)
     return True, None
