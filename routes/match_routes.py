@@ -25,6 +25,7 @@ def build_match_history_payload(match):
         "score_team_b": match.score_team_b,
         "point_diff": match.point_diff,
         "winner_team": match.winner_team,
+        "four_twenty_mode": match.four_twenty_mode,
         "played_at": match.played_at.isoformat(),
         "team_a_players": [
             {"name": match.team_a.player1.name, "team_slot": 1},
@@ -80,13 +81,14 @@ def start_match_route():
 
     team_a_id = data.get("team_a_id")
     team_b_id = data.get("team_b_id")
+    four_twenty_mode = bool(data.get("four_twenty_mode"))
 
     team_a, team_b, error_response, status_code = validate_selected_teams(team_a_id, team_b_id)
 
     if error_response:
         return error_response, status_code
 
-    game = start_new_game(team_a.name, team_b.name, team_a.id, team_b.id)
+    game = start_new_game(team_a.name, team_b.name, team_a.id, team_b.id, four_twenty_mode)
 
     return jsonify({
         "message": "Match erfolgreich gestartet.",
@@ -118,7 +120,13 @@ def create_match_route():
     team_a_id = game.get("team_a_id")
     team_b_id = game.get("team_b_id")
 
-    success, error, match = create_match(score_team_a, score_team_b, team_a_id, team_b_id)
+    success, error, match = create_match(
+        score_team_a,
+        score_team_b,
+        team_a_id,
+        team_b_id,
+        four_twenty_mode=bool(game.get("four_twenty_mode")),
+    )
 
     if not success:
         return jsonify({"error": error}), 400

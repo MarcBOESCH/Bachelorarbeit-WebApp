@@ -37,6 +37,8 @@ async function sendAction(payload) {
 
 // Speichert ein abgeschlossenes Match in der Datenbank.
 async function saveFinishedMatch(game) {
+    const winnerTeam = determineWinnerTeam(game);
+
     try {
         const response = await fetch("/api/matches", {
             method: "POST",
@@ -46,7 +48,7 @@ async function saveFinishedMatch(game) {
             body: JSON.stringify({
                 score_team_a: game.score_a,
                 score_team_b: game.score_b,
-                winner_team: game.score_a > game.score_b ? "A" : "B"
+                winner_team: winnerTeam
             })
         });
 
@@ -57,9 +59,15 @@ async function saveFinishedMatch(game) {
             return false;
         }
 
-        const winnerName = game.score_a > game.score_b ? "Team A" : "Team B";
+        const winnerName = winnerTeam === "A"
+            ? (game.team_name_a ?? "Team A")
+            : (game.team_name_b ?? "Team B");
         showMatchStatusMessage(`${winnerName} hat gewonnen 🏆`);
         showToast("Das Match wurde gespeichert.", "success");
+
+        if (isFourTwentyWin(game, winnerTeam)) {
+            showFourTwentyWinOverlay();
+        }
 
         triggerConfetti();
 
@@ -158,6 +166,33 @@ function setMatchInputsDisabled(disabled) {
 
 // Prüft nach jeder Punktänderung, ob das Match beendet ist.
 // Wenn ja, wird es automatisch gespeichert.
+function determineWinnerTeam(game) {
+    const scoreA = game.score_a ?? 0;
+    const scoreB = game.score_b ?? 0;
+    const fourTwentyMode = game.four_twenty_mode ?? false;
+
+    if (fourTwentyMode && scoreA === 420 && scoreB !== 420) {
+        return "A";
+    }
+
+    if (fourTwentyMode && scoreB === 420 && scoreA !== 420) {
+        return "B";
+    }
+
+    return scoreA > scoreB ? "A" : "B";
+}
+
+function isFourTwentyWin(game, winnerTeam) {
+    const scoreA = game.score_a ?? 0;
+    const scoreB = game.score_b ?? 0;
+    const fourTwentyMode = game.four_twenty_mode ?? false;
+
+    return (
+        fourTwentyMode &&
+        ((winnerTeam === "A" && scoreA === 420) || (winnerTeam === "B" && scoreB === 420))
+    );
+}
+
 async function checkMatchFinishedAndSave(game) {
     if (!game || matchFinished) {
         return;
@@ -166,8 +201,11 @@ async function checkMatchFinishedAndSave(game) {
     const scoreA = game.score_a ?? 0;
     const scoreB = game.score_b ?? 0;
     const maxPoints = game.max_points ?? 1000;
+    const fourTwentyMode = game.four_twenty_mode ?? false;
 
     const hasWinner =
+        (fourTwentyMode && scoreA === 420 && scoreB !== 420) ||
+        (fourTwentyMode && scoreB === 420 && scoreA !== 420) ||
         (scoreA >= maxPoints && scoreA > scoreB) ||
         (scoreB >= maxPoints && scoreB > scoreA);
 
@@ -540,6 +578,25 @@ function triggerConfetti() {
         colors: ["#0f5132", "#f3b63f", "#ffffff", "#0b3d26"],
         disableForReducedMotion: true
     });
+}
+
+function showFourTwentyWinOverlay() {
+    const overlay = document.getElementById("four-twenty-win-overlay");
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.classList.remove("d-none", "show");
+
+    window.requestAnimationFrame(() => {
+        overlay.classList.add("show");
+    });
+
+    window.setTimeout(() => {
+        overlay.classList.add("d-none");
+        overlay.classList.remove("show");
+    }, 2500);
 }
 
 /* =========================

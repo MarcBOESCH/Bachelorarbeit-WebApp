@@ -845,7 +845,8 @@ async function submitPlayerSelection(event) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 team_a_id: teamA.id,
-                team_b_id: teamB.id
+                team_b_id: teamB.id,
+                four_twenty_mode: document.getElementById("four-twenty-mode-toggle")?.checked ?? false
             })
         });
 

@@ -16,6 +16,7 @@ class Match(db.Model):
     score_team_b = db.Column(db.Integer, nullable=False)
     point_diff = db.Column(db.Integer, nullable=False)
     winner_team = db.Column(db.String(1), nullable=False)
+    four_twenty_mode = db.Column(db.Boolean, default=False, nullable=False)
 
     team_a = db.relationship("Team", foreign_keys=[team_a_id])
     team_b = db.relationship("Team", foreign_keys=[team_b_id])

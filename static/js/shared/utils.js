@@ -27,3 +27,15 @@ function showToast(message, type = "error") {
         });
     }, 3000);
 }
+
+function initBootstrapTooltips() {
+    if (!window.bootstrap?.Tooltip) {
+        return;
+    }
+
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
+        new bootstrap.Tooltip(element);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initBootstrapTooltips);

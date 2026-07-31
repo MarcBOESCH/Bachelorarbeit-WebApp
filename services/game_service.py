@@ -26,6 +26,7 @@ def create_new_game_state():
         "score_a": 0,
         "score_b": 0,
         "max_points": 1000,
+        "four_twenty_mode": False,
         "history": [],
         "undo_a": [],
         "undo_b": [],
@@ -44,7 +45,13 @@ def get_game_state():
 
 def update_winner(game):
     """Setzt den Gewinner, sobald ein Team die Zielpunktzahl erreicht und vorne liegt."""
-    if game["score_a"] >= game["max_points"] and game["score_a"] > game["score_b"]:
+    four_twenty_mode = bool(game.get("four_twenty_mode"))
+
+    if four_twenty_mode and game["score_a"] == 420 and game["score_b"] != 420:
+        game["winner"] = game["team_name_a"]
+    elif four_twenty_mode and game["score_b"] == 420 and game["score_a"] != 420:
+        game["winner"] = game["team_name_b"]
+    elif game["score_a"] >= game["max_points"] and game["score_a"] > game["score_b"]:
         game["winner"] = game["team_name_a"]
     elif game["score_b"] >= game["max_points"] and game["score_b"] > game["score_a"]:
         game["winner"] = game["team_name_b"]
@@ -104,12 +111,13 @@ def build_players_payload(team_a, team_b):
     return players
 
 
-def start_new_game(team_name_a, team_name_b, team_a_id, team_b_id):
+def start_new_game(team_name_a, team_name_b, team_a_id, team_b_id, four_twenty_mode=False):
     game = create_new_game_state()
     game["team_name_a"] = team_name_a
     game["team_name_b"] = team_name_b
     game["team_a_id"] = team_a_id
     game["team_b_id"] = team_b_id
+    game["four_twenty_mode"] = bool(four_twenty_mode)
 
     team_a = Team.query.get(team_a_id)
     team_b = Team.query.get(team_b_id)

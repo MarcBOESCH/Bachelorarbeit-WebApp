@@ -104,7 +104,7 @@ def build_result_payload(
 
 
 def evaluate_elo_predictions():
-    matches = Match.query.order_by(Match.played_at.asc()).all()
+    matches = Match.query.filter_by(four_twenty_mode=False).order_by(Match.played_at.asc()).all()
 
     player_ratings = {}
     correct_predictions = 0
@@ -182,7 +182,7 @@ def evaluate_elo_predictions():
 
 
 def evaluate_elo_margin_predictions():
-    matches = Match.query.order_by(Match.played_at.asc()).all()
+    matches = Match.query.filter_by(four_twenty_mode=False).order_by(Match.played_at.asc()).all()
 
     player_ratings = {}
     correct_predictions = 0
@@ -264,7 +264,7 @@ def evaluate_elo_margin_predictions():
 
 
 def evaluate_glicko2_predictions():
-    matches = Match.query.order_by(Match.played_at.asc()).all()
+    matches = Match.query.filter_by(four_twenty_mode=False).order_by(Match.played_at.asc()).all()
 
     player_states = {}
     correct_predictions = 0
@@ -352,7 +352,7 @@ def evaluate_glicko2_predictions():
 
 
 def evaluate_trueskill_predictions():
-    matches = Match.query.order_by(Match.played_at.asc()).all()
+    matches = Match.query.filter_by(four_twenty_mode=False).order_by(Match.played_at.asc()).all()
 
     player_states = {}
     correct_predictions = 0

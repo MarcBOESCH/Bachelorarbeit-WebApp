@@ -550,6 +550,124 @@ canvas {
     color: var(--color-brand);
 }
 
+.match-mode-options {
+    display: flex;
+    justify-content: center;
+}
+
+.match-mode-switch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(100%, 175px);
+    min-height: 64px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+}
+
+.match-mode-switch .form-check-input {
+    flex: 0 0 auto;
+    width: 3rem;
+    height: 1.5rem;
+    margin: 0;
+    cursor: pointer;
+}
+
+.match-mode-switch .form-check-input:checked {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+}
+
+.match-mode-switch .form-check-input:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 0.2rem var(--color-focus);
+}
+
+.match-mode-switch .form-check-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.match-mode-title {
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.match-mode-description {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.four-twenty-win-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(246, 247, 243, 0.72);
+    pointer-events: none;
+    opacity: 0;
+}
+
+@media (min-width: 768px) {
+    .four-twenty-win-overlay {
+        left: var(--sidebar-width);
+    }
+}
+
+.four-twenty-win-overlay.show {
+    animation: fourTwentyOverlayPop 2.4s ease forwards;
+}
+
+.four-twenty-win-image {
+    width: auto;
+    height: min(72dvh, 520px);
+    max-width: min(78vw, 420px);
+    object-fit: contain;
+    filter: drop-shadow(0 18px 28px rgba(16, 24, 40, 0.22));
+    transform: scale(0.92);
+}
+
+.four-twenty-win-overlay.show .four-twenty-win-image {
+    animation: fourTwentyImagePop 2.4s ease forwards;
+}
+
+@keyframes fourTwentyOverlayPop {
+    0% {
+        opacity: 0;
+    }
+    12%,
+    82% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes fourTwentyImagePop {
+    0% {
+        transform: scale(0.88) translateY(16px);
+    }
+    14% {
+        transform: scale(1.02) translateY(0);
+    }
+    82% {
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        transform: scale(0.94) translateY(-10px);
+    }
+}
+
 /* =========================
    Match Page
 ========================= */
@@ -1091,5 +1209,13 @@ canvas {
         scroll-behavior: auto !important;
         transition: none !important;
         animation: none !important;
+    }
+
+    .four-twenty-win-overlay.show {
+        opacity: 1;
+    }
+
+    .four-twenty-win-overlay.show .four-twenty-win-image {
+        transform: none;
     }
 }

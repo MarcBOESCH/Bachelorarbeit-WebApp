@@ -5,6 +5,7 @@ from services.rating_service import process_match_for_system
 
 
 MAX_POINTS = 1000
+FOUR_TWENTY_POINTS = 420
 
 
 def trigger_live_elo_update(match):
@@ -12,17 +13,39 @@ def trigger_live_elo_update(match):
     Verarbeitet direkt nach dem Speichern eines Matches das Live-Elo.
     Fehler im Elo-Update sollen das bereits gespeicherte Match nicht verwerfen.
     """
+    if match.four_twenty_mode:
+        return
+
     try:
         process_match_for_system(match, "elo")
     except Exception:
         db.session.rollback()
 
 
-def is_valid_match_result(score_team_a, score_team_b):
+def is_four_twenty_winner(score_team_a, score_team_b):
+    return (
+        (score_team_a == FOUR_TWENTY_POINTS and score_team_b != FOUR_TWENTY_POINTS) or
+        (score_team_b == FOUR_TWENTY_POINTS and score_team_a != FOUR_TWENTY_POINTS)
+    )
+
+
+def is_valid_match_result(score_team_a, score_team_b, four_twenty_mode=False):
     return (
         (score_team_a >= MAX_POINTS and score_team_a > score_team_b) or
-        (score_team_b >= MAX_POINTS and score_team_b > score_team_a)
+        (score_team_b >= MAX_POINTS and score_team_b > score_team_a) or
+        (four_twenty_mode and is_four_twenty_winner(score_team_a, score_team_b))
     )
+
+
+def determine_winner_team(score_team_a, score_team_b, four_twenty_mode=False):
+    if four_twenty_mode:
+        if score_team_a == FOUR_TWENTY_POINTS and score_team_b != FOUR_TWENTY_POINTS:
+            return "A"
+
+        if score_team_b == FOUR_TWENTY_POINTS and score_team_a != FOUR_TWENTY_POINTS:
+            return "B"
+
+    return "A" if score_team_a > score_team_b else "B"
 
 
 def get_teams_for_match(team_a_id, team_b_id):
@@ -51,7 +74,7 @@ def is_probable_duplicate_match(score_team_a, score_team_b, team_a_id, team_b_id
     )
 
 
-def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
+def create_match(score_team_a, score_team_b, team_a_id, team_b_id, four_twenty_mode=False):
     if not isinstance(score_team_a, int) or not isinstance(score_team_b, int):
         return False, "Die Scores müssen Ganzzahlen sein.", None
 
@@ -61,7 +84,7 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     if score_team_a == score_team_b:
         return False, "Ein Match kann nicht mit Gleichstand gespeichert werden.", None
 
-    if not is_valid_match_result(score_team_a, score_team_b):
+    if not is_valid_match_result(score_team_a, score_team_b, four_twenty_mode):
         return (
             False,
             "Das Match darf erst gespeichert werden, wenn ein Team die Gewinnpunktzahl erreicht hat.",
@@ -79,7 +102,7 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
     if is_probable_duplicate_match(score_team_a, score_team_b, team_a_id, team_b_id):
         return False, "Dieses Match scheint bereits gespeichert worden zu sein.", None
 
-    winner_team = "A" if score_team_a > score_team_b else "B"
+    winner_team = determine_winner_team(score_team_a, score_team_b, four_twenty_mode)
     point_diff = abs(score_team_a - score_team_b)
 
     match = Match(
@@ -89,6 +112,7 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id):
         score_team_b=score_team_b,
         point_diff=point_diff,
         winner_team=winner_team,
+        four_twenty_mode=bool(four_twenty_mode),
     )
 
     try:

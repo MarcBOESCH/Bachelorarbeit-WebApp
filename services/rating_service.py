@@ -150,7 +150,7 @@ def get_unprocessed_matches_for_system(system_name):
     if system_name not in SUPPORTED_SYSTEMS:
         raise ValueError(f"Unbekanntes Rating-System: {system_name}")
 
-    matches = Match.query.order_by(Match.played_at.asc()).all()
+    matches = Match.query.filter_by(four_twenty_mode=False).order_by(Match.played_at.asc()).all()
     result = []
 
     for match in matches:
@@ -379,6 +379,9 @@ def process_trueskill_match(match):
 
 
 def process_match_for_system(match, system_name):
+    if match.four_twenty_mode:
+        raise ValueError("420-Mode-Matches werden nicht für Ratings verarbeitet.")
+
     if system_name == "elo":
         return process_elo_match(match)
     if system_name == "elo_margin":
