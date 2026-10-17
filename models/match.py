@@ -1,4 +1,4 @@
-from datetime import datetime
+from time_utils import utc_now_naive
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from extensions import db
@@ -8,7 +8,7 @@ class Match(db.Model):
     __tablename__ = "matches"
 
     id = db.Column(db.Integer, primary_key=True)
-    played_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    played_at = db.Column(db.DateTime, default=utc_now_naive, nullable=False)
 
     team_a_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=False)
     team_b_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=False)

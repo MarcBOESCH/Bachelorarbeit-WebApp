@@ -26,7 +26,7 @@ def create_player(name):
 
 
 def update_player(player_id, new_name):
-    player = Player.query.get(player_id)
+    player = db.session.get(Player, player_id)
 
     if not player:
         return False, "Spieler wurde nicht gefunden.", None
@@ -50,7 +50,7 @@ def update_player(player_id, new_name):
 
 
 def delete_player(player_id):
-    player = Player.query.get(player_id)
+    player = db.session.get(Player, player_id)
 
     if not player:
         return False, "Spieler wurde nicht gefunden."

@@ -1,7 +1,7 @@
-import datetime
 import math
 
 from extensions import db
+from time_utils import utc_now_naive
 from models.match import Match
 from models.match_rating_status import MatchRatingStatus
 from models.rating import PlayerRating
@@ -168,7 +168,7 @@ def get_unprocessed_matches_for_system(system_name):
 def mark_match_as_processed_for_system(match, system_name):
     status_entry = get_or_create_match_rating_status(match.id, system_name)
     status_entry.processed = True
-    status_entry.processed_at = datetime.datetime.now()
+    status_entry.processed_at = utc_now_naive()
 
 
 def process_elo_match(match, k_factor=32):

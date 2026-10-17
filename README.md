@@ -151,3 +151,14 @@ PostgreSQL auf `localhost` bzw. `127.0.0.1` und Datenbank
 `jasstistics_dev` (zusaetzlich In-Memory-SQLite in automatisierten Tests).
 Sie sind nicht fuer Neon/Production nutzbar. Vor dem Ausfuehren Host und
 Datenbank in der laufenden Flask-Konfiguration kontrollieren.
+
+## Python-3.13- und SQLAlchemy-Warnungen
+
+Alle bisher veralteten `Model.query.get(id)`-Zugriffe sind auf
+`db.session.get(Model, id)` (SQLAlchemy 2.x) umgestellt. Zeitstempel werden
+über `time_utils.utc_now_naive()` erzeugt: `datetime.now(timezone.utc)`
+mit anschliessendem Entfernen der Zeitzoneninformation. Die vorhandenen
+`DateTime`-Spalten speichern weiterhin UTC als **naive Zeitstempel**, damit
+bestehende Daten und die Match-Sortierung ohne Migration konsistent bleiben.
+Für eine spätere Umstellung auf timezone-aware UTC wäre eine separate,
+geprüfte Datenmigration erforderlich.

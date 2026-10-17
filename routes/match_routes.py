@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from extensions import db
 
 from models.team import Team
 from services.game_service import (
@@ -42,8 +43,8 @@ def validate_selected_teams(team_a_id, team_b_id):
     if not team_a_id or not team_b_id:
         return None, None, jsonify({"error": "Beide Teams müssen ausgewählt sein."}), 400
 
-    team_a = Team.query.get(team_a_id)
-    team_b = Team.query.get(team_b_id)
+    team_a = db.session.get(Team, team_a_id)
+    team_b = db.session.get(Team, team_b_id)
 
     if not team_a or not team_b:
         return None, None, jsonify({"error": "Ein ausgewähltes Team existiert nicht in der Datenbank."}), 400

@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
@@ -7,6 +7,7 @@ from flask import Flask
 from services.rating_utils import Glicko2Player as GlickoPlayer
 
 from extensions import db
+from time_utils import utc_now_naive
 from models.player import Player
 from models.team import Team
 from models.match import Match
@@ -60,6 +61,29 @@ def match(i, *, day=None, winner='A', mode=False, team_b=2, four_twenty_win=Fals
 def snapshot(system='glicko2'):
     return [(r.player_id, r.rating, r.rating_deviation, r.volatility, r.matches_played)
             for r in PlayerRating.query.filter_by(system_name=system).order_by(PlayerRating.player_id)]
+
+
+def test_utc_timestamps_keep_existing_naive_utc_convention(app):
+    # PostgreSQL columns are TIMESTAMP WITHOUT TIME ZONE; no schema change.
+    before = datetime.now(timezone.utc).replace(tzinfo=None)
+    generated = utc_now_naive()
+    after = datetime.now(timezone.utc).replace(tzinfo=None)
+    assert generated.tzinfo is None
+    assert before <= generated <= after
+
+    direct = Match(team_a_id=1, team_b_id=2,
+                   score_team_a=1000, score_team_b=700,
+                   point_diff=300, winner_team="A", four_twenty_mode=False)
+    db.session.add(direct)
+    db.session.commit()
+    assert direct.played_at.tzinfo is None
+    assert before <= direct.played_at <= datetime.now(timezone.utc).replace(tzinfo=None)
+
+    ratings.rebuild_glicko2_ratings()
+    status = MatchRatingStatus.query.filter_by(
+        match_id=direct.id, system_name='glicko2'
+    ).one()
+    assert status.processed_at is not None and status.processed_at.tzinfo is None
 
 
 def test_reference_example():

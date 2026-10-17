@@ -49,8 +49,8 @@ def create_team_route():
     if not name or not player1_id or not player2_id or player1_id == player2_id:
         return jsonify({"error": "Ungültige Team-Daten."}), 400
 
-    player1 = Player.query.get(player1_id)
-    player2 = Player.query.get(player2_id)
+    player1 = db.session.get(Player, player1_id)
+    player2 = db.session.get(Player, player2_id)
 
     if not player1 or not player2:
         return jsonify({"error": "Mindestens ein Spieler existiert nicht."}), 400
@@ -84,7 +84,7 @@ def update_team_route(team_id):
     if not new_name:
         return jsonify({"error": "Der Teamname darf nicht leer sein."}), 400
 
-    team = Team.query.get(team_id)
+    team = db.session.get(Team, team_id)
     if not team:
         return jsonify({"error": "Team wurde nicht gefunden."}), 404
 
@@ -109,7 +109,7 @@ def delete_team_route(team_id):
     if session.get("role") != "admin":
         return jsonify({"error": "Nur Admins dürfen Teams löschen."}), 403
 
-    team = Team.query.get(team_id)
+    team = db.session.get(Team, team_id)
     if not team:
         return jsonify({"error": "Team wurde nicht gefunden."}), 404
 

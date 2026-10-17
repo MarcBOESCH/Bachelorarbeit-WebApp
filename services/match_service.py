@@ -61,8 +61,8 @@ def determine_winner_team(score_team_a, score_team_b, four_twenty_mode=False):
 
 
 def get_teams_for_match(team_a_id, team_b_id):
-    team_a = Team.query.get(team_a_id)
-    team_b = Team.query.get(team_b_id)
+    team_a = db.session.get(Team, team_a_id)
+    team_b = db.session.get(Team, team_b_id)
     return team_a, team_b
 
 

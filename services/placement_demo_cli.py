@@ -1,12 +1,13 @@
 """Local-only, reversible placement preview data for the statistics page."""
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import click
 from flask import current_app
 from sqlalchemy.engine import make_url
 
 from extensions import db
+from time_utils import utc_now_naive
 from models.match import Match
 from models.player import Player
 from models.team import Team
@@ -74,7 +75,7 @@ def seed_placement_demo():
         db.session.add_all(teams)
         db.session.flush()
 
-        start = datetime.utcnow() - timedelta(minutes=len(DEMO_SCORES) + 1)
+        start = utc_now_naive() - timedelta(minutes=len(DEMO_SCORES) + 1)
         for index, (score_a, score_b, mode) in enumerate(DEMO_SCORES):
             db.session.add(Match(
                 played_at=start + timedelta(minutes=index),

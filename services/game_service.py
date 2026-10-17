@@ -1,4 +1,5 @@
 from flask import session
+from extensions import db
 from models.team import Team
 
 
@@ -119,8 +120,8 @@ def start_new_game(team_name_a, team_name_b, team_a_id, team_b_id, four_twenty_m
     game["team_b_id"] = team_b_id
     game["four_twenty_mode"] = bool(four_twenty_mode)
 
-    team_a = Team.query.get(team_a_id)
-    team_b = Team.query.get(team_b_id)
+    team_a = db.session.get(Team, team_a_id)
+    team_b = db.session.get(Team, team_b_id)
     game["players"] = build_players_payload(team_a, team_b)
 
     save_game_state(game)
