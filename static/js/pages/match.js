@@ -561,7 +561,7 @@ function renderSnakeScores(teamLower, currentScore, undoHistory) {
 
     const restElement = document.getElementById(`rest-${teamLower}`);
     if (restElement) {
-        restElement.textContent = rest > 0 ? rest : "";
+        restElement.textContent = String(rest);
     }
 }
 

@@ -69,6 +69,7 @@ test('Schlange remainder stays below 20 across actions and undo', () => {
         snake.ctx.renderSnakeScores('a', score, history);
         assert.equal(snake.reconstructedScore('a'), score);
         assert.equal(snake.remainder('a'), remaining);
+        assert.equal(snake.elements.get('rest-a').textContent, String(remaining));
         assert.ok(snake.remainder('a') >= 0 && snake.remainder('a') < 20);
     }
 
@@ -76,4 +77,5 @@ test('Schlange remainder stays below 20 across actions and undo', () => {
     snake.ctx.renderSnakeScores('b', 270, []);
     assert.equal(snake.reconstructedScore('b'), 270);
     assert.equal(snake.remainder('b'), 0);
+    assert.equal(snake.elements.get('rest-b').textContent, '0');
 });
