@@ -11,12 +11,14 @@ im 420-Modus zählt weder für Ratings noch für Placement.** Allgemeine
 Match-, Sieg- und Punktestatistiken zählen wie bisher alle Matches.
 
 Die mit dem Nutzer abgestimmte Regel verwendet **keine zusätzliche RD-Grenze**
-und keinen Abschlag `Rating - k * RD`. RD wird angezeigt: kleiner bedeutet
-weniger Unsicherheit. Die zehn Matches sind eine Produktentscheidung, keine
+und keinen Abschlag `Rating - k * RD`. RD wird intern weiterberechnet
+und in den Admin-Ratingvergleichen angezeigt, aber nicht in der öffentlichen
+Statistik-Tabelle. Die zehn Matches sind eine Produktentscheidung, keine
 statistische Garantie und keine Vorgabe des Glicko-2-Verfahrens. Fünf Matches
 würden den Einstieg beschleunigen, aber stärker auf kurze Erfolgsserien reagieren.
 
-Unplatzierte Spieler bleiben suchbar und zeigen `Placement x/10 · ohne Rang`.
+Unplatzierte Spieler bleiben suchbar und zeigen `Placement x/10` unter ihrem
+Rating. Platzierte Spieler sehen stattdessen `Rang x`.
 Bei Rating-Sortierung stehen sie alphabetisch hinter den platzierten Spielern.
 Top 3 zeigt immer die globale Glicko-2-Rangliste unabhängig von Tabellenfilter
 und Sortierung; bei weniger als drei Qualifizierten bleiben Plätze frei.

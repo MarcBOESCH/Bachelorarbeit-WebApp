@@ -31,10 +31,9 @@ function comparePublicRatings(a, b, ascending) {
 function ratingCell(item) {
     if (item.rating_pending) return '<span class="text-muted">Neuberechnung ausstehend</span>';
     const value = item.glicko2 == null ? "–" : formatNumber(item.glicko2);
-    const rd = item.rating_deviation == null ? "–" : formatNumber(item.rating_deviation);
     const status = item.ranking_eligible ? `Rang ${item.rating_rank}`
-        : `Placement ${Math.min(item.rated_matches, item.placement_required)}/${item.placement_required} · ohne Rang`;
-    return `${value}<small class="d-block text-muted">RD ${rd} · ${status}</small>`;
+        : `Placement ${Math.min(item.rated_matches, item.placement_required)}/${item.placement_required}`;
+    return `${value}<small class="d-block text-muted">${status}</small>`;
 }
 
 function getTopPlayer(stats, compareFn) {

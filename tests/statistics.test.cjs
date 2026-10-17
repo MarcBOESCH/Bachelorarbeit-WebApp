@@ -24,7 +24,20 @@ test('podium uses eligible global rating ranks independently of table sort/searc
     assert.equal(elements['podium-2'].style.visibility, 'hidden');
     assert.equal(elements['podium-3'].style.visibility, 'hidden');
 });
-test('placement and pending rendering are explicit', () => {
-    assert.match(ctx.ratingCell({glicko2:1700, rating_deviation:200, rated_matches:9, placement_required:10}), /Placement 9\/10 · ohne Rang/);
+test('public rating cells show only placement progress or rank, never RD', () => {
+    const unplaced = ctx.ratingCell({
+        glicko2:1700, rating_deviation:200, rated_matches:2, placement_required:10,
+        ranking_eligible:false
+    });
+    assert.match(unplaced, /1700/);
+    assert.match(unplaced, /Placement 2\/10/);
+    assert.doesNotMatch(unplaced, /RD|ohne Rang/);
+
+    const placed = ctx.ratingCell({
+        glicko2:1600, rating_deviation:65, ranking_eligible:true, rating_rank:3
+    });
+    assert.match(placed, /Rang 3/);
+    assert.doesNotMatch(placed, /RD|Placement/);
+
     assert.match(ctx.ratingCell({rating_pending:true}), /Neuberechnung ausstehend/);
 });
