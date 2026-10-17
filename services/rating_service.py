@@ -67,7 +67,7 @@ def get_or_create_player_rating(player_id, system_name):
         raise ValueError(f"Unbekanntes Rating-System: {system_name}")
 
     db.session.add(rating_entry)
-    db.session.commit()
+    db.session.flush()
     return rating_entry
 
 
@@ -142,7 +142,7 @@ def get_or_create_match_rating_status(match_id, system_name):
     )
 
     db.session.add(status_entry)
-    db.session.commit()
+    db.session.flush()
     return status_entry
 
 
@@ -268,7 +268,7 @@ def process_elo_margin_match(match, k_factor=32, cap=500, alpha=0.5):
     }
 
 
-def process_glicko2_match(match):
+def _apply_glicko2_match(match):
     team_a, team_b = split_match_ratings_by_team(match, "glicko2")
 
     if len(team_a) != 2 or len(team_b) != 2:
@@ -301,7 +301,7 @@ def process_glicko2_match(match):
         rating.matches_played += 1
 
     mark_match_as_processed_for_system(match, "glicko2")
-    db.session.commit()
+    db.session.flush()
 
     return {
         "match_id": match.id,
@@ -398,6 +398,9 @@ def process_all_unprocessed_matches_for_system(system_name):
     if system_name not in SUPPORTED_SYSTEMS:
         raise ValueError(f"Unbekanntes Rating-System: {system_name}")
 
+    if system_name == "glicko2":
+        return rebuild_glicko2_ratings()
+
     matches = get_unprocessed_matches_for_system(system_name)
     results = []
 
@@ -442,3 +445,52 @@ def get_player_ratings_for_system(system_name):
         )
 
     return result
+
+
+def rebuild_glicko2_ratings(*, dry_run=False):
+    """Replay the complete eligible history atomically; never reset another system.
+
+    PostgreSQL serializes replays across workers. READ COMMITTED (the default)
+    ensures the history query after acquiring the lock sees prior commits.
+    Call after committing a newly created match. A failed replay leaves the
+    previous complete rating snapshot intact and can safely be retried.
+    """
+    from sqlalchemy import text
+
+    try:
+        if db.session.get_bind().dialect.name == "postgresql":
+            db.session.execute(text("SELECT pg_advisory_xact_lock(190420, 2)"))
+        matches = Match.query.filter_by(four_twenty_mode=False).order_by(
+            Match.played_at.asc(), Match.id.asc()
+        ).all()
+        for match in matches:
+            if not match.team_a or not match.team_b:
+                raise ValueError(f"Match {match.id}: Team fehlt.")
+            players = [match.team_a.player1_id, match.team_a.player2_id,
+                       match.team_b.player1_id, match.team_b.player2_id]
+            if len(set(players)) != 4 or match.winner_team not in {"A", "B"}:
+                raise ValueError(f"Match {match.id}: ungültige Spieler oder Gewinner.")
+            if ((match.score_team_a > match.score_team_b) != (match.winner_team == "A")
+                    or match.score_team_a == match.score_team_b):
+                raise ValueError(f"Match {match.id}: Ergebnis widerspricht Gewinner.")
+
+        PlayerRating.query.filter_by(system_name="glicko2").delete(synchronize_session="fetch")
+        MatchRatingStatus.query.filter_by(system_name="glicko2").delete(synchronize_session="fetch")
+        results = [_apply_glicko2_match(match) for match in matches]
+        if dry_run:
+            db.session.rollback()
+        else:
+            db.session.commit()
+        return results
+    except Exception:
+        db.session.rollback()
+        raise
+
+
+def process_glicko2_match(match):
+    """Public single-match entry point: safe for retries and backdated matches."""
+    if match.four_twenty_mode:
+        raise ValueError("420-Mode-Matches werden nicht für Ratings verarbeitet.")
+    match_id = match.id
+    results = rebuild_glicko2_ratings()
+    return next(result for result in results if result["match_id"] == match_id)

@@ -1,3 +1,5 @@
+import math
+from services.ranking_service import public_rating_lookup, placement_fields, assign_rating_ranks
 from models.match import Match
 from models.rating import PlayerRating
 from models.team import Team
@@ -78,4 +80,22 @@ def get_team_stats():
     matches = Match.query.all()
     elo_lookup = build_elo_lookup()
 
-    return [build_team_stats(team, matches, elo_lookup) for team in teams]
+    lookup, ready = public_rating_lookup()
+    stats = []
+    for team in teams:
+        item = build_team_stats(team, matches, elo_lookup)
+        a = placement_fields(lookup.get(team.player1_id), ready)
+        b = placement_fields(lookup.get(team.player2_id), ready)
+        item.update({
+            "glicko2": (a["glicko2"] + b["glicko2"]) / 2
+                if a["glicko2"] is not None and b["glicko2"] is not None else None,
+            "rating_deviation": math.hypot(a["rating_deviation"], b["rating_deviation"]) / 2
+                if a["rating_deviation"] is not None and b["rating_deviation"] is not None else None,
+            "rated_matches": min(a["rated_matches"], b["rated_matches"]),
+            "placement_required": a["placement_required"],
+            "placement_remaining": max(a["placement_remaining"], b["placement_remaining"]),
+            "ranking_eligible": a["ranking_eligible"] and b["ranking_eligible"],
+            "rating_pending": not ready,
+        })
+        stats.append(item)
+    return assign_rating_ranks(stats)

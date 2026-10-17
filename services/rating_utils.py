@@ -1,7 +1,19 @@
 import math
 
 import trueskill
-from glicko2 import Player as Glicko2Player
+from glicko2 import Player as BaseGlicko2Player
+
+
+class Glicko2Player(BaseGlicko2Player):
+    """Correct glicko2 2.1.0 volatility equation (Glickman, step 5)."""
+
+    def _f(self, x, delta, v, a):
+        variance = (self.rd / 173.7178) ** 2
+        ex = math.exp(x)
+        return (ex * (delta ** 2 - variance - v - ex)
+                / (2 * (variance + v + ex) ** 2)
+                - (x - a) / self._tau ** 2)
+
 
 
 SUPPORTED_RATING_SYSTEMS = {"elo", "elo_margin", "glicko2", "trueskill"}

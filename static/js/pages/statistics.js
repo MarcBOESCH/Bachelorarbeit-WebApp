@@ -1,10 +1,10 @@
 let allStatsData = [];
-let currentSortColumn = "elo";
+let currentSortColumn = "glicko2";
 let currentSortAsc = false;
 let currentSearchTerm = "";
 
 let allTeamStatsData = [];
-let currentTeamSortColumn = "elo";
+let currentTeamSortColumn = "glicko2";
 let currentTeamSortAsc = false;
 let currentTeamSearchTerm = "";
 
@@ -20,6 +20,21 @@ function formatNumber(value) {
     }
 
     return number.toFixed(2);
+}
+
+function comparePublicRatings(a, b, ascending) {
+    if (a.ranking_eligible !== b.ranking_eligible) return a.ranking_eligible ? -1 : 1;
+    if (!a.ranking_eligible) return a.name.localeCompare(b.name) || a.id - b.id;
+    return ascending ? b.rating_rank - a.rating_rank : a.rating_rank - b.rating_rank;
+}
+
+function ratingCell(item) {
+    if (item.rating_pending) return '<span class="text-muted">Neuberechnung ausstehend</span>';
+    const value = item.glicko2 == null ? "–" : formatNumber(item.glicko2);
+    const rd = item.rating_deviation == null ? "–" : formatNumber(item.rating_deviation);
+    const status = item.ranking_eligible ? `Rang ${item.rating_rank}`
+        : `Placement ${Math.min(item.rated_matches, item.placement_required)}/${item.placement_required} · ohne Rang`;
+    return `${value}<small class="d-block text-muted">RD ${rd} · ${status}</small>`;
 }
 
 function getTopPlayer(stats, compareFn) {
@@ -153,31 +168,11 @@ function updatePodium(sortedData) {
         return;
     }
 
-    if (
-        currentSearchTerm !== "" ||
-        currentSortAsc ||
-        currentSortColumn === "name" ||
-        sortedData.length < 3
-    ) {
-        podiumCard.style.display = "none";
-        return;
-    }
-
-    podiumCard.style.display = "block";
-
-    const columnTitles = {
-        matches_played: "Matches",
-        wins: "Siegen",
-        losses: "Niederlagen",
-        win_rate: "Siegquote",
-        avg_point_diff: "Ø Punktedifferenz",
-        elo: "Elo-Rating"
-    };
-
+    sortedData = allStatsData.filter(player => player.ranking_eligible)
+        .sort((a, b) => a.rating_rank - b.rating_rank);
+    podiumCard.style.display = sortedData.length ? "block" : "none";
     const subtitle = document.getElementById("podium-subtitle");
-    if (subtitle) {
-        subtitle.textContent = `nach ${columnTitles[currentSortColumn]}`;
-    }
+    if (subtitle) subtitle.textContent = "nach Glicko-2 · Placement abgeschlossen";
 
     const fillPodiumStep = (rank, player) => {
         const stepElement = document.getElementById(`podium-${rank}`);
@@ -194,16 +189,7 @@ function updatePodium(sortedData) {
         stepElement.style.visibility = "visible";
         document.getElementById(`podium-${rank}-name`).textContent = player.name;
 
-        let value = player[currentSortColumn];
-        let displayValue = formatNumber(value);
-
-        if (currentSortColumn === "win_rate") {
-            displayValue += " %";
-        }
-
-        if (currentSortColumn === "avg_point_diff" && value > 0) {
-            displayValue = `+${displayValue}`;
-        }
+        const displayValue = formatNumber(player.glicko2);
 
         document.getElementById(`podium-${rank}-stat`).textContent = displayValue;
     };
@@ -227,6 +213,9 @@ function processAndRenderTable() {
     const processedData = allStatsData
         .filter(player => player.name.toLowerCase().includes(currentSearchTerm))
         .sort((a, b) => {
+            if (currentSortColumn === "glicko2") {
+                return comparePublicRatings(a, b, currentSortAsc);
+            }
             let valueA = a[currentSortColumn];
             let valueB = b[currentSortColumn];
 
@@ -290,7 +279,7 @@ function processAndRenderTable() {
             <td class="text-end">${formatNumber(player.losses)}</td>
             <td class="text-end fw-bold" style="color: var(--color-brand);">${formatNumber(player.win_rate)} %</td>
             <td class="text-end"><span class="badge bg-light text-dark border">${diffValue}</span></td>
-            <td class="text-end fw-bold fs-6">${player.elo}</td>
+            <td class="text-end fw-bold fs-6">${ratingCell(player)}</td>
         `;
 
         tbody.appendChild(row);
@@ -314,6 +303,9 @@ function processAndRenderTeamTable() {
             team.player_names.toLowerCase().includes(currentTeamSearchTerm)
         )
         .sort((a, b) => {
+            if (currentTeamSortColumn === "glicko2") {
+                return comparePublicRatings(a, b, currentTeamSortAsc);
+            }
             let valueA = a[currentTeamSortColumn];
             let valueB = b[currentTeamSortColumn];
 
@@ -377,7 +369,7 @@ function processAndRenderTeamTable() {
             <td class="text-end">${formatNumber(team.losses)}</td>
             <td class="text-end fw-bold" style="color: var(--color-brand);">${formatNumber(team.win_rate)} %</td>
             <td class="text-end"><span class="badge bg-light text-dark border">${diffValue}</span></td>
-            <td class="text-end fw-bold fs-6">${team.elo}</td>
+            <td class="text-end fw-bold fs-6">${ratingCell(team)}</td>
         `;
 
         tbody.appendChild(row);

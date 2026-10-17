@@ -1,7 +1,8 @@
+from flask import current_app
 from extensions import db
 from models.match import Match
 from models.team import Team
-from services.rating_service import process_match_for_system
+from services.rating_service import process_match_for_system, rebuild_glicko2_ratings
 
 
 MAX_POINTS = 1000
@@ -20,6 +21,17 @@ def trigger_live_elo_update(match):
         process_match_for_system(match, "elo")
     except Exception:
         db.session.rollback()
+        current_app.logger.exception("Elo-Update für Match %s fehlgeschlagen", match.id)
+
+
+def trigger_live_glicko2_update(match):
+    if match.four_twenty_mode:
+        return
+    try:
+        rebuild_glicko2_ratings()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Glicko-2-Neuberechnung für Match %s fehlgeschlagen", match.id)
 
 
 def is_four_twenty_winner(score_team_a, score_team_b):
@@ -123,6 +135,7 @@ def create_match(score_team_a, score_team_b, team_a_id, team_b_id, four_twenty_m
         return False, "Das Match konnte aufgrund eines Datenbankfehlers nicht gespeichert werden.", None
 
     trigger_live_elo_update(match)
+    trigger_live_glicko2_update(match)
 
     return True, None, match
 

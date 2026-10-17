@@ -3,6 +3,7 @@ from datetime import timedelta
 
 
 class BaseConfig:
+    RATING_PLACEMENT_MATCHES = int(os.environ.get("RATING_PLACEMENT_MATCHES", "10"))
     SQLALCHEMY_DATABASE_URI = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {

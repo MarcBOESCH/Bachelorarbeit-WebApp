@@ -1,3 +1,4 @@
+from services.ranking_service import public_rating_lookup, placement_fields, assign_rating_ranks
 from models.match import Match
 from models.player import Player
 
@@ -73,4 +74,7 @@ def get_player_stats():
     players = Player.query.order_by(Player.name.asc()).all()
     matches = Match.query.all()
 
-    return [build_player_stats(player, matches) for player in players]
+    lookup, ready = public_rating_lookup()
+    stats = [dict(build_player_stats(player, matches),
+                  **placement_fields(lookup.get(player.id), ready)) for player in players]
+    return assign_rating_ranks(stats)

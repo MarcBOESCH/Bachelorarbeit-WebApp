@@ -27,6 +27,9 @@ def create_app():
     config_class = config_by_name.get(env_name, config_by_name["development"])
     app.config.from_object(config_class)
 
+    if app.config["RATING_PLACEMENT_MATCHES"] < 1:
+        raise ValueError("RATING_PLACEMENT_MATCHES muss mindestens 1 sein.")
+
     if env_name == "production":
         required_keys = ["SECRET_KEY", "USER_PIN", "ADMIN_PIN"]
         missing = [key for key in required_keys if not app.config.get(key)]
@@ -44,6 +47,8 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     register_blueprints(app)
+    from services.rating_cli import register_rating_commands
+    register_rating_commands(app)
 
     @app.context_processor
     def inject_static_url():
