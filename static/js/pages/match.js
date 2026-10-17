@@ -540,6 +540,11 @@ function renderSnakeScores(teamLower, currentScore, undoHistory) {
         rest = remaining % 20;
     }
 
+    // Beim Addieren einzelner Spielzüge können sich mehr als 19 Restpunkte
+    // ansammeln. Volle 20er als Striche darstellen, statt sie als Rest zu zeigen.
+    tallies[20] += Math.floor(rest / 20);
+    rest %= 20;
+
     while (tallies[20] > 10) {
         tallies[100] += 2;
         tallies[20] -= 10;

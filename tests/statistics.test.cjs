@@ -56,3 +56,11 @@ test('statistics include sortable 420-win columns for players and teams', () => 
     assert.ok(js.includes('colspan="8" class="text-center text-muted py-4">Keine Spieler gefunden.'));
     assert.ok(js.includes('colspan="9" class="text-center text-muted py-4">Keine Teams gefunden.'));
 });
+
+test('statistics label both Glicko-2 columns simply as Rating', () => {
+    const html = fs.readFileSync('templates/statistics.html', 'utf8');
+    assert.match(html, /data-sort="glicko2"[^>]*>Rating<\/th>/g);
+    const headings = html.match(/data-sort="glicko2"[^>]*>Rating<\/th>/g) || [];
+    assert.equal(headings.length, 2);
+    assert.doesNotMatch(html, />Glicko-2-Rating<\/th>|>Team-Glicko-2/);
+});
