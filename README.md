@@ -119,3 +119,31 @@ löschen ihre Tabellen. Abgedeckt sind Referenzformel, Placement-Grenze,
 Konfiguration, 420-Punkte-Sieg-Ausschluss, Elo-Erhalt, deterministische Reihenfolge,
 Wiederholung, Rückdatierung, Korrektur/Löschung, Rollback, CLI, API und Livepfad.
 JavaScript-Tests prüfen Placement-Sortierung, Podium und Statusanzeige.
+
+## Lokale Placement-Vorschau (nur Testdatenbank)
+
+Mit den zwei Befehlen lassen sich die fertigen Placements in der Statistik
+testen, ohne echte Spieler und Matches zu aendern:
+
+```sh
+flask --app app seed-placement-demo
+# Statistikseite aktualisieren: vier "Demo ... (Placement)" Spieler haben sichtbare Ratings
+flask --app app clear-placement-demo
+```
+
+Das Seed-Kommando legt **vier eigene Demo-Spieler**, zwei Demo-Teams sowie
+**elf Matches** an: zehn rating-relevante Siege (darunter einer im 420-Modus
+mit 1.000+ Punkten) und einen **nicht gewerteten 420-Punkte-Sieg**. So sieht man
+bei den Demo-Spielern 11 Matches in der allgemeinen Statistik, aber zehn
+gewertete Spiele fuer die Platzierung. Bestehende Spieler bleiben unveraendert,
+ihre Glicko-2-Werte werden aus der vollstaendigen Historie neu berechnet.
+Der Gegenbefehl entfernt die zuordenbaren Demo-Spiele/-Teams/-Spieler und
+berechnet Glicko-2 erneut. Er bricht ab, wenn die Demo-Spieler inzwischen in
+anderen Teams mitgespielt haben. Wiederholtes Seeden ohne vorheriges Entfernen
+wird abgelehnt.
+
+**Schutz:** Die Kommandos akzeptieren ausschliesslich Development mit
+PostgreSQL auf `localhost` bzw. `127.0.0.1` und Datenbank
+`jasstistics_dev` (zusaetzlich In-Memory-SQLite in automatisierten Tests).
+Sie sind nicht fuer Neon/Production nutzbar. Vor dem Ausfuehren Host und
+Datenbank in der laufenden Flask-Konfiguration kontrollieren.

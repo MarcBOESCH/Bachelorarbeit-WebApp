@@ -49,6 +49,8 @@ def create_app():
     register_blueprints(app)
     from services.rating_cli import register_rating_commands
     register_rating_commands(app)
+    from services.placement_demo_cli import register_demo_commands
+    register_demo_commands(app)
 
     @app.context_processor
     def inject_static_url():

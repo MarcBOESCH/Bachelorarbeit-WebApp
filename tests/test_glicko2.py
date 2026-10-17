@@ -17,6 +17,7 @@ from services.player_stats_service import get_player_stats
 from services.team_stats_service import get_team_stats
 from services.match_service import create_match
 from services.rating_cli import register_rating_commands
+from services.placement_demo_cli import register_demo_commands, DEMO_PLAYERS, DEMO_TEAMS
 from routes.statistic_routes import statistics_api_bp
 
 
@@ -28,6 +29,7 @@ def app():
     db.init_app(app)
     app.register_blueprint(statistics_api_bp)
     register_rating_commands(app)
+    register_demo_commands(app)
     with app.app_context():
         db.create_all()
         db.session.add_all([Player(id=i, name=f'Player {i}') for i in range(1, 7)])
@@ -260,3 +262,42 @@ def test_postgres_concurrent_replays(app):
         assert [job.result(timeout=15) for job in jobs] == [5, 5]
     assert snapshot() == expected
     assert MatchRatingStatus.query.filter_by(system_name='glicko2').count() == 5
+
+
+def test_demo_placement_seed_is_reversible_and_idempotent(app):
+    match(1)
+    ratings.rebuild_glicko2_ratings()
+    original = snapshot()
+
+    result = app.test_cli_runner().invoke(args=['seed-placement-demo'])
+    assert result.exit_code == 0, result.output
+    assert '10 gewertet' in result.output
+    assert Match.query.count() == 12
+    assert Player.query.filter(Player.name.in_(DEMO_PLAYERS)).count() == 4
+    assert Team.query.filter(Team.name.in_(DEMO_TEAMS)).count() == 2
+
+    demo_stats = [p for p in get_player_stats() if p['name'] in DEMO_PLAYERS]
+    assert len(demo_stats) == 4
+    assert all(p['matches_played'] == 11 and p['rated_matches'] == 10
+               and p['ranking_eligible'] and p['glicko2'] is not None for p in demo_stats)
+    assert MatchRatingStatus.query.filter_by(system_name='glicko2').count() == 11
+
+    repeated = app.test_cli_runner().invoke(args=['seed-placement-demo'])
+    assert repeated.exit_code != 0
+    assert Match.query.count() == 12
+
+    cleared = app.test_cli_runner().invoke(args=['clear-placement-demo'])
+    assert cleared.exit_code == 0, cleared.output
+    assert Player.query.filter(Player.name.in_(DEMO_PLAYERS)).count() == 0
+    assert Team.query.filter(Team.name.in_(DEMO_TEAMS)).count() == 0
+    assert Match.query.count() == 1
+    assert snapshot() == original
+    assert MatchRatingStatus.query.filter_by(system_name='glicko2').count() == 1
+
+
+def test_demo_commands_reject_nonlocal_or_non_demo_database(app):
+    app.config['TESTING'] = False  # SQLite is allowed only for in-memory tests
+    result = app.test_cli_runner().invoke(args=['seed-placement-demo'])
+    assert result.exit_code != 0
+    assert 'lokale PostgreSQL-Testdatenbank' in result.output
+    assert Match.query.count() == 0
