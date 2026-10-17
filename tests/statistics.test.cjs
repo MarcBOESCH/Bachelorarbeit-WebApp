@@ -24,20 +24,24 @@ test('podium uses eligible global rating ranks independently of table sort/searc
     assert.equal(elements['podium-2'].style.visibility, 'hidden');
     assert.equal(elements['podium-3'].style.visibility, 'hidden');
 });
-test('public rating cells show only placement progress or rank, never RD', () => {
+test('public rating is hidden during placement and unadorned once qualified', () => {
     const unplaced = ctx.ratingCell({
         glicko2:1700, rating_deviation:200, rated_matches:2, placement_required:10,
         ranking_eligible:false
     });
-    assert.match(unplaced, /1700/);
     assert.match(unplaced, /Placement 2\/10/);
-    assert.doesNotMatch(unplaced, /RD|ohne Rang/);
+    assert.doesNotMatch(unplaced, /1700|RD|Rang/);
 
     const placed = ctx.ratingCell({
         glicko2:1600, rating_deviation:65, ranking_eligible:true, rating_rank:3
     });
-    assert.match(placed, /Rang 3/);
-    assert.doesNotMatch(placed, /RD|Placement/);
+    assert.equal(placed, '1600');
+
+    const teamInPlacement = ctx.ratingCell({
+        glicko2:1520, rated_matches:9, placement_required:10, ranking_eligible:false
+    });
+    assert.match(teamInPlacement, /Placement 9\/10/);
+    assert.doesNotMatch(teamInPlacement, /1520/);
 
     assert.match(ctx.ratingCell({rating_pending:true}), /Neuberechnung ausstehend/);
 });

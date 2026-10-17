@@ -17,8 +17,10 @@ Statistik-Tabelle. Die zehn Matches sind eine Produktentscheidung, keine
 statistische Garantie und keine Vorgabe des Glicko-2-Verfahrens. Fünf Matches
 würden den Einstieg beschleunigen, aber stärker auf kurze Erfolgsserien reagieren.
 
-Unplatzierte Spieler bleiben suchbar und zeigen `Placement x/10` unter ihrem
-Rating. Platzierte Spieler sehen stattdessen `Rang x`.
+Unplatzierte Spieler bleiben suchbar und zeigen ausschließlich `Placement x/10`.
+Ihr bereits intern berechnetes Glicko-2-Rating wird öffentlich erst nach
+Abschluss des Placements angezeigt. Platzierte Spieler sehen nur den Ratingwert,
+ohne zusätzliche Rang- oder RD-Anzeige. Die gleiche Darstellung gilt für Teams.
 Bei Rating-Sortierung stehen sie alphabetisch hinter den platzierten Spielern.
 Top 3 zeigt immer die globale Glicko-2-Rangliste unabhängig von Tabellenfilter
 und Sortierung; bei weniger als drei Qualifizierten bleiben Plätze frei.

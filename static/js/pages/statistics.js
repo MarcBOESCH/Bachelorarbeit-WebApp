@@ -30,10 +30,10 @@ function comparePublicRatings(a, b, ascending) {
 
 function ratingCell(item) {
     if (item.rating_pending) return '<span class="text-muted">Neuberechnung ausstehend</span>';
-    const value = item.glicko2 == null ? "–" : formatNumber(item.glicko2);
-    const status = item.ranking_eligible ? `Rang ${item.rating_rank}`
-        : `Placement ${Math.min(item.rated_matches, item.placement_required)}/${item.placement_required}`;
-    return `${value}<small class="d-block text-muted">${status}</small>`;
+    if (!item.ranking_eligible) {
+        return `<span class="text-muted">Placement ${Math.min(item.rated_matches ?? 0, item.placement_required)}/${item.placement_required}</span>`;
+    }
+    return item.glicko2 == null ? "–" : formatNumber(item.glicko2);
 }
 
 function getTopPlayer(stats, compareFn) {
