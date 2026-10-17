@@ -40,12 +40,16 @@ def app():
         db.drop_all()
 
 
-def match(i, *, day=None, winner='A', mode=False, team_b=2):
+def match(i, *, day=None, winner='A', mode=False, team_b=2, four_twenty_win=False):
+    assert not four_twenty_win or mode
+    score_a, score_b = (1000, 800) if winner == 'A' else (800, 1000)
+    if four_twenty_win:
+        score_a, score_b = (420, 200) if winner == 'A' else (200, 420)
     m = Match(id=i, played_at=datetime(2026, 1, 1) + timedelta(days=i if day is None else day),
               team_a_id=1, team_b_id=team_b,
-              score_team_a=1000 if winner == 'A' else 800,
-              score_team_b=800 if winner == 'A' else 1000,
-              point_diff=200, winner_team=winner, four_twenty_mode=mode)
+              score_team_a=score_a,
+              score_team_b=score_b,
+              point_diff=abs(score_a - score_b), winner_team=winner, four_twenty_mode=mode)
     db.session.add(m)
     db.session.commit()
     return m
@@ -68,7 +72,7 @@ def test_reference_example():
 def test_replay_order_idempotence_and_elo_preserved(app):
     later = match(2, day=0, winner='B')
     first = match(1, day=0)
-    match(3, mode=True)
+    match(3, mode=True, four_twenty_win=True)
     ratings.process_elo_match(first)
     elo = snapshot('elo')
     results = ratings.rebuild_glicko2_ratings()
@@ -126,7 +130,7 @@ def test_atomic_failure_and_dry_run(app):
 def test_placement_boundary_config_rd_and_teams(app):
     for i in range(1, 10):
         match(i, winner='B' if i % 2 else 'A')
-    match(99, mode=True)
+    match(99, mode=True, four_twenty_win=True)
     ratings.rebuild_glicko2_ratings()
     assert all(not p['ranking_eligible'] for p in get_player_stats())
     match(10)
@@ -155,11 +159,51 @@ def test_live_matches_and_mode_exclusion(app):
     before = snapshot()
     assert create_match(420, 200, 1, 2, four_twenty_mode=True)[0]
     assert snapshot() == before
-    assert create_match(800, 1000, 1, 2)[0]
+    # With 420 mode enabled, a regular 1000-point victory is still rated.
+    assert create_match(1000, 700, 1, 2, four_twenty_mode=True)[0]
     assert all(r[-1] == 2 for r in snapshot())
+    assert all(r[-1] == 2 for r in snapshot('elo'))
+    assert create_match(800, 1000, 1, 2)[0]
+    assert all(r[-1] == 3 for r in snapshot())
     expected = snapshot()
     ratings.rebuild_glicko2_ratings()
     assert snapshot() == expected
+
+
+def test_420_mode_only_excludes_actual_420_point_victories(app):
+    match(1, mode=True, winner='A')  # regular victory with 420 mode enabled
+    match(2, mode=True, four_twenty_win=True, winner='A')
+    match(3, mode=True, winner='B')  # regular defeat with 420 mode enabled
+    match(4, mode=True, four_twenty_win=True, winner='B')
+    match(5, mode=False)
+
+    eligible = Match.query.filter(Match.rating_eligible).order_by(Match.id).all()
+    assert [m.id for m in eligible] == [1, 3, 5]
+    assert [m.rating_eligible for m in Match.query.order_by(Match.id).all()] == [
+        True, False, True, False, True
+    ]
+
+    results = ratings.rebuild_glicko2_ratings()
+    assert [r['match_id'] for r in results] == [1, 3, 5]
+    assert all(r[-1] == 3 for r in snapshot())
+    assert all(p['rated_matches'] == 3 and p['placement_remaining'] == 7
+               for p in get_player_stats() if p['id'] <= 4)
+    assert MatchRatingStatus.query.filter_by(system_name='glicko2').count() == 3
+    assert [m.id for m in ratings.get_unprocessed_matches_for_system('elo')] == [1, 3, 5]
+    from services.ranking_service import public_rating_lookup
+    assert public_rating_lookup()[1] is True
+    with pytest.raises(ValueError, match='420'):
+        ratings.process_match_for_system(db.session.get(Match, 2), 'elo')
+
+
+def test_pending_when_new_regular_win_in_420_mode_is_not_replayed(app):
+    match(1)
+    ratings.rebuild_glicko2_ratings()
+    assert all(not p['rating_pending'] for p in get_player_stats())
+    match(2, mode=True)
+    assert all(p['rating_pending'] for p in get_player_stats())
+    ratings.rebuild_glicko2_ratings()
+    assert all(not p['rating_pending'] for p in get_player_stats())
 
 
 def test_api_and_cli(app):

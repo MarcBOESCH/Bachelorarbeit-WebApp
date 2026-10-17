@@ -7,7 +7,7 @@ from models.rating import PlayerRating
 
 def public_rating_lookup():
     # Hide ranks while a saved match is awaiting processing after a failed update.
-    eligible = {m.id for m in Match.query.filter_by(four_twenty_mode=False).all()}
+    eligible = {m.id for m in Match.query.filter(Match.rating_eligible).all()}
     processed = {s.match_id for s in MatchRatingStatus.query.filter_by(
         system_name="glicko2", processed=True).all()}
     return ({r.player_id: r for r in PlayerRating.query.filter_by(system_name="glicko2").all()},

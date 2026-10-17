@@ -14,7 +14,7 @@ def trigger_live_elo_update(match):
     Verarbeitet direkt nach dem Speichern eines Matches das Live-Elo.
     Fehler im Elo-Update sollen das bereits gespeicherte Match nicht verwerfen.
     """
-    if match.four_twenty_mode:
+    if not match.rating_eligible:
         return
 
     try:
@@ -25,7 +25,7 @@ def trigger_live_elo_update(match):
 
 
 def trigger_live_glicko2_update(match):
-    if match.four_twenty_mode:
+    if not match.rating_eligible:
         return
     try:
         rebuild_glicko2_ratings()

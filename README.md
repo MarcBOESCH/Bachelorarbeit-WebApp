@@ -5,8 +5,10 @@
 Die Statistikseite verwendet Glicko-2 statt Elo. Nach **10 gewerteten Matches**
 ist ein Spieler für Rating-Rang und Top 3 qualifiziert. Die Schwelle ist mit
 `RATING_PLACEMENT_MATCHES` konfigurierbar (positive Ganzzahl; Standard 10).
-Historische reguläre Matches zählen mit; 420-Mode zählt nicht. Allgemeine
-Match-, Sieg- und Punktestatistiken zählen wie bisher auch 420-Matches.
+Historische Matches zählen mit, sofern sie regulär gewonnen wurden – auch
+wenn der 420-Modus aktiviert war. **Nur ein tatsächlicher Sieg mit 420 Punkten
+im 420-Modus zählt weder für Ratings noch für Placement.** Allgemeine
+Match-, Sieg- und Punktestatistiken zählen wie bisher alle Matches.
 
 Die mit dem Nutzer abgestimmte Regel verwendet **keine zusätzliche RD-Grenze**
 und keinen Abschlag `Rating - k * RD`. RD wird angezeigt: kleiner bedeutet
@@ -30,7 +32,7 @@ Die vorhandene Teamlogik in `services/rating_utils.py` wird weiterverwendet:
 Startwerte 1500 / RD 350 / Volatilität 0,06, tau 0,5; Teammittelwert,
 aggregierte Unsicherheit und RD-gewichtete Verteilung der Teamänderungen.
 Beide Teams werden aus demselben Zustand vor dem Match aktualisiert.
-Ein reguläres Match bildet einen Verarbeitungsschritt. Es gibt wie bisher
+Ein gewertetes Match bildet einen Verarbeitungsschritt. Es gibt wie bisher
 keine kalenderbasierte Erhöhung der RD bei Inaktivität.
 
 Das ist eine projektspezifische Teamadaption, nicht das unveränderte
@@ -49,7 +51,9 @@ Aussage „bestes System“ wird durch diese Änderung nicht neu belegt.
 ## Historische Neuberechnung / Einführung
 
 Das Schema enthält bereits alle Felder und Match-Verarbeitungsmarker; eine
-Schema-Migration ist nicht nötig. Elo und andere Systeme werden beim Replay
+Schema-Migration ist nicht nötig. Auch Elo wertet reguläre 1.000-Punkte-Siege
+im 420-Modus; historische, bisher übersprungene Elo-Matches müssen über die
+Admin-Verarbeitung nachberechnet werden. Elo und andere Systeme werden beim Replay
 nicht gelöscht oder verändert. Elo wird für neue Matches weitergeführt.
 
 Mit der üblichen Datenbankkonfiguration der App (`NEON_DATABASE_URL` oder
@@ -72,12 +76,12 @@ Statistik prüfen. Es wurde keine Produktionsdatenbank verändert. Im Repository
 liegt kein Export der realen Matchhistorie; reale RD-Verteilung, Platzierungen
 und Laufzeit müssen dort geprüft werden.
 
-Neue reguläre Matches werden zuerst gespeichert, danach wird Glicko-2 über
+Neue gewertete Matches werden zuerst gespeichert, danach wird Glicko-2 über
 denselben vollständigen Replay aktualisiert. PostgreSQL serialisiert Replays
 mit einem transaktionsgebundenen Advisory Lock; verwendet wird die normale
 READ-COMMITTED-Isolation. Bei Fehlern bleibt das Match gespeichert und der
 vorherige vollständige Ratingstand erhalten; der Fehler wird protokolliert.
-Solange reguläre Matches unverarbeitet sind, zeigt die öffentliche Statistik
+Solange gewertete Matches unverarbeitet sind, zeigt die öffentliche Statistik
 „Neuberechnung ausstehend“ statt gültiger Rangplätze. Der Admin-Button
 „Historie neu berechnen“ bzw. der CLI-Befehl repariert diesen Zustand.
 
@@ -108,6 +112,6 @@ GLICKO_TEST_DATABASE_URL=postgresql+psycopg2://localhost/jass_test python -m pyt
 
 **Nur eine isolierte, leere Testdatenbank verwenden:** Die Tests erzeugen und
 löschen ihre Tabellen. Abgedeckt sind Referenzformel, Placement-Grenze,
-Konfiguration, 420-Ausschluss, Elo-Erhalt, deterministische Reihenfolge,
+Konfiguration, 420-Punkte-Sieg-Ausschluss, Elo-Erhalt, deterministische Reihenfolge,
 Wiederholung, Rückdatierung, Korrektur/Löschung, Rollback, CLI, API und Livepfad.
 JavaScript-Tests prüfen Placement-Sortierung, Podium und Statusanzeige.

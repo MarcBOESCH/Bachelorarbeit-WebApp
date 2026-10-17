@@ -150,7 +150,7 @@ def get_unprocessed_matches_for_system(system_name):
     if system_name not in SUPPORTED_SYSTEMS:
         raise ValueError(f"Unbekanntes Rating-System: {system_name}")
 
-    matches = Match.query.filter_by(four_twenty_mode=False).order_by(Match.played_at.asc()).all()
+    matches = Match.query.filter(Match.rating_eligible).order_by(Match.played_at.asc()).all()
     result = []
 
     for match in matches:
@@ -379,8 +379,8 @@ def process_trueskill_match(match):
 
 
 def process_match_for_system(match, system_name):
-    if match.four_twenty_mode:
-        raise ValueError("420-Mode-Matches werden nicht für Ratings verarbeitet.")
+    if not match.rating_eligible:
+        raise ValueError("420-Punkte-Siege im 420-Modus werden nicht für Ratings verarbeitet.")
 
     if system_name == "elo":
         return process_elo_match(match)
@@ -460,7 +460,7 @@ def rebuild_glicko2_ratings(*, dry_run=False):
     try:
         if db.session.get_bind().dialect.name == "postgresql":
             db.session.execute(text("SELECT pg_advisory_xact_lock(190420, 2)"))
-        matches = Match.query.filter_by(four_twenty_mode=False).order_by(
+        matches = Match.query.filter(Match.rating_eligible).order_by(
             Match.played_at.asc(), Match.id.asc()
         ).all()
         for match in matches:
@@ -489,8 +489,8 @@ def rebuild_glicko2_ratings(*, dry_run=False):
 
 def process_glicko2_match(match):
     """Public single-match entry point: safe for retries and backdated matches."""
-    if match.four_twenty_mode:
-        raise ValueError("420-Mode-Matches werden nicht für Ratings verarbeitet.")
+    if not match.rating_eligible:
+        raise ValueError("420-Punkte-Siege im 420-Modus werden nicht für Ratings verarbeitet.")
     match_id = match.id
     results = rebuild_glicko2_ratings()
     return next(result for result in results if result["match_id"] == match_id)
