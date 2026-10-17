@@ -41,6 +41,7 @@ def calculate_team_match_point_diff(team_side, match):
 def build_team_stats(team, matches, elo_lookup):
     matches_played = 0
     wins = 0
+    four_twenty_wins = 0
     losses = 0
     total_point_diff = 0
 
@@ -54,6 +55,8 @@ def build_team_stats(team, matches, elo_lookup):
 
         if match.winner_team == team_side:
             wins += 1
+            if not match.rating_eligible:
+                four_twenty_wins += 1
         else:
             losses += 1
 
@@ -68,6 +71,7 @@ def build_team_stats(team, matches, elo_lookup):
         "player_names": f"{team.player1.name} & {team.player2.name}",
         "matches_played": matches_played,
         "wins": wins,
+        "four_twenty_wins": four_twenty_wins,
         "losses": losses,
         "win_rate": win_rate,
         "avg_point_diff": avg_point_diff,

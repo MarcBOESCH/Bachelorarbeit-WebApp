@@ -208,6 +208,35 @@ def test_pending_when_new_regular_win_in_420_mode_is_not_replayed(app):
     assert all(not p['rating_pending'] for p in get_player_stats())
 
 
+def test_420_wins_are_reported_separately_for_players_and_teams(app):
+    # Actual 420-point wins for both teams count toward the normal win rate,
+    # but do not count as rated wins. Regular wins in 420 mode are not 420 wins.
+    match(1, mode=True, four_twenty_win=True, winner='A')
+    match(2, mode=True, winner='A')
+    match(3, mode=True, four_twenty_win=True, winner='B')
+    match(4, winner='B')
+
+    players = {p['id']: p for p in get_player_stats()}
+    assert all(players[i]['wins'] == 2 and players[i]['four_twenty_wins'] == 1
+               and players[i]['matches_played'] == 4 for i in (1, 2, 3, 4))
+    assert all(players[i]['four_twenty_wins'] == 0 for i in (5, 6))
+    teams = {t['id']: t for t in get_team_stats()}
+    assert teams[1]['four_twenty_wins'] == 1
+    assert teams[2]['four_twenty_wins'] == 1
+    assert teams[3]['four_twenty_wins'] == 0
+
+    ratings.rebuild_glicko2_ratings()
+    assert all(p['rated_matches'] == 2 and p['four_twenty_wins'] == 1
+               for p in get_player_stats() if p['id'] in (1, 2, 3, 4))
+
+    player_response = app.test_client().get('/api/player-stats')
+    team_response = app.test_client().get('/api/team-stats')
+    assert player_response.status_code == 200
+    assert team_response.status_code == 200
+    assert next(p for p in player_response.json if p['id'] == 1)['four_twenty_wins'] == 1
+    assert next(t for t in team_response.json if t['id'] == 2)['four_twenty_wins'] == 1
+
+
 def test_api_and_cli(app):
     match(1)
     result = app.test_cli_runner().invoke(args=['rebuild-glicko2', '--dry-run'])
@@ -280,6 +309,8 @@ def test_demo_placement_seed_is_reversible_and_idempotent(app):
     assert len(demo_stats) == 4
     assert all(p['matches_played'] == 11 and p['rated_matches'] == 10
                and p['ranking_eligible'] and p['glicko2'] is not None for p in demo_stats)
+    assert {p['four_twenty_wins'] for p in demo_stats if p['name'] in DEMO_PLAYERS[:2]} == {1}
+    assert {p['four_twenty_wins'] for p in demo_stats if p['name'] in DEMO_PLAYERS[2:]} == {0}
     assert MatchRatingStatus.query.filter_by(system_name='glicko2').count() == 11
 
     repeated = app.test_cli_runner().invoke(args=['seed-placement-demo'])

@@ -9,6 +9,10 @@ Historische Matches zählen mit, sofern sie regulär gewonnen wurden – auch
 wenn der 420-Modus aktiviert war. **Nur ein tatsächlicher Sieg mit 420 Punkten
 im 420-Modus zählt weder für Ratings noch für Placement.** Allgemeine
 Match-, Sieg- und Punktestatistiken zählen wie bisher alle Matches.
+Die sortierbare Spalte `420-Siege` in der Spieler- und Teamstatistik zeigt
+separat, wie viele Siege mit genau 420 Punkten im 420-Modus erzielt wurden.
+Diese Siege sind in der allgemeinen Siegzahl/Siegquote enthalten, werden
+aber weder für Ratings noch Placement berücksichtigt.
 
 Die mit dem Nutzer abgestimmte Regel verwendet **keine zusätzliche RD-Grenze**
 und keinen Abschlag `Rating - k * RD`. RD wird intern weiterberechnet

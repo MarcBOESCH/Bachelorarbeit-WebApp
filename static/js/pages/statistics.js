@@ -261,7 +261,7 @@ function processAndRenderTable() {
     tbody.innerHTML = "";
 
     if (processedData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Keine Spieler gefunden.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Keine Spieler gefunden.</td></tr>`;
         return;
     }
 
@@ -275,6 +275,7 @@ function processAndRenderTable() {
             <td class="fw-semibold">${player.name}</td>
             <td class="text-end">${formatNumber(player.matches_played)}</td>
             <td class="text-end">${formatNumber(player.wins)}</td>
+            <td class="text-end">${formatNumber(player.four_twenty_wins)}</td>
             <td class="text-end">${formatNumber(player.losses)}</td>
             <td class="text-end fw-bold" style="color: var(--color-brand);">${formatNumber(player.win_rate)} %</td>
             <td class="text-end"><span class="badge bg-light text-dark border">${diffValue}</span></td>
@@ -350,7 +351,7 @@ function processAndRenderTeamTable() {
     tbody.innerHTML = "";
 
     if (processedData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Keine Teams gefunden.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">Keine Teams gefunden.</td></tr>`;
         return;
     }
 
@@ -365,6 +366,7 @@ function processAndRenderTeamTable() {
             <td class="text-muted">${team.player_names}</td>
             <td class="text-end">${formatNumber(team.matches_played)}</td>
             <td class="text-end">${formatNumber(team.wins)}</td>
+            <td class="text-end">${formatNumber(team.four_twenty_wins)}</td>
             <td class="text-end">${formatNumber(team.losses)}</td>
             <td class="text-end fw-bold" style="color: var(--color-brand);">${formatNumber(team.win_rate)} %</td>
             <td class="text-end"><span class="badge bg-light text-dark border">${diffValue}</span></td>

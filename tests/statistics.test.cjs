@@ -45,3 +45,14 @@ test('public rating is hidden during placement and unadorned once qualified', ()
 
     assert.match(ctx.ratingCell({rating_pending:true}), /Neuberechnung ausstehend/);
 });
+
+test('statistics include sortable 420-win columns for players and teams', () => {
+    const html = fs.readFileSync('templates/statistics.html', 'utf8');
+    const js = fs.readFileSync('static/js/pages/statistics.js', 'utf8');
+    assert.ok(html.includes('class="text-end sortable-header" data-sort="four_twenty_wins"'));
+    assert.ok(html.includes('class="text-end team-sortable-header" data-sort="four_twenty_wins"'));
+    assert.ok(js.includes('formatNumber(player.four_twenty_wins)'));
+    assert.ok(js.includes('formatNumber(team.four_twenty_wins)'));
+    assert.ok(js.includes('colspan="8" class="text-center text-muted py-4">Keine Spieler gefunden.'));
+    assert.ok(js.includes('colspan="9" class="text-center text-muted py-4">Keine Teams gefunden.'));
+});
