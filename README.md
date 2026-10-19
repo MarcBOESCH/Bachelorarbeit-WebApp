@@ -236,3 +236,13 @@ und Pfeilbuttons sind anklickbar. Der „Weiter“-Button führt immer
 zum gerade markierten Modus. Ohne JavaScript stehen direkte Links
 zur Verfügung. Die laufenden Matches bleiben wie bisher über
 die Match-Navigation erreichbar.
+
+### Karten-Karussell für Spielmodi
+
+Die Modusauswahl wurde gegenüber dem ersten Slider nochmals verfeinert.
+Die drei Modi erscheinen als **einzelne, vertikal gestapelte Cards** in
+einem schmalen, etwa 300 px breiten Auswahlbereich. Die mittlere Card
+ist als aktive Auswahl farblich hervorgehoben; oberhalb und unterhalb
+stehen abgeblendete Cards. Die bisherige durchgehende grüne
+Auswahlleiste ist entfernt. Wischen auf Touchscreens, Mausrad, Pfeiltasten
+und Klick auf Nachbarkarten funktionieren weiterhin.
