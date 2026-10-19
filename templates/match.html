@@ -4,7 +4,10 @@
 
 {% block content %}
     <section class="page-header">
-        <h1>Match</h1>
+        <h1>{% if game.get('mode') == 'quickplay' %}Quickplay{% elif game.get('mode') == 'six_player' %}6er-Kreuzjass{% else %}Ranglistenspiel{% endif %}</h1>
+        {% if game.get('mode') in ['quickplay', 'six_player'] %}
+            <p>Freies Spiel · keine Speicherung in der Rangliste</p>
+        {% endif %}
     </section>
 
     <section class="score-section section-spacing">

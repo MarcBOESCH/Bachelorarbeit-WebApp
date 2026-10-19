@@ -63,7 +63,7 @@ async function saveFinishedMatch(game) {
             ? (game.team_name_a ?? "Team A")
             : (game.team_name_b ?? "Team B");
         showMatchStatusMessage(`${winnerName} hat gewonnen 🏆`);
-        showToast("Das Match wurde gespeichert.", "success");
+        showToast(data.saved === false ? "Freies Spiel beendet – ohne Rating." : "Das Match wurde gespeichert.", "success");
 
         if (isFourTwentyWin(game, winnerTeam)) {
             showFourTwentyWinOverlay();
@@ -636,6 +636,14 @@ function showFourTwentyWinOverlay() {
 // Initialisiert die komplette Match-Seite.
 function initMatchPage() {
     hideMatchStatusMessage();
+    const game = window.INITIAL_GAME_STATE;
+    if (game?.match_saved) {
+        matchFinished = true;
+        const winner = determineWinnerTeam(game);
+        const name = winner === "A" ? game.team_name_a : game.team_name_b;
+        showMatchStatusMessage(`${name} hat gewonnen 🏆`);
+        setMatchInputsDisabled(true);
+    }
     initScoreButtons();
     initManualButton();
     initManualEnterKey();

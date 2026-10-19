@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Spielen – JassTistics{% endblock %}
+{% block content %}
+<section class="home-hero">
+    <div class="home-kicker"><i class="bi bi-suit-spade-fill"></i> JassTistics</div>
+    <h1>Bereit für die nächste Runde?</h1>
+    <p>Mit Rating um den ersten Platz kämpfen oder einfach gemütlich jassen – du entscheidest.</p>
+</section>
+
+<h2 class="home-section-heading">Spielmodus wählen</h2>
+<div class="game-mode-grid section-spacing">
+    <a class="game-mode-card featured" href="{{ url_for('matches.player_selection_page') }}">
+        <span class="mode-icon"><i class="bi bi-trophy"></i></span>
+        <span class="mode-title">Ranglistenspiel · 2 gegen 2</span>
+        <span class="mode-description">Wähle registrierte Spieler, sammle Siege und verbessere dein Glicko-2-Rating.</span>
+        <span class="mode-foot">Mit Ranking und Spielhistorie <i class="bi bi-arrow-right"></i></span>
+    </a>
+    <a class="game-mode-card" href="{{ url_for('free_play.quickplay_page') }}">
+        <span class="mode-icon"><i class="bi bi-lightning-charge"></i></span>
+        <span class="mode-title">Quickplay · 2 gegen 2</span>
+        <span class="mode-description">Ohne Registrierung direkt Punkte zählen. Nichts wird in die Datenbank übernommen.</span>
+        <span class="mode-foot">Ohne Rating <i class="bi bi-arrow-right"></i></span>
+    </a>
+    <a class="game-mode-card" href="{{ url_for('free_play.six_player_page') }}">
+        <span class="mode-icon"><i class="bi bi-people-fill"></i></span>
+        <span class="mode-title">6er-Kreuzjass · 3 gegen 3</span>
+        <span class="mode-description">Sechs Spieler, zwei Teams und die gewohnte Punkteerfassung – vorerst ohne Rangliste.</span>
+        <span class="mode-foot">Freizeitmodus <i class="bi bi-arrow-right"></i></span>
+    </a>
+</div>
+
+<h2 class="home-section-heading">Unsere Jassrunde</h2>
+<div class="home-stats section-spacing">
+    <div class="home-stat"><strong>{{ player_count }}</strong><span>Registrierte Spieler</span></div>
+    <div class="home-stat"><strong>{{ match_count }}</strong><span>Gewertete Historien-Matches</span></div>
+</div>
+<section class="app-card section-spacing">
+    <div class="app-card-body">
+        <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
+            <h2 class="fs-5 fw-bold mb-0">Top 3</h2>
+            <a href="{{ url_for('statistics.statistics_page') }}" class="link-success fw-semibold">Zur Rangliste <i class="bi bi-arrow-right"></i></a>
+        </div>
+        {% if not rating_ready %}
+            <p class="text-muted">Die Rating-Neuberechnung steht noch aus.</p>
+        {% elif leaders %}
+            <ol class="home-leaders">
+                {% for name, rating in leaders %}
+                <li><span>{{ loop.index }}. {{ name }}</span><b>{{ "%.2f"|format(rating) }}</b></li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="text-muted">Noch keine Spieler mit abgeschlossenem Placement.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
