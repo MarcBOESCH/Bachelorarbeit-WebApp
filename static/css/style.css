@@ -1266,29 +1266,6 @@ canvas {
    Home / mode selection
 ========================= */
 
-.home-hero {
-    padding: clamp(24px, 5vw, 42px);
-    margin-bottom: 18px;
-    border-radius: var(--radius-lg);
-    color: #fff;
-    background: linear-gradient(125deg, #0b3d26, #166b46);
-    box-shadow: var(--shadow-sm);
-}
-.home-hero h1 {
-    margin: 10px 0 12px;
-    color: #fff;
-    font-weight: 800;
-    font-size: clamp(2rem, 5vw, 2.7rem);
-}
-.home-hero p { max-width: 38rem; color: #e4f3e9; line-height: 1.6; }
-.home-kicker {
-    font-size: .75rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: #c5e8d2;
-}
-.home-section-heading { font-size: 1.2rem; font-weight: 800; margin: 22px 0 12px; }
 .game-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .game-mode-card {
     display: flex;

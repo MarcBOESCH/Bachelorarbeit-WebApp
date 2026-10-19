@@ -1,13 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Spielen – JassTistics{% endblock %}
+{% block title %}Match – JassTistics{% endblock %}
 {% block content %}
-<section class="home-hero">
-    <div class="home-kicker"><i class="bi bi-suit-spade-fill"></i> JassTistics</div>
-    <h1>Bereit für die nächste Runde?</h1>
-    <p>Mit Rating um den ersten Platz kämpfen oder einfach gemütlich jassen – du entscheidest.</p>
+<section class="page-header">
+    <h1>Match</h1>
+    <p>Wähle deinen Spielmodus</p>
 </section>
-
-<h2 class="home-section-heading">Spielmodus wählen</h2>
 <div class="game-mode-grid section-spacing">
     <a class="game-mode-card featured" href="{{ url_for('matches.player_selection_page') }}">
         <span class="mode-icon"><i class="bi bi-trophy"></i></span>

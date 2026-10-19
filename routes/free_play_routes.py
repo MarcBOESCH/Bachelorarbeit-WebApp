@@ -25,6 +25,16 @@ def setup_free_game(mode, player_count):
         names_b = [
             cleaned(f"player_b_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
         ]
+        if mode == "six_player":
+            # Each of the six places needs a distinct player. Only session data
+            # is created; the registered player/team tables remain untouched.
+            all_names = names_a + names_b
+            if any(not (request.form.get(f"player_{side}_{i}") or "").strip()
+                   for side in ("a", "b") for i in range(1, 4)):
+                abort(400, "Für 6er-Kreuzjass müssen sechs Spieler ausgewählt werden.")
+            if len({name.casefold() for name in all_names}) != 6:
+                abort(400, "Jeder Spieler darf nur einmal ausgewählt werden.")
+
         start_free_game(
             mode=mode,
             team_name_a=cleaned("team_a_name", "Team A"),
@@ -35,6 +45,8 @@ def setup_free_game(mode, player_count):
         )
         return redirect(url_for("matches.match_page"))
 
+    if mode == "six_player":
+        return render_template("six_player_selection.html")
     return render_template("free_play_setup.html", mode=mode, player_count=player_count)
 
 

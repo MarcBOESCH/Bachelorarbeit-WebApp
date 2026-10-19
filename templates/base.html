@@ -35,22 +35,10 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a class="sidebar-link {% if endpoint == 'home' %}active{% endif %}"
+                <a class="sidebar-link {% if endpoint in ['home', 'matches.player_selection_page', 'matches.match_page', 'free_play.quickplay_page', 'free_play.six_player_page'] %}active{% endif %}"
                    href="{{ url_for('home') }}">
-                    <i class="bi bi-house-door"></i><span>Startseite</span>
-                </a>
-                <a class="sidebar-link {% if endpoint == 'matches.player_selection_page' or (endpoint == 'matches.match_page' and session.get('game', {}).get('mode', 'ranked') == 'ranked') %}active{% endif %}"
-                   href="{{ url_for('matches.player_selection_page') }}">
-                    <i class="bi bi-trophy"></i>
-                    <span>Ranglistenspiel</span>
-                </a>
-                <a class="sidebar-link {% if endpoint == 'free_play.quickplay_page' or (endpoint == 'matches.match_page' and session.get('game', {}).get('mode') == 'quickplay') %}active{% endif %}"
-                   href="{{ url_for('free_play.quickplay_page') }}">
-                    <i class="bi bi-lightning-charge"></i><span>Quickplay</span>
-                </a>
-                <a class="sidebar-link {% if endpoint == 'free_play.six_player_page' or (endpoint == 'matches.match_page' and session.get('game', {}).get('mode') == 'six_player') %}active{% endif %}"
-                   href="{{ url_for('free_play.six_player_page') }}">
-                    <i class="bi bi-people-fill"></i><span>6er-Kreuzjass</span>
+                    <i class="bi bi-controller"></i>
+                    <span>Match</span>
                 </a>
 
                 <a class="sidebar-link {% if endpoint == 'players.players_page' %}active{% endif %}"
@@ -95,8 +83,8 @@
     <nav class="mobile-bottom-nav d-md-none">
         <a class="mobile-nav-link {% if endpoint in ['home', 'matches.player_selection_page', 'matches.match_page', 'free_play.quickplay_page', 'free_play.six_player_page'] %}active{% endif %}"
            href="{{ url_for('home') }}">
-            <i class="bi bi-house-door"></i>
-            <span>Spielen</span>
+            <i class="bi bi-controller"></i>
+            <span>Match</span>
         </a>
 
         <a class="mobile-nav-link {% if endpoint == 'players.players_page' %}active{% endif %}"
