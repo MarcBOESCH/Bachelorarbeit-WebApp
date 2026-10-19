@@ -1266,46 +1266,39 @@ canvas {
    Home / mode selection
 ========================= */
 
-/* =========================
-   iOS-style mode picker
-========================= */
+/* Compact vertical card carousel for choosing a game mode */
 
 .mode-chooser {
-    width: min(100%, 620px);
+    width: min(100%, 370px);
     margin: 0 auto;
-    padding: clamp(18px, 4vw, 34px);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-sm);
     text-align: center;
 }
 
 .mode-chooser-heading {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 800;
-    letter-spacing: .01em;
-    margin-bottom: 18px;
+    margin-bottom: 10px;
 }
 
 .mode-wheel-layout {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .mode-wheel-arrow {
     display: grid;
     place-items: center;
-    width: 52px;
+    width: 48px;
     height: 36px;
-    background: transparent;
+    padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
+    background: transparent;
     color: var(--color-brand);
-    font-size: 1.2rem;
     cursor: pointer;
+    font-size: 1.15rem;
 }
 
 .mode-wheel-arrow:hover {
@@ -1320,121 +1313,113 @@ canvas {
 }
 
 .mode-wheel {
-    position: relative;
-    width: 100%;
-    max-width: 520px;
-    height: 228px;
-    overflow: hidden;
+    width: min(100%, 300px);
+    height: 322px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    border-radius: var(--radius-md);
+    gap: 12px;
+    overflow: hidden;
+    margin: 0 auto;
+    padding: 4px;
+    border-radius: var(--radius-lg);
     touch-action: pan-x;
     user-select: none;
     -webkit-user-select: none;
     cursor: ns-resize;
     outline: none;
-    isolation: isolate;
-}
-
-.mode-wheel-selection-band {
-    position: absolute;
-    z-index: -1;
-    top: 76px;
-    left: 0;
-    right: 0;
-    height: 76px;
-    background: var(--color-brand-soft);
-    border: 1px solid #a3d6b7;
-    border-radius: var(--radius-md);
-    pointer-events: none;
 }
 
 .mode-wheel-option {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 14px;
-    flex: 0 0 76px;
-    min-height: 76px;
-    padding: 8px 14px;
+    text-align: left;
+    gap: 12px;
+    flex: 0 0 92px;
+    min-height: 92px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
     color: var(--color-text);
-    font-size: clamp(1.05rem, 3vw, 1.35rem);
-    font-weight: 700;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-    transition: opacity 150ms ease, transform 150ms ease;
+    transition: opacity 180ms ease, transform 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
-.mode-wheel-option i {
-    flex: 0 0 auto;
+.mode-wheel-symbol {
+    display: grid;
+    place-items: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--color-surface-soft);
     color: var(--color-brand);
     font-size: 1.2rem;
 }
 
-.mode-wheel-active {
-    position: relative;
-    z-index: 1;
-    color: var(--color-brand-dark);
-    opacity: 1;
+.mode-wheel-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 5px;
+}
+
+.mode-wheel-copy strong {
+    font-size: 1rem;
     font-weight: 800;
+    line-height: 1.15;
+    color: inherit;
+}
+
+.mode-wheel-copy small {
+    font-size: .77rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-text-muted);
+}
+
+.mode-wheel-active {
+    border-color: #78bd96;
+    background: #e9f6ed;
+    color: var(--color-brand-dark);
+    box-shadow: 0 8px 22px rgba(15, 81, 50, .12);
+}
+
+.mode-wheel-active .mode-wheel-symbol {
+    background: #d5ebdc;
+}
+
+.mode-wheel-active .mode-wheel-copy small {
+    color: #426553;
 }
 
 .mode-wheel-neighbor {
-    opacity: .45;
-    transform: scale(.91);
+    opacity: .55;
+    transform: scale(.93);
     cursor: pointer;
 }
 
-.mode-wheel-neighbor:hover { opacity: .75; }
+.mode-wheel-neighbor:hover { opacity: .85; }
 
 .mode-wheel-hint {
-    margin: 16px 0 22px;
+    margin: 10px 0 18px;
     color: var(--color-text-muted);
-    font-size: .88rem;
+    font-size: .78rem;
+    line-height: 1.45;
 }
-
-.mode-wheel-hint i { margin-right: 4px; }
 
 .mode-selection-details {
+    padding: 14px 4px 0;
+    min-height: 90px;
     border-top: 1px solid var(--color-border);
-    padding-top: 22px;
-    min-height: 205px;
 }
 
-.mode-selection-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 12px;
-    display: grid;
-    place-items: center;
-    border-radius: 14px;
-    background: var(--color-surface-soft);
-    color: var(--color-brand);
-    font-size: 1.5rem;
-}
-
-.mode-selection-details h3 {
-    font-size: 1.28rem;
-    font-weight: 800;
-    margin-bottom: 12px;
-}
-
-.mode-selection-details h3 span {
-    color: var(--color-text-muted);
-    font-weight: 600;
-}
-
-.mode-selection-details > p:not(.mode-details-meta) {
+.mode-selection-details p {
     color: var(--color-text-muted);
     line-height: 1.5;
-    margin-bottom: 10px;
-}
-
-.mode-details-meta {
-    color: var(--color-brand);
-    font-size: .9rem;
-    font-weight: 700;
+    font-size: .92rem;
 }
 
 .mode-start-btn {
@@ -1442,9 +1427,9 @@ canvas {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    min-height: 54px;
     width: 100%;
-    margin-top: 6px;
+    min-height: 54px;
+    margin-top: 10px;
     text-decoration: none;
 }
 
@@ -1456,10 +1441,8 @@ canvas {
 }
 
 @media (max-width: 575px) {
-    .mode-chooser { padding: 16px 14px 20px; }
-    .mode-wheel-option { gap: 8px; font-size: 1.08rem; }
-    .mode-wheel-hint { font-size: .8rem; }
-    .mode-selection-details { min-height: 225px; }
+    .mode-chooser { width: min(100%, 350px); }
+    .mode-wheel { width: min(100%, 294px); }
 }
 
 .free-setup-note { color: var(--color-text-muted); line-height: 1.5; }

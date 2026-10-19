@@ -10,7 +10,7 @@ function createGameModes(wheel) {
             size: "2 gegen 2",
             icon: "bi-trophy",
             description: "Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.",
-            meta: "Mit Ranking und Spielhistorie",
+            tag: "Mit Rating",
             url: wheel.dataset.rankedUrl
         },
         {
@@ -18,7 +18,7 @@ function createGameModes(wheel) {
             size: "2 gegen 2",
             icon: "bi-lightning-charge",
             description: "Direkt Punkte erfassen, ohne Spieler oder Teams anzulegen. Das Spiel wird nicht gespeichert.",
-            meta: "Ohne Rating und Historie",
+            tag: "Ohne Rating",
             url: wheel.dataset.quickplayUrl
         },
         {
@@ -26,7 +26,7 @@ function createGameModes(wheel) {
             size: "3 gegen 3",
             icon: "bi-people-fill",
             description: "Sechs Spieler in zwei Dreierteams – mit der gewohnten Punkteerfassung und ohne Rangliste.",
-            meta: "Freizeitmodus ohne Rating",
+            tag: "Freizeit",
             url: wheel.dataset.sixPlayerUrl
         }
     ];
@@ -41,9 +41,6 @@ function initModePicker() {
     const current = document.getElementById("mode-wheel-current");
     const next = document.getElementById("mode-wheel-next");
     const description = document.getElementById("mode-details-description");
-    const title = document.getElementById("mode-details-title");
-    const meta = document.getElementById("mode-details-meta");
-    const icon = document.getElementById("mode-details-icon");
     const start = document.getElementById("mode-start");
 
     let selected = 0;
@@ -53,15 +50,24 @@ function initModePicker() {
     let lastWheelAt = 0;
 
     function fillOption(node, mode, active) {
-        node.replaceChildren();
-        const symbol = document.createElement("i");
-        symbol.className = `bi ${mode.icon}`;
-        symbol.setAttribute("aria-hidden", "true");
-        const label = document.createElement("span");
-        label.textContent = mode.name;
-        node.append(symbol, label);
+        const symbol = document.createElement("span");
+        symbol.className = "mode-wheel-symbol";
+        const icon = document.createElement("i");
+        icon.className = `bi ${mode.icon}`;
+        icon.setAttribute("aria-hidden", "true");
+        symbol.append(icon);
+
+        const copy = document.createElement("span");
+        copy.className = "mode-wheel-copy";
+        const heading = document.createElement("strong");
+        heading.textContent = mode.name;
+        const detail = document.createElement("small");
+        detail.textContent = `${mode.size} · ${mode.tag}`;
+        copy.append(heading, detail);
+
+        node.replaceChildren(symbol, copy);
         node.setAttribute("aria-selected", active ? "true" : "false");
-        node.setAttribute("aria-label", `${mode.name}, ${mode.size}`);
+        node.setAttribute("aria-label", `${mode.name}, ${mode.size}, ${mode.tag}`);
     }
 
     function renderSelection() {
@@ -70,17 +76,7 @@ function initModePicker() {
         fillOption(current, mode, true);
         fillOption(next, modes[wrapModeIndex(selected + 1, modes.length)], false);
 
-        title.replaceChildren(document.createTextNode(`${mode.name} `));
-        const size = document.createElement("span");
-        size.textContent = `· ${mode.size}`;
-        title.append(size);
         description.textContent = mode.description;
-        meta.textContent = mode.meta;
-
-        icon.replaceChildren();
-        const symbol = document.createElement("i");
-        symbol.className = `bi ${mode.icon}`;
-        icon.append(symbol);
         start.href = mode.url;
         start.replaceChildren(document.createTextNode(`Weiter zu ${mode.name} `));
         const arrow = document.createElement("i");

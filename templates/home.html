@@ -8,6 +8,7 @@
 
 <section class="mode-chooser" aria-labelledby="mode-chooser-heading">
     <h2 id="mode-chooser-heading" class="mode-chooser-heading">Spielmodus</h2>
+
     <div class="mode-wheel-layout">
         <button id="mode-previous" type="button" class="mode-wheel-arrow"
                 aria-label="Vorheriger Spielmodus" aria-controls="mode-wheel">
@@ -21,21 +22,20 @@
              data-ranked-url="{{ url_for('matches.player_selection_page') }}"
              data-quickplay-url="{{ url_for('free_play.quickplay_page') }}"
              data-six-player-url="{{ url_for('free_play.six_player_page') }}">
-            <div class="mode-wheel-selection-band" aria-hidden="true"></div>
             <div id="mode-wheel-previous" class="mode-wheel-option mode-wheel-neighbor"
                  role="option" aria-selected="false">
-                <i class="bi bi-people-fill" aria-hidden="true"></i>
-                <span>6er-Kreuzjass</span>
+                <span class="mode-wheel-symbol"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+                <span class="mode-wheel-copy"><strong>6er-Kreuzjass</strong><small>3 gegen 3 · Freizeit</small></span>
             </div>
             <div id="mode-wheel-current" class="mode-wheel-option mode-wheel-active"
                  role="option" aria-selected="true">
-                <i class="bi bi-trophy" aria-hidden="true"></i>
-                <span>Ranglistenspiel</span>
+                <span class="mode-wheel-symbol"><i class="bi bi-trophy" aria-hidden="true"></i></span>
+                <span class="mode-wheel-copy"><strong>Ranglistenspiel</strong><small>2 gegen 2 · Mit Rating</small></span>
             </div>
             <div id="mode-wheel-next" class="mode-wheel-option mode-wheel-neighbor"
                  role="option" aria-selected="false">
-                <i class="bi bi-lightning-charge" aria-hidden="true"></i>
-                <span>Quickplay</span>
+                <span class="mode-wheel-symbol"><i class="bi bi-lightning-charge" aria-hidden="true"></i></span>
+                <span class="mode-wheel-copy"><strong>Quickplay</strong><small>2 gegen 2 · Ohne Rating</small></span>
             </div>
         </div>
 
@@ -44,20 +44,13 @@
             <i class="bi bi-chevron-down" aria-hidden="true"></i>
         </button>
     </div>
+
     <p id="mode-wheel-hint" class="mode-wheel-hint">
-        <i class="bi bi-hand-index-thumb" aria-hidden="true"></i>
-        Wischen, scrollen oder Pfeiltasten verwenden
+        Wischen, scrollen oder mit den Pfeilen wechseln
     </p>
 
     <div class="mode-selection-details" aria-live="polite" aria-atomic="true">
-        <span id="mode-details-icon" class="mode-selection-icon" aria-hidden="true">
-            <i class="bi bi-trophy"></i>
-        </span>
-        <h3 id="mode-details-title">Ranglistenspiel <span>· 2 gegen 2</span></h3>
         <p id="mode-details-description">Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.</p>
-        <p id="mode-details-meta" class="mode-details-meta">
-            <i class="bi bi-check-circle" aria-hidden="true"></i> Mit Ranking und Spielhistorie
-        </p>
     </div>
 
     <a id="mode-start" class="btn btn-dark mode-start-btn"
