@@ -81,11 +81,6 @@ function updateSixPlayerPreview() {
     document.getElementById("match-preview-card").classList.toggle("d-none", allIds.length === 0);
     document.getElementById("start-match-btn").disabled = !complete;
 
-    const error = document.getElementById("six-player-error");
-    error.classList.toggle("d-none", allIds.length === 0 || complete);
-    error.textContent = !complete && allIds.length > 0
-        ? "Bitte sechs unterschiedliche Spieler auswählen."
-        : "";
 }
 
 async function createSixPlayer(input) {

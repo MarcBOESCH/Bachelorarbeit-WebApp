@@ -11,6 +11,7 @@ test('match home presents exactly three modes without hero', () => {
         "free_play.six_player_page"
     ]) assert.ok(home.includes(target));
     assert.doesNotMatch(home, /home-hero|Bereit für die nächste Runde/);
+    assert.doesNotMatch(home, /Unsere Jassrunde|Registrierte Spieler|Gespeicherte Matches|Top 3|Zur Rangliste/);
     assert.match(home, /<h1>Match<\/h1>/);
 });
 
@@ -31,6 +32,10 @@ test('six-player form only has the six-player selector, preview and 420 mode', (
     assert.doesNotMatch(html, /btn-selection-mode-teams|team-selection-view|team-\{\{ side \}\}-third/);
     assert.match(html, /match-preview-card/);
     assert.match(html, /four-twenty-mode-toggle/);
+    assert.doesNotMatch(html, /six-player-error|Bitte sechs unterschiedliche Spieler auswählen/);
+    const js = fs.readFileSync('static/js/pages/six_player_selection.js', 'utf8');
+    assert.doesNotMatch(js, /six-player-error/);
+    assert.match(js, /disabled = !complete/);
 });
 
 test('six-player selection locks chosen player IDs in other five fields', () => {

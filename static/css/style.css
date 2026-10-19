@@ -1307,14 +1307,6 @@ canvas {
 .mode-title { display: block; font-size: 1.22rem; font-weight: 800; }
 .mode-description { flex: 1; color: var(--color-text-muted); line-height: 1.5; }
 .mode-foot { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; font-size: .88rem; color: var(--color-brand); font-weight: 700; }
-.home-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.home-stat { border: 1px solid var(--color-border); background: #fff; border-radius: var(--radius-md); padding: 18px; }
-.home-stat strong { display: block; font-size: 1.7rem; color: var(--color-brand); }
-.home-stat span { color: var(--color-text-muted); font-size: .85rem; }
-.home-leaders { margin: 0; padding: 0; list-style: none; }
-.home-leaders li { display: flex; gap: 10px; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
-.home-leaders li:last-child { border-bottom: 0; }
-.home-leaders b { color: var(--color-brand); }
 .free-setup-note { color: var(--color-text-muted); line-height: 1.5; }
 .free-setup-names { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .free-setup-names > div { min-width: 0; }

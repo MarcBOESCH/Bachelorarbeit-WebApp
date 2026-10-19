@@ -99,6 +99,7 @@ def test_six_player_form_uses_only_player_selection(client):
         assert 'id="team-a-select"' not in html
         assert 'id="match-preview-card"' in html
         assert 'id="four-twenty-mode-toggle"' in html
+        assert 'id="six-player-error"' not in html
         assert "/js/pages/six_player_selection.js" in html
         assert_no_rated_records()
 

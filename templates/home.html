@@ -25,29 +25,4 @@
         <span class="mode-foot">Freizeitmodus <i class="bi bi-arrow-right"></i></span>
     </a>
 </div>
-
-<h2 class="home-section-heading">Unsere Jassrunde</h2>
-<div class="home-stats section-spacing">
-    <div class="home-stat"><strong>{{ player_count }}</strong><span>Registrierte Spieler</span></div>
-    <div class="home-stat"><strong>{{ match_count }}</strong><span>Gespeicherte Matches</span></div>
-</div>
-<section class="app-card section-spacing">
-    <div class="app-card-body">
-        <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
-            <h2 class="fs-5 fw-bold mb-0">Top 3</h2>
-            <a href="{{ url_for('statistics.statistics_page') }}" class="link-success fw-semibold">Zur Rangliste <i class="bi bi-arrow-right"></i></a>
-        </div>
-        {% if not rating_ready %}
-            <p class="text-muted">Die Rating-Neuberechnung steht noch aus.</p>
-        {% elif leaders %}
-            <ol class="home-leaders">
-                {% for name, rating in leaders %}
-                <li><span>{{ loop.index }}. {{ name }}</span><b>{{ "%.2f"|format(rating) }}</b></li>
-                {% endfor %}
-            </ol>
-        {% else %}
-            <p class="text-muted">Noch keine Spieler mit abgeschlossenem Placement.</p>
-        {% endif %}
-    </div>
-</section>
 {% endblock %}

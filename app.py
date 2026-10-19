@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask, request, redirect, url_for, session, render_template, send_from_directory
-from sqlalchemy import func
 
 from config import config_by_name
 from extensions import db, migrate
@@ -129,33 +128,7 @@ def home():
     if has_active_match(get_game_state()):
         return redirect(url_for("matches.match_page"))
 
-    from models.player import Player
-    from models.match import Match
-    from models.rating import PlayerRating
-    from services.ranking_service import public_rating_lookup
-
-    _, rating_ready = public_rating_lookup()
-    leaders = []
-    if rating_ready:
-        leaders = (
-            db.session.query(Player.name, PlayerRating.rating)
-            .join(PlayerRating, PlayerRating.player_id == Player.id)
-            .filter(
-                PlayerRating.system_name == "glicko2",
-                PlayerRating.matches_played >= app.config["RATING_PLACEMENT_MATCHES"],
-            )
-            .order_by(PlayerRating.rating.desc(), Player.id.asc())
-            .limit(3)
-            .all()
-        )
-
-    return render_template(
-        "home.html",
-        leaders=leaders,
-        rating_ready=rating_ready,
-        player_count=db.session.query(func.count(Player.id)).scalar() or 0,
-        match_count=db.session.query(func.count(Match.id)).scalar() or 0,
-    )
+    return render_template("home.html")
 
 
 @app.route("/logout")

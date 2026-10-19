@@ -215,3 +215,12 @@ angelegt werden (diese Spieler werden in der Datenbank registriert),
 aber ein **6er-Match erzeugt weder Teamdatensätze noch gewertete Matches
 oder Ratings**. Die tatsächliche Punkteerfassung bleibt Session-only.
 Die Serverroute verlangt sechs unterschiedliche, existierende Spieler-IDs.
+
+### Aufgeräumte Modusauswahl
+
+Die Startseite zeigt ausschließlich die drei Moduskarten für
+Ranglistenspiel, Quickplay und 6er-Kreuzjass. Der Bereich „Unsere
+Jassrunde“ einschließlich Spielerzahl, Matchzahl und Top 3 ist entfernt.
+Die rote Meldung in der 6er-Match-Vorschau entfällt. Die sechs
+Spieler müssen weiterhin unterschiedlich sein; erst bei vollständiger
+ausgewählter Besetzung lässt sich „Match starten“ anklicken.
