@@ -224,3 +224,15 @@ Jassrunde“ einschließlich Spielerzahl, Matchzahl und Top 3 ist entfernt.
 Die rote Meldung in der 6er-Match-Vorschau entfällt. Die sechs
 Spieler müssen weiterhin unterschiedlich sein; erst bei vollständiger
 ausgewählter Besetzung lässt sich „Match starten“ anklicken.
+
+### Wischbare Spielmodus-Auswahl
+
+Die Match-Startseite nutzt jetzt ein **vertikales, iOS-Timer-artiges
+Auswahlrad** mit mittlerem horizontalem Auswahlbalken für die drei
+Spielmodi. Auf Smartphones lässt sich durch vertikales Wischen
+wechseln, mit Maus bzw. Trackpad durch Scrollen und per Tastatur
+über Pfeil hoch/runter (auch Home/End). Oberes/unteres Element
+und Pfeilbuttons sind anklickbar. Der „Weiter“-Button führt immer
+zum gerade markierten Modus. Ohne JavaScript stehen direkte Links
+zur Verfügung. Die laufenden Matches bleiben wie bisher über
+die Match-Navigation erreichbar.
