@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}6er-Kreuzjass – JassTistic{% endblock %}
+
+{% block content %}
+    <section class="page-header">
+        <h1>Neues Match</h1>
+        <p>6er-Kreuzjass · 3 gegen 3 · ohne Rangliste</p>
+    </section>
+
+    <section class="selection-mode-toggle">
+        <div class="score-mode-toggle">
+            <button id="btn-selection-mode-players" type="button" class="btn-toggle active">Spieler wählen</button>
+            <button id="btn-selection-mode-teams" type="button" class="btn-toggle">Teams wählen</button>
+        </div>
+    </section>
+
+    <form id="six-player-selection-form" class="section-spacing" method="post" action="{{ url_for('free_play.six_player_page') }}">
+        <div id="player-selection-view" class="stack-lg section-spacing">
+            {% for side in ['a', 'b'] %}
+            <section class="app-card">
+                <div class="app-card-body">
+                    <div class="section-header team-selection-header text-center">
+                        <h2 class="mb-0">Team {{ side|upper }}</h2>
+                        <p>Wähle drei Spieler für Team {{ side|upper }}</p>
+                    </div>
+                    <div class="team-setup mt-3">
+                        {% for n in range(1, 4) %}
+                        <div class="form-group">
+                            <label for="team-{{ side }}-player-{{ n }}" class="form-label">Spieler {{ n }}</label>
+                            <select id="team-{{ side }}-player-{{ n }}" class="form-select six-player-option" data-side="{{ side }}" aria-label="Spieler {{ n }} Team {{ side|upper }}">
+                                <option value="">Spieler suchen...</option>
+                            </select>
+                        </div>
+                        {% endfor %}
+                        <div class="form-group mt-3">
+                            <label for="team-{{ side }}-custom-name" class="form-label">Teamname (optional)</label>
+                            <input id="team-{{ side }}-custom-name" type="text" class="form-control" maxlength="40"
+                                   placeholder="Team {{ side|upper }}" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+
+        <div id="team-selection-view" class="stack-lg section-spacing d-none">
+            {% for side in ['a', 'b'] %}
+            <section class="app-card">
+                <div class="app-card-body">
+                    <div class="section-header team-selection-header text-center">
+                        <h2 class="mb-0">Team {{ side|upper }}</h2>
+                        <p>Wähle ein Zweierteam und den dritten Spieler</p>
+                    </div>
+                    <div class="team-setup mt-3">
+                        <div class="form-group">
+                            <label for="team-{{ side }}-select" class="form-label">Team wählen</label>
+                            <select id="team-{{ side }}-select" class="form-select">
+                                <option value="">Team suchen...</option>
+                            </select>
+                        </div>
+                        <div id="team-{{ side }}-players-info" class="small text-muted mt-2 d-none">
+                            <i class="bi bi-people-fill"></i> Spieler: <span class="fw-semibold player-names"></span>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="team-{{ side }}-third" class="form-label">Spieler 3</label>
+                            <select id="team-{{ side }}-third" class="form-select">
+                                <option value="">Spieler suchen...</option>
+                            </select>
+                        </div>
+                        <p class="small text-muted mt-2">Das Dreierteam wird nur für dieses Spiel verwendet, nicht gespeichert.</p>
+                    </div>
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+
+        <section id="match-preview-card" class="app-card section-spacing d-none">
+            <div class="app-card-body">
+                <div class="section-header text-center">
+                    <h2>Match-Vorschau</h2>
+                    <p>So sieht das nächste Match aus</p>
+                </div>
+                <div class="match-preview">
+                    {% for side in ['a', 'b'] %}
+                    {% if not loop.first %}<div class="match-preview-vs">vs</div>{% endif %}
+                    <div class="match-preview-team">
+                        <div class="match-preview-label">Team {{ side|upper }}</div>
+                        <div id="preview-team-{{ side }}-name" class="match-preview-name">-</div>
+                        <div id="preview-team-{{ side }}-players" class="match-preview-players text-muted">-</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="match-mode-options mt-4">
+                    <div class="form-check form-switch match-mode-switch" data-bs-toggle="tooltip"
+                         title="Ein Team gewinnt auch dann, wenn es genau 420 Punkte erreicht. Freie Spiele zählen nicht zur Rangliste.">
+                        <input id="four-twenty-mode-toggle" class="form-check-input" type="checkbox" role="switch" name="four_twenty_mode">
+                        <label class="form-check-label" for="four-twenty-mode-toggle">
+                            <span class="match-mode-title">420 Mode</span>
+                        </label>
+                    </div>
+                </div>
+                <div id="six-player-error" class="text-danger small mt-3 d-none" role="alert"></div>
+                <div class="match-summary-actions mt-4">
+                    <button id="start-match-btn" type="submit" class="btn btn-dark" disabled>Match starten</button>
+                </div>
+            </div>
+        </section>
+
+        {% for side in ['a', 'b'] %}
+        <input type="hidden" name="team_{{ side }}_name" id="chosen-team-{{ side }}-name">
+        {% for n in range(1, 4) %}
+        <input type="hidden" name="player_{{ side }}_{{ n }}" id="chosen-player-{{ side }}-{{ n }}">
+        {% endfor %}
+        {% endfor %}
+    </form>
+{% endblock %}
+
+{% block page_scripts %}
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script src="{{ static_url('js/pages/six_player_selection.js') }}"></script>
+{% endblock %}
