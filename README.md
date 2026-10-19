@@ -246,3 +246,14 @@ ist als aktive Auswahl farblich hervorgehoben; oberhalb und unterhalb
 stehen abgeblendete Cards. Die bisherige durchgehende grüne
 Auswahlleiste ist entfernt. Wischen auf Touchscreens, Mausrad, Pfeiltasten
 und Klick auf Nachbarkarten funktionieren weiterhin.
+
+### Horizontales Kartenkarussell
+
+Die Match-Modusauswahl besteht aus drei länglichen Karten nebeneinander. Auf
+Smartphones werden die Karten durch horizontales Wischen nativ verschoben
+(CSS Scroll Snap, mittige Einrastposition). Nachbarkarten bleiben seitlich
+angeschnitten sichtbar. Aktive Card, Beschreibung und Weiter-Link
+synchronisieren sich mit der mittigen Karte. Am Desktop unterstützen
+Links-/Rechtspfeile, horizontales Trackpad-Scrollen, Mausrad,
+Tastaturpfeile und die drei Indikatorpunkte die Auswahl. Die Navigation
+zu einem laufenden Match und die drei Spielmodi bleiben unverändert.

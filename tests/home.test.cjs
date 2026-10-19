@@ -3,148 +3,174 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const home = fs.readFileSync('templates/home.html', 'utf8');
-const styles = fs.readFileSync('static/css/style.css', 'utf8');
+const html = fs.readFileSync('templates/home.html', 'utf8');
+const css = fs.readFileSync('static/css/style.css', 'utf8');
 const source = fs.readFileSync('static/js/pages/home.js', 'utf8');
 
-test('match landing shows compact vertical carousel with three distinct cards', () => {
-    assert.match(home, /id="mode-wheel"/);
-    assert.match(home, /role="listbox"/);
-    assert.match(home, /aria-activedescendant="mode-wheel-current"/);
-    assert.match(home, /id="mode-wheel-current"/);
-    assert.match(home, /id="mode-start"/);
-    for(const id of ['previous','current','next']) {
-        assert.ok(home.includes(`id="mode-wheel-${id}"`));
+test('horizontal carousel contains three long, individually selectable cards', () => {
+    assert.match(html, /id="mode-carousel"/);
+    assert.match(html, /aria-orientation="horizontal"/);
+    assert.match(html, /aria-activedescendant="mode-card-0"/);
+    for (let i = 0; i < 3; i++) {
+        assert.match(html, new RegExp(`id="mode-card-${i}"`));
+        assert.match(html, new RegExp(`data-mode-index="${i}"`));
     }
+    assert.match(css, /scroll-snap-type:\s*x mandatory/);
+    assert.match(css, /scroll-snap-align:\s*center/);
+    assert.match(css, /overflow-x:\s*auto/);
+    assert.match(css, /touch-action:\s*pan-x/);
+    assert.match(css, /\.mode-carousel-card\s*\{[^}]*min-height:\s*158px/);
+    assert.match(css, /\.mode-carousel-card\.is-active/);
+    assert.doesNotMatch(html, /mode-wheel|home-hero|Unsere Jassrunde|Top 3/);
+    assert.doesNotMatch(css, /\.mode-wheel\s*\{/);
+
     for (const route of [
         'matches.player_selection_page',
         'free_play.quickplay_page',
         'free_play.six_player_page'
-    ]) assert.ok(home.includes(route));
-
-    assert.ok(home.includes('js/pages/home.js'));
-    assert.doesNotMatch(home, /mode-wheel-selection-band|game-mode-card|Unsere Jassrunde|Top 3|home-hero/);
-    assert.match(styles, /\.mode-wheel-option\s*\{[^}]*border: 1px solid/);
-    assert.match(styles, /\.mode-wheel-active\s*\{[^}]*background:/);
-    assert.match(styles, /\.mode-wheel-neighbor\s*\{[^}]*opacity:/);
-    assert.match(styles, /width: min\(100%, 300px\)/);
-    assert.match(styles, /touch-action:\s*pan-x/);
-    assert.doesNotMatch(styles, /\.mode-wheel-selection-band|\.game-mode-card\s*\{/);
+    ]) assert.ok(html.includes(route));
 });
 
 function fakeElement(id) {
+    const classNames = new Set();
     return {
-        id, children: [], listeners: {}, attributes: {}, textContent: '',
-        href: '', dataset: {}, className: '',
-        addEventListener(name, handler) { this.listeners[name] = handler; },
+        id, listeners: {}, attributes: {}, children: [], dataset: {},
+        textContent: '', className: '', href: '', disabled: false,
+        classList: {
+            contains(name) {return classNames.has(name);},
+            toggle(name, active) {
+                if(active) classNames.add(name); else classNames.delete(name);
+            }
+        },
+        addEventListener(name, callback) {this.listeners[name] = callback;},
         setAttribute(name, value) {this.attributes[name] = value;},
-        replaceChildren(...children) { this.children = children; },
-        append(...children) { this.children.push(...children); },
-        fire(name, detail = {}) {
-            const event = {preventDefault(){ this.defaultPrevented = true; }, ...detail};
+        removeAttribute(name) {delete this.attributes[name];},
+        append(...parts) {this.children.push(...parts);},
+        replaceChildren(...parts) {this.children = parts;},
+        fire(name, properties = {}) {
+            const event = {
+                ...properties, defaultPrevented: false,
+                preventDefault() {this.defaultPrevented = true;}
+            };
             this.listeners[name](event);
             return event;
         }
     };
 }
 
-function fakeDocument() {
-    const ids = [
-        'mode-wheel','mode-wheel-previous','mode-wheel-current','mode-wheel-next',
-        'mode-details-description','mode-start','mode-previous','mode-next'
+function fixture() {
+    const ids = ['mode-carousel', 'mode-previous', 'mode-next',
+        'mode-details-description', 'mode-start',
+        'mode-card-0', 'mode-card-1', 'mode-card-2'
     ];
-    const elements = Object.fromEntries(ids.map(id => [id, fakeElement(id)]));
-    elements['mode-wheel'].dataset = {
-        rankedUrl:'/player-selection',
-        quickplayUrl:'/quickplay',
-        sixPlayerUrl:'/six-player'
-    };
+    const nodes = Object.fromEntries(ids.map(id=>[id,fakeElement(id)]));
+    const cards = [nodes['mode-card-0'], nodes['mode-card-1'],nodes['mode-card-2']];
+    const dots = [0,1,2].map(i=>{
+        const dot=fakeElement(`dot-${i}`);
+        dot.dataset.modeTarget=String(i);
+        return dot;
+    });
+    const carousel = nodes['mode-carousel'];
+    carousel.dataset = {rankedUrl:'/player-selection',quickplayUrl:'/quickplay',sixPlayerUrl:'/six-player'};
+    carousel.clientWidth=820;
+    carousel.scrollLeft=0;
+    carousel.querySelectorAll=()=>cards;
+    carousel.getBoundingClientRect=()=>({left:0,width:820});
+    carousel.scrollTo=({left})=>{carousel.scrollLeft=left;};
+    carousel.focus=()=>{};
+
+    cards.forEach((card,index)=>{
+        card.getBoundingClientRect=()=>({left:210 + index*416 - carousel.scrollLeft,width:400});
+    });
 
     const document = {
-        getElementById(id) {return elements[id];},
-        createElement(tag) {return fakeElement(tag);},
+        getElementById(id) {return nodes[id];},
+        querySelectorAll() {return dots;},
+        addEventListener() {},
         createTextNode(text) {return {textContent:text};},
-        addEventListener() {}
+        createElement(tag) {return fakeElement(tag);}
     };
 
-    let navigated = null;
-    const context = vm.createContext({
-        document, console, Date,
-        window:{location:{assign(url){navigated=url;}},setTimeout(){}}
-    });
-    vm.runInContext(source, context);
-    vm.runInContext('initModePicker()', context);
-
-    const title = () => elements['mode-wheel-current'].children[1].children[0].textContent;
-    const subtitle = () => elements['mode-wheel-current'].children[1].children[1].textContent;
-    return {elements, title, subtitle, selectedUrl:()=>elements['mode-start'].href,
-        navigatedTo:()=>navigated};
+    let navigated='';
+    const timers = new Map();
+    let nextTimer = 1;
+    const window = {
+        matchMedia:()=>({matches:false}),
+        location:{assign(url){navigated=url;}},
+        setTimeout(fn){const id=nextTimer++;timers.set(id,fn);return id;},
+        clearTimeout(id){timers.delete(id);},
+        addEventListener() {}
+    };
+    const context = vm.createContext({document,window,console,Date});
+    vm.runInContext(source,context);
+    vm.runInContext('initModePicker()',context);
+    return {
+        nodes,cards,dots,carousel,
+        flush() {for(const fn of timers.values())fn();timers.clear();},
+        selectedUrl:()=>nodes['mode-start'].href,
+        navigatedTo:()=>navigated
+    };
 }
 
-test('center card and Weiter link stay in sync for all three modes', () => {
-    const {elements,title,subtitle,selectedUrl} = fakeDocument();
-    assert.equal(title(),'Ranglistenspiel');
-    assert.equal(subtitle(),'2 gegen 2 · Mit Rating');
-    assert.equal(selectedUrl(),'/player-selection');
-
-    elements['mode-next'].fire('click');
-    assert.equal(title(),'Quickplay');
-    assert.equal(selectedUrl(),'/quickplay');
-
-    elements['mode-next'].fire('click');
-    assert.equal(title(),'6er-Kreuzjass');
-    assert.equal(subtitle(),'3 gegen 3 · Freizeit');
-    assert.equal(selectedUrl(),'/six-player');
-
-    elements['mode-next'].fire('click');
-    assert.equal(title(),'Ranglistenspiel');
-    elements['mode-previous'].fire('click');
-    assert.equal(title(),'6er-Kreuzjass');
-
-    for(const node of ['previous','next']) {
-        assert.equal(elements[`mode-wheel-${node}`].attributes['aria-selected'],'false');
-        assert.equal(elements['mode-wheel-current'].attributes['aria-selected'],'true');
-    }
+test('next/previous controls highlight the corresponding card and update Weiter', () => {
+    const f=fixture();
+    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.nodes['mode-previous'].disabled,true);
+    f.nodes['mode-next'].fire('click');
+    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.cards[1].attributes['aria-selected'],'true');
+    assert.equal(f.carousel.attributes['aria-activedescendant'],'mode-card-1');
+    assert.equal(f.carousel.scrollLeft,416);
+    f.nodes['mode-next'].fire('click');
+    assert.equal(f.selectedUrl(),'/six-player');
+    assert.equal(f.nodes['mode-next'].disabled,true);
+    f.nodes['mode-previous'].fire('click');
+    assert.equal(f.selectedUrl(),'/quickplay');
 });
 
-test('click on neighboring cards changes the selected mode', () => {
-    const {elements,title} = fakeDocument();
-    elements['mode-wheel-previous'].fire('click');
-    assert.equal(title(),'6er-Kreuzjass');
-    elements['mode-wheel-next'].fire('click');
-    assert.equal(title(),'Ranglistenspiel');
+test('touch-like native horizontal scroll picks the card nearest the center', () => {
+    const f=fixture();
+    f.carousel.scrollLeft=416;
+    f.carousel.fire('scroll');
+    f.flush();
+    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.dots[1].attributes['aria-current'],'true');
+
+    f.carousel.scrollLeft=832;
+    f.carousel.fire('scroll');
+    f.flush();
+    assert.equal(f.selectedUrl(),'/six-player');
+    assert.equal(f.cards[2].classList.contains('is-active'),true);
 });
 
-test('touch swipe up and down change the card in the center', () => {
-    const {elements,title} = fakeDocument();
-    const wheel=elements['mode-wheel'];
-    wheel.fire('pointerdown',{clientY:180,pointerId:8,pointerType:'touch'});
-    wheel.fire('pointerup',{clientY:95,pointerId:8,pointerType:'touch'});
-    assert.equal(title(),'Quickplay');
-
-    wheel.fire('pointerdown',{clientY:95,pointerId:9,pointerType:'touch'});
-    wheel.fire('pointerup',{clientY:180,pointerId:9,pointerType:'touch'});
-    assert.equal(title(),'Ranglistenspiel');
-
-    wheel.fire('pointerdown',{clientY:100,pointerId:10,pointerType:'touch'});
-    wheel.fire('pointerup',{clientY:98,pointerId:10,pointerType:'touch'});
-    assert.equal(title(),'Ranglistenspiel');
+test('click on a long card or pagination indicator centers it', () => {
+    const f=fixture();
+    f.cards[2].fire('click');
+    assert.equal(f.selectedUrl(),'/six-player');
+    assert.equal(f.carousel.scrollLeft,832);
+    f.dots[0].fire('click');
+    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.carousel.scrollLeft,0);
 });
 
-test('keyboard arrows, scroll and Enter activate the correct mode', () => {
-    const {elements,title,selectedUrl,navigatedTo} = fakeDocument();
-    const wheel=elements['mode-wheel'];
-    const key = code=>wheel.fire('keydown',{key:code});
-    assert.equal(key('ArrowDown').defaultPrevented,true);
-    assert.equal(title(),'Quickplay');
+test('horizontal keyboard navigation, Enter and mouse wheel support desktop users', () => {
+    const f=fixture();
+    const key=code=>f.carousel.fire('keydown',{key:code});
+    assert.equal(key('ArrowRight').defaultPrevented,true);
+    assert.equal(f.selectedUrl(),'/quickplay');
     key('End');
-    assert.equal(title(),'6er-Kreuzjass');
+    assert.equal(f.selectedUrl(),'/six-player');
     key('Home');
-    assert.equal(selectedUrl(),'/player-selection');
+    assert.equal(f.selectedUrl(),'/player-selection');
 
-    const evt=wheel.fire('wheel',{deltaY:100});
-    assert.equal(evt.defaultPrevented,true);
-    assert.equal(selectedUrl(),'/quickplay');
+    // Native horizontal trackpad gestures must remain available.
+    const native=f.carousel.fire('wheel',{deltaX:120,deltaY:0});
+    assert.equal(native.defaultPrevented,false);
+
+    const mouse=f.carousel.fire('wheel',{deltaX:0,deltaY:120});
+    assert.equal(mouse.defaultPrevented,true);
+    assert.equal(f.selectedUrl(),'/quickplay');
+
     key('Enter');
-    assert.equal(navigatedTo(),'/quickplay');
+    assert.equal(f.navigatedTo(),'/quickplay');
 });
