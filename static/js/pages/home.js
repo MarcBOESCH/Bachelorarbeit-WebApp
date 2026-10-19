@@ -1,81 +1,74 @@
-/* iPhone-inspired game mode wheel: one centered selection, no DB effects. */
-function wrapModeIndex(value, length) {
-    return ((value % length) + length) % length;
-}
-
-function createGameModes(wheel) {
+/* Horizontal, swipeable and keyboard-accessible carousel for the 3 game modes. */
+function createGameModes(carousel) {
     return [
         {
             name: "Ranglistenspiel",
-            size: "2 gegen 2",
-            icon: "bi-trophy",
             description: "Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.",
-            tag: "Mit Rating",
-            url: wheel.dataset.rankedUrl
+            url: carousel.dataset.rankedUrl
         },
         {
             name: "Quickplay",
-            size: "2 gegen 2",
-            icon: "bi-lightning-charge",
             description: "Direkt Punkte erfassen, ohne Spieler oder Teams anzulegen. Das Spiel wird nicht gespeichert.",
-            tag: "Ohne Rating",
-            url: wheel.dataset.quickplayUrl
+            url: carousel.dataset.quickplayUrl
         },
         {
             name: "6er-Kreuzjass",
-            size: "3 gegen 3",
-            icon: "bi-people-fill",
             description: "Sechs Spieler in zwei Dreierteams – mit der gewohnten Punkteerfassung und ohne Rangliste.",
-            tag: "Freizeit",
-            url: wheel.dataset.sixPlayerUrl
+            url: carousel.dataset.sixPlayerUrl
         }
     ];
 }
 
 function initModePicker() {
-    const wheel = document.getElementById("mode-wheel");
-    if (!wheel) return;
+    const carousel = document.getElementById("mode-carousel");
+    if (!carousel) return;
 
-    const modes = createGameModes(wheel);
-    const previous = document.getElementById("mode-wheel-previous");
-    const current = document.getElementById("mode-wheel-current");
-    const next = document.getElementById("mode-wheel-next");
+    const modes = createGameModes(carousel);
+    const cards = Array.from(carousel.querySelectorAll(".mode-carousel-card"));
+    const dots = Array.from(document.querySelectorAll(".mode-carousel-dot"));
+    const previous = document.getElementById("mode-previous");
+    const next = document.getElementById("mode-next");
     const description = document.getElementById("mode-details-description");
     const start = document.getElementById("mode-start");
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
     let selected = 0;
-    let startY = null;
-    let pointerId = null;
-    let ignoreClick = false;
+    let scrollTimer = null;
     let lastWheelAt = 0;
 
-    function fillOption(node, mode, active) {
-        const symbol = document.createElement("span");
-        symbol.className = "mode-wheel-symbol";
-        const icon = document.createElement("i");
-        icon.className = `bi ${mode.icon}`;
-        icon.setAttribute("aria-hidden", "true");
-        symbol.append(icon);
+    function centerCard(index, behavior = "smooth") {
+        const card = cards[index];
+        const cardRect = card.getBoundingClientRect();
+        const carouselRect = carousel.getBoundingClientRect();
+        const targetLeft = carousel.scrollLeft + (cardRect.left + cardRect.width / 2)
+            - (carouselRect.left + carouselRect.width / 2);
 
-        const copy = document.createElement("span");
-        copy.className = "mode-wheel-copy";
-        const heading = document.createElement("strong");
-        heading.textContent = mode.name;
-        const detail = document.createElement("small");
-        detail.textContent = `${mode.size} · ${mode.tag}`;
-        copy.append(heading, detail);
-
-        node.replaceChildren(symbol, copy);
-        node.setAttribute("aria-selected", active ? "true" : "false");
-        node.setAttribute("aria-label", `${mode.name}, ${mode.size}, ${mode.tag}`);
+        carousel.scrollTo({
+            left: targetLeft,
+            behavior: prefersReducedMotion ? "instant" : behavior
+        });
     }
 
-    function renderSelection() {
+    function updateSelection(index, scroll = false, behavior = "smooth") {
+        selected = Math.max(0, Math.min(index, modes.length - 1));
         const mode = modes[selected];
-        fillOption(previous, modes[wrapModeIndex(selected - 1, modes.length)], false);
-        fillOption(current, mode, true);
-        fillOption(next, modes[wrapModeIndex(selected + 1, modes.length)], false);
 
+        cards.forEach((card, cardIndex) => {
+            const active = cardIndex === selected;
+            card.classList.toggle("is-active", active);
+            card.setAttribute("aria-selected", String(active));
+        });
+        carousel.setAttribute("aria-activedescendant", cards[selected].id);
+
+        dots.forEach((dot, dotIndex) => {
+            const active = dotIndex === selected;
+            dot.classList.toggle("is-active", active);
+            if (active) dot.setAttribute("aria-current", "true");
+            else dot.removeAttribute("aria-current");
+        });
+
+        previous.disabled = selected === 0;
+        next.disabled = selected === modes.length - 1;
         description.textContent = mode.description;
         start.href = mode.url;
         start.replaceChildren(document.createTextNode(`Weiter zu ${mode.name} `));
@@ -83,69 +76,69 @@ function initModePicker() {
         arrow.className = "bi bi-arrow-right";
         arrow.setAttribute("aria-hidden", "true");
         start.append(arrow);
+
+        if (scroll) centerCard(selected, behavior);
     }
 
-    function selectMode(index) {
-        selected = wrapModeIndex(index, modes.length);
-        renderSelection();
+    function closestCenteredCard() {
+        const carouselRect = carousel.getBoundingClientRect();
+        const centerX = carouselRect.left + carouselRect.width / 2;
+        let closest = 0;
+        let minDistance = Infinity;
+
+        cards.forEach((card, index) => {
+            const rect = card.getBoundingClientRect();
+            const distance = Math.abs(rect.left + rect.width / 2 - centerX);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closest = index;
+            }
+        });
+        return closest;
     }
 
-    document.getElementById("mode-previous").addEventListener("click", () => selectMode(selected - 1));
-    document.getElementById("mode-next").addEventListener("click", () => selectMode(selected + 1));
+    previous.addEventListener("click", () => updateSelection(selected - 1, true));
+    next.addEventListener("click", () => updateSelection(selected + 1, true));
 
-    previous.addEventListener("click", () => {
-        if (!ignoreClick) selectMode(selected - 1);
-    });
-    next.addEventListener("click", () => {
-        if (!ignoreClick) selectMode(selected + 1);
-    });
+    cards.forEach((card, index) => card.addEventListener("click", () => {
+        updateSelection(index, true);
+        carousel.focus({preventScroll: true});
+    }));
 
-    wheel.addEventListener("keydown", event => {
-        const key = event.key;
-        if (key === "ArrowUp" || key === "PageUp") selectMode(selected - 1);
-        else if (key === "ArrowDown" || key === "PageDown") selectMode(selected + 1);
-        else if (key === "Home") selectMode(0);
-        else if (key === "End") selectMode(modes.length - 1);
-        else if (key === "Enter" || key === " ") {
+    dots.forEach((dot, index) => dot.addEventListener("click", () => updateSelection(index, true)));
+
+    carousel.addEventListener("scroll", () => {
+        window.clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(() => {
+            updateSelection(closestCenteredCard());
+        }, 100);
+    }, {passive: true});
+
+    carousel.addEventListener("keydown", event => {
+        if (event.key === "ArrowLeft") updateSelection(selected - 1, true);
+        else if (event.key === "ArrowRight") updateSelection(selected + 1, true);
+        else if (event.key === "Home") updateSelection(0, true);
+        else if (event.key === "End") updateSelection(modes.length - 1, true);
+        else if (event.key === "Enter" || event.key === " ") {
             window.location.assign(modes[selected].url);
         } else return;
         event.preventDefault();
     });
 
-    wheel.addEventListener("wheel", event => {
-        // Scroll over the picker changes a single selection; never scrolls the page.
+    carousel.addEventListener("wheel", event => {
+        // Horizontal trackpad swipes are native; vertical mouse wheels step cards.
+        if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+        if (Math.abs(event.deltaY) < 8) return;
         event.preventDefault();
         const now = Date.now();
-        if (Math.abs(event.deltaY) < 4 || now - lastWheelAt < 220) return;
+        if (now - lastWheelAt < 280) return;
         lastWheelAt = now;
-        selectMode(selected + (event.deltaY > 0 ? 1 : -1));
+        updateSelection(selected + Math.sign(event.deltaY), true);
     }, {passive: false});
 
-    wheel.addEventListener("pointerdown", event => {
-        if (event.pointerType === "mouse" && event.button !== 0) return;
-        startY = event.clientY;
-        pointerId = event.pointerId;
-    });
+    window.addEventListener("resize", () => centerCard(selected, "instant"), {passive: true});
 
-    wheel.addEventListener("pointerup", event => {
-        if (startY === null || event.pointerId !== pointerId) return;
-        const deltaY = event.clientY - startY;
-        startY = null;
-        pointerId = null;
-        if (Math.abs(deltaY) < 26) return;
-
-        // Finger upwards moves the item below into the highlighted center.
-        selectMode(selected + (deltaY < 0 ? 1 : -1));
-        ignoreClick = true;
-        window.setTimeout(() => { ignoreClick = false; }, 60);
-    });
-
-    wheel.addEventListener("pointercancel", () => {
-        startY = null;
-        pointerId = null;
-    });
-
-    renderSelection();
+    updateSelection(0);
 }
 
 document.addEventListener("DOMContentLoaded", initModePicker);

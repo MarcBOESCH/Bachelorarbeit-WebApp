@@ -9,44 +9,69 @@
 <section class="mode-chooser" aria-labelledby="mode-chooser-heading">
     <h2 id="mode-chooser-heading" class="mode-chooser-heading">Spielmodus</h2>
 
-    <div class="mode-wheel-layout">
-        <button id="mode-previous" type="button" class="mode-wheel-arrow"
-                aria-label="Vorheriger Spielmodus" aria-controls="mode-wheel">
-            <i class="bi bi-chevron-up" aria-hidden="true"></i>
+    <div class="mode-carousel-layout">
+        <button id="mode-previous" type="button" class="mode-carousel-arrow"
+                aria-label="Vorheriger Spielmodus" aria-controls="mode-carousel" disabled>
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
         </button>
 
-        <div id="mode-wheel" class="mode-wheel" role="listbox" tabindex="0"
+        <div id="mode-carousel" class="mode-carousel-track" role="listbox" tabindex="0"
              aria-label="Spielmodus auswählen"
-             aria-describedby="mode-wheel-hint"
-             aria-activedescendant="mode-wheel-current"
+             aria-orientation="horizontal"
+             aria-describedby="mode-carousel-hint"
+             aria-activedescendant="mode-card-0"
              data-ranked-url="{{ url_for('matches.player_selection_page') }}"
              data-quickplay-url="{{ url_for('free_play.quickplay_page') }}"
              data-six-player-url="{{ url_for('free_play.six_player_page') }}">
-            <div id="mode-wheel-previous" class="mode-wheel-option mode-wheel-neighbor"
-                 role="option" aria-selected="false">
-                <span class="mode-wheel-symbol"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
-                <span class="mode-wheel-copy"><strong>6er-Kreuzjass</strong><small>3 gegen 3 · Freizeit</small></span>
+
+            <div id="mode-card-0" class="mode-carousel-card is-active"
+                 role="option" aria-selected="true" tabindex="-1" data-mode-index="0">
+                <span class="mode-card-symbol"><i class="bi bi-trophy" aria-hidden="true"></i></span>
+                <span class="mode-card-copy">
+                    <strong>Ranglistenspiel</strong>
+                    <span>2 gegen 2</span>
+                    <small>Mit Rating und Historie</small>
+                </span>
             </div>
-            <div id="mode-wheel-current" class="mode-wheel-option mode-wheel-active"
-                 role="option" aria-selected="true">
-                <span class="mode-wheel-symbol"><i class="bi bi-trophy" aria-hidden="true"></i></span>
-                <span class="mode-wheel-copy"><strong>Ranglistenspiel</strong><small>2 gegen 2 · Mit Rating</small></span>
+
+            <div id="mode-card-1" class="mode-carousel-card"
+                 role="option" aria-selected="false" tabindex="-1" data-mode-index="1">
+                <span class="mode-card-symbol"><i class="bi bi-lightning-charge" aria-hidden="true"></i></span>
+                <span class="mode-card-copy">
+                    <strong>Quickplay</strong>
+                    <span>2 gegen 2</span>
+                    <small>Ohne Rating</small>
+                </span>
             </div>
-            <div id="mode-wheel-next" class="mode-wheel-option mode-wheel-neighbor"
-                 role="option" aria-selected="false">
-                <span class="mode-wheel-symbol"><i class="bi bi-lightning-charge" aria-hidden="true"></i></span>
-                <span class="mode-wheel-copy"><strong>Quickplay</strong><small>2 gegen 2 · Ohne Rating</small></span>
+
+            <div id="mode-card-2" class="mode-carousel-card"
+                 role="option" aria-selected="false" tabindex="-1" data-mode-index="2">
+                <span class="mode-card-symbol"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+                <span class="mode-card-copy">
+                    <strong>6er-Kreuzjass</strong>
+                    <span>3 gegen 3</span>
+                    <small>Freizeitmodus</small>
+                </span>
             </div>
         </div>
 
-        <button id="mode-next" type="button" class="mode-wheel-arrow"
-                aria-label="Nächster Spielmodus" aria-controls="mode-wheel">
-            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        <button id="mode-next" type="button" class="mode-carousel-arrow"
+                aria-label="Nächster Spielmodus" aria-controls="mode-carousel">
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
         </button>
     </div>
 
-    <p id="mode-wheel-hint" class="mode-wheel-hint">
-        Wischen, scrollen oder mit den Pfeilen wechseln
+    <div class="mode-carousel-pagination" role="group" aria-label="Spielmodus auswählen">
+        <button type="button" class="mode-carousel-dot is-active" data-mode-target="0"
+                aria-label="Ranglistenspiel auswählen" aria-current="true"></button>
+        <button type="button" class="mode-carousel-dot" data-mode-target="1"
+                aria-label="Quickplay auswählen"></button>
+        <button type="button" class="mode-carousel-dot" data-mode-target="2"
+                aria-label="6er-Kreuzjass auswählen"></button>
+    </div>
+
+    <p id="mode-carousel-hint" class="mode-carousel-hint">
+        Auf der Karte nach links oder rechts wischen
     </p>
 
     <div class="mode-selection-details" aria-live="polite" aria-atomic="true">
@@ -60,7 +85,7 @@
 
     <noscript>
         <div class="mode-noscript">
-            <p>Ohne JavaScript kannst du den Modus direkt auswählen:</p>
+            <p>Ohne JavaScript kannst du direkt wählen:</p>
             <a href="{{ url_for('matches.player_selection_page') }}">Ranglistenspiel</a>
             <a href="{{ url_for('free_play.quickplay_page') }}">Quickplay</a>
             <a href="{{ url_for('free_play.six_player_page') }}">6er-Kreuzjass</a>
