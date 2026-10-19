@@ -8,14 +8,14 @@ function sixSelectionInfo(side) {
             name: document.getElementById(`team-${side}-custom-name`).value.trim() || `Team ${side.toUpperCase()}`,
             names: [1, 2, 3].map(i => {
                 const instance = c[`team-${side}-player-${i}`];
-                return instance.options[instance.getValue()]?.name || "";
+                return instance?.options[instance.getValue()]?.name || "";
             })
         };
     }
-    const teamId = c[`team-${side}-select`].getValue();
+    const teamId = c[`team-${side}-select`]?.getValue() || "";
     const selected = sixSelection.teams.find(team => String(team.id) === String(teamId));
     const third = c[`team-${side}-third`];
-    const thirdName = third.options[third.getValue()]?.name || "";
+    const thirdName = third?.options[third.getValue()]?.name || "";
     if (!selected) return { name: `Team ${side.toUpperCase()}`, names: ["", "", thirdName] };
     const playerIds = [selected.player1_id, selected.player2_id];
     const firstTwo = playerIds.map(id =>

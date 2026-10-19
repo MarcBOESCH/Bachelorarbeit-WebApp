@@ -163,11 +163,8 @@ def action_route():
     double_points = bool(data.get("double_points"))
 
     if action == "new_game":
-        free_mode = game.get("mode") in {"quickplay", "six_player"}
         reset_game()
-        return jsonify({
-            "redirect_url": url_for("home") if free_mode else url_for("matches.player_selection_page")
-        }), 200
+        return jsonify({"redirect_url": url_for("home")}), 200
 
     if not has_active_match(game):
         return jsonify({"error": "Es ist aktuell kein aktives Match gestartet."}), 400

@@ -64,7 +64,7 @@ def test_start_free_game_without_registered_players(client, route, count, mode):
     with client.application.app_context():
         response = client.get(route)
         assert response.status_code == 200
-        assert b"Spiel starten" in response.data
+        assert (b"Match starten" if mode == "six_player" else b"Spiel starten") in response.data
 
         response = client.post(route, data={
             "team_a_name": "Team Nord",
@@ -93,7 +93,13 @@ def test_start_free_game_without_registered_players(client, route, count, mode):
 @pytest.mark.parametrize("route", ["/quickplay", "/six-player"])
 def test_free_game_scores_undo_and_finish_do_not_write_to_database(client, route):
     with client.application.app_context():
-        response = client.post(route, data={})
+        payload = {}
+        if route == "/six-player":
+            payload = {
+                **{f"player_a_{i}": f"Team A {i}" for i in range(1, 4)},
+                **{f"player_b_{i}": f"Team B {i}" for i in range(1, 4)},
+            }
+        response = client.post(route, data=payload)
         assert response.status_code == 302
 
         for _ in range(3):
@@ -165,3 +171,68 @@ def test_free_start_requires_authentication_and_limits_input(client):
             s["role"] = "user"
         assert client.post("/quickplay", data={"team_a_name": "x" * 41}).status_code == 400
         assert_no_rated_records()
+
+
+def test_six_player_uses_player_team_selection_layout(client):
+    with client.application.app_context():
+        response = client.get("/six-player")
+        assert response.status_code == 200
+        html = response.data.decode("utf-8")
+        for element_id in (
+            "btn-selection-mode-players", "btn-selection-mode-teams",
+            "player-selection-view", "team-selection-view",
+            "team-a-player-3", "team-b-player-3",
+            "team-a-select", "team-b-select",
+            "team-a-third", "team-b-third",
+            "match-preview-card", "four-twenty-mode-toggle"
+        ):
+            assert f'id="{element_id}"' in html
+        assert "/js/pages/six_player_selection.js" in html
+        assert_no_rated_records()
+
+
+def test_six_player_rejects_missing_or_duplicated_names_without_db_changes(client):
+    with client.application.app_context():
+        base = {
+            **{f"player_a_{i}": f"Nord {i}" for i in range(1, 4)},
+            **{f"player_b_{i}": f"Sued {i}" for i in range(1, 4)},
+        }
+        assert client.post("/six-player", data={}).status_code == 400
+        assert client.post("/six-player", data={**base, "player_a_3": ""}).status_code == 400
+        assert client.post("/six-player", data={**base, "player_a_3": "sued 2"}).status_code == 400
+        assert_no_rated_records()
+
+
+def test_six_player_saved_pairs_can_be_reused_without_creating_3_person_team(client):
+    with client.application.app_context():
+        db.session.add_all([
+            Player(id=1, name="A1"),
+            Player(id=2, name="A2"),
+            Player(id=3, name="B1"),
+            Player(id=4, name="B2"),
+            Player(id=5, name="A3"),
+            Player(id=6, name="B3"),
+        ])
+        db.session.flush()
+        db.session.add_all([
+            Team(name="Das Duo", player1_id=1, player2_id=2),
+            Team(name="Zwei andere", player1_id=3, player2_id=4),
+        ])
+        db.session.commit()
+
+        data = {
+            "team_a_name": "Das Duo",
+            "team_b_name": "Zwei andere",
+            "player_a_1": "A1", "player_a_2": "A2", "player_a_3": "A3",
+            "player_b_1": "B1", "player_b_2": "B2", "player_b_3": "B3",
+        }
+        response = client.post("/six-player", data=data)
+        assert response.status_code == 302
+        with client.session_transaction() as s:
+            game = s["game"]
+            assert game["mode"] == "six_player"
+            assert len(game["players"]) == 6
+        assert Team.query.count() == 2
+        assert Player.query.count() == 6
+        assert Match.query.count() == 0
+        assert PlayerRating.query.count() == 0
