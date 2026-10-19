@@ -1266,160 +1266,195 @@ canvas {
    Home / mode selection
 ========================= */
 
-/* Compact vertical card carousel for choosing a game mode */
-
+/* Swipeable horizontal game-mode cards; the centered card is selected. */
 .mode-chooser {
-    width: min(100%, 370px);
+    width: min(100%, 900px);
     margin: 0 auto;
     text-align: center;
 }
 
 .mode-chooser-heading {
-    font-size: 1rem;
+    margin: 0 0 18px;
+    font-size: 1.1rem;
     font-weight: 800;
-    margin-bottom: 10px;
 }
 
-.mode-wheel-layout {
-    display: flex;
-    flex-direction: column;
+.mode-carousel-layout {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
 }
 
-.mode-wheel-arrow {
+.mode-carousel-arrow {
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 36px;
+    width: 44px;
+    height: 48px;
     padding: 0;
     border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
+    border-radius: 16px;
+    background: #e7eee9;
     color: var(--color-brand);
+    font-size: 1.3rem;
     cursor: pointer;
-    font-size: 1.15rem;
 }
 
-.mode-wheel-arrow:hover {
+.mode-carousel-arrow:hover:not(:disabled) {
     background: var(--color-brand-soft);
 }
 
-.mode-wheel-arrow:focus-visible,
-.mode-wheel:focus-visible,
+.mode-carousel-arrow:disabled {
+    color: var(--color-text-muted);
+    opacity: .35;
+    cursor: default;
+}
+
+.mode-carousel-track {
+    --mode-card-width: min(72vw, 400px);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 16px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 16px max(0px, calc(50% - min(36vw, 200px)));
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: max(0px, calc(50% - min(36vw, 200px)));
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    outline: none;
+}
+
+.mode-carousel-track::-webkit-scrollbar { display: none; }
+
+.mode-carousel-card {
+    display: flex;
+    flex: 0 0 var(--mode-card-width);
+    align-items: center;
+    text-align: left;
+    min-width: 0;
+    min-height: 158px;
+    gap: 18px;
+    padding: 24px 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-text);
+    cursor: pointer;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    transform: scale(.95);
+    opacity: .63;
+    transition: transform 180ms ease, opacity 180ms ease,
+        background-color 180ms ease, border-color 180ms ease;
+}
+
+.mode-carousel-card:hover { opacity: .9; }
+
+.mode-carousel-card.is-active {
+    background: #e9f6ed;
+    border-color: #78bd96;
+    color: var(--color-brand-dark);
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 8px 24px rgba(15, 81, 50, .11);
+}
+
+.mode-card-symbol {
+    display: grid;
+    place-items: center;
+    flex: 0 0 58px;
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+    font-size: 1.55rem;
+}
+
+.mode-card-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 7px;
+}
+
+.mode-card-copy strong {
+    color: inherit;
+    font-size: clamp(1.12rem, 2.5vw, 1.4rem);
+    font-weight: 800;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.mode-card-copy > span {
+    color: var(--color-text-muted);
+    font-weight: 600;
+    font-size: .94rem;
+}
+
+.mode-card-copy small {
+    color: var(--color-brand);
+    font-weight: 650;
+    font-size: .83rem;
+}
+
+.mode-carousel-track:focus-visible,
+.mode-carousel-arrow:focus-visible,
+.mode-carousel-dot:focus-visible,
 .mode-start-btn:focus-visible {
     outline: 3px solid var(--color-brand);
     outline-offset: 3px;
 }
 
-.mode-wheel {
-    width: min(100%, 300px);
-    height: 322px;
+.mode-carousel-pagination {
     display: flex;
-    flex-direction: column;
     justify-content: center;
-    gap: 12px;
-    overflow: hidden;
-    margin: 0 auto;
-    padding: 4px;
-    border-radius: var(--radius-lg);
-    touch-action: pan-x;
-    user-select: none;
-    -webkit-user-select: none;
-    cursor: ns-resize;
-    outline: none;
-}
-
-.mode-wheel-option {
-    display: flex;
     align-items: center;
-    text-align: left;
-    gap: 12px;
-    flex: 0 0 92px;
-    min-height: 92px;
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-sm);
-    color: var(--color-text);
-    transition: opacity 180ms ease, transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    gap: 9px;
+    margin: 10px auto 0;
 }
 
-.mode-wheel-symbol {
-    display: grid;
-    place-items: center;
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: var(--color-surface-soft);
-    color: var(--color-brand);
-    font-size: 1.2rem;
-}
-
-.mode-wheel-copy {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    gap: 5px;
-}
-
-.mode-wheel-copy strong {
-    font-size: 1rem;
-    font-weight: 800;
-    line-height: 1.15;
-    color: inherit;
-}
-
-.mode-wheel-copy small {
-    font-size: .77rem;
-    font-weight: 600;
-    line-height: 1.25;
-    color: var(--color-text-muted);
-}
-
-.mode-wheel-active {
-    border-color: #78bd96;
-    background: #e9f6ed;
-    color: var(--color-brand-dark);
-    box-shadow: 0 8px 22px rgba(15, 81, 50, .12);
-}
-
-.mode-wheel-active .mode-wheel-symbol {
-    background: #d5ebdc;
-}
-
-.mode-wheel-active .mode-wheel-copy small {
-    color: #426553;
-}
-
-.mode-wheel-neighbor {
-    opacity: .55;
-    transform: scale(.93);
+.mode-carousel-dot {
+    width: 11px;
+    height: 11px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #b9c8be;
     cursor: pointer;
 }
 
-.mode-wheel-neighbor:hover { opacity: .85; }
+.mode-carousel-dot.is-active {
+    width: 28px;
+    border-radius: 10px;
+    background: var(--color-brand);
+}
 
-.mode-wheel-hint {
-    margin: 10px 0 18px;
+.mode-carousel-hint {
+    margin: 14px 0 20px;
     color: var(--color-text-muted);
-    font-size: .78rem;
-    line-height: 1.45;
+    font-size: .84rem;
 }
 
 .mode-selection-details {
-    padding: 14px 4px 0;
+    max-width: 540px;
     min-height: 90px;
+    margin: 0 auto;
+    padding: 16px 10px 0;
     border-top: 1px solid var(--color-border);
 }
 
 .mode-selection-details p {
     color: var(--color-text-muted);
-    line-height: 1.5;
-    font-size: .92rem;
+    font-size: .95rem;
+    line-height: 1.6;
 }
 
 .mode-start-btn {
@@ -1427,9 +1462,9 @@ canvas {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 100%;
+    width: min(100%, 430px);
     min-height: 54px;
-    margin-top: 10px;
+    margin: 6px auto 0;
     text-decoration: none;
 }
 
@@ -1441,8 +1476,39 @@ canvas {
 }
 
 @media (max-width: 575px) {
-    .mode-chooser { width: min(100%, 350px); }
-    .mode-wheel { width: min(100%, 294px); }
+    .mode-carousel-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .mode-carousel-arrow {
+        display: none;
+    }
+
+    .mode-carousel-track {
+        gap: 12px;
+    }
+
+    .mode-carousel-card {
+        min-height: 152px;
+        padding: 18px 16px;
+        gap: 12px;
+    }
+
+    .mode-card-symbol {
+        flex-basis: 48px;
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
+    }
+
+    .mode-card-copy strong { font-size: 1.12rem; }
+    .mode-card-copy > span { font-size: .88rem; }
+    .mode-card-copy small { font-size: .78rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mode-carousel-card { transition: none; }
+    .mode-carousel-track { scroll-behavior: auto; }
 }
 
 .free-setup-note { color: var(--color-text-muted); line-height: 1.5; }
