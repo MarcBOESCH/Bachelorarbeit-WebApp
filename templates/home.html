@@ -5,24 +5,77 @@
     <h1>Match</h1>
     <p>Wähle deinen Spielmodus</p>
 </section>
-<div class="game-mode-grid section-spacing">
-    <a class="game-mode-card featured" href="{{ url_for('matches.player_selection_page') }}">
-        <span class="mode-icon"><i class="bi bi-trophy"></i></span>
-        <span class="mode-title">Ranglistenspiel · 2 gegen 2</span>
-        <span class="mode-description">Wähle registrierte Spieler, sammle Siege und verbessere dein Glicko-2-Rating.</span>
-        <span class="mode-foot">Mit Ranking und Spielhistorie <i class="bi bi-arrow-right"></i></span>
+
+<section class="mode-chooser" aria-labelledby="mode-chooser-heading">
+    <h2 id="mode-chooser-heading" class="mode-chooser-heading">Spielmodus</h2>
+    <div class="mode-wheel-layout">
+        <button id="mode-previous" type="button" class="mode-wheel-arrow"
+                aria-label="Vorheriger Spielmodus" aria-controls="mode-wheel">
+            <i class="bi bi-chevron-up" aria-hidden="true"></i>
+        </button>
+
+        <div id="mode-wheel" class="mode-wheel" role="listbox" tabindex="0"
+             aria-label="Spielmodus auswählen"
+             aria-describedby="mode-wheel-hint"
+             aria-activedescendant="mode-wheel-current"
+             data-ranked-url="{{ url_for('matches.player_selection_page') }}"
+             data-quickplay-url="{{ url_for('free_play.quickplay_page') }}"
+             data-six-player-url="{{ url_for('free_play.six_player_page') }}">
+            <div class="mode-wheel-selection-band" aria-hidden="true"></div>
+            <div id="mode-wheel-previous" class="mode-wheel-option mode-wheel-neighbor"
+                 role="option" aria-selected="false">
+                <i class="bi bi-people-fill" aria-hidden="true"></i>
+                <span>6er-Kreuzjass</span>
+            </div>
+            <div id="mode-wheel-current" class="mode-wheel-option mode-wheel-active"
+                 role="option" aria-selected="true">
+                <i class="bi bi-trophy" aria-hidden="true"></i>
+                <span>Ranglistenspiel</span>
+            </div>
+            <div id="mode-wheel-next" class="mode-wheel-option mode-wheel-neighbor"
+                 role="option" aria-selected="false">
+                <i class="bi bi-lightning-charge" aria-hidden="true"></i>
+                <span>Quickplay</span>
+            </div>
+        </div>
+
+        <button id="mode-next" type="button" class="mode-wheel-arrow"
+                aria-label="Nächster Spielmodus" aria-controls="mode-wheel">
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+    </div>
+    <p id="mode-wheel-hint" class="mode-wheel-hint">
+        <i class="bi bi-hand-index-thumb" aria-hidden="true"></i>
+        Wischen, scrollen oder Pfeiltasten verwenden
+    </p>
+
+    <div class="mode-selection-details" aria-live="polite" aria-atomic="true">
+        <span id="mode-details-icon" class="mode-selection-icon" aria-hidden="true">
+            <i class="bi bi-trophy"></i>
+        </span>
+        <h3 id="mode-details-title">Ranglistenspiel <span>· 2 gegen 2</span></h3>
+        <p id="mode-details-description">Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.</p>
+        <p id="mode-details-meta" class="mode-details-meta">
+            <i class="bi bi-check-circle" aria-hidden="true"></i> Mit Ranking und Spielhistorie
+        </p>
+    </div>
+
+    <a id="mode-start" class="btn btn-dark mode-start-btn"
+       href="{{ url_for('matches.player_selection_page') }}">
+        Weiter zum Ranglistenspiel <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </a>
-    <a class="game-mode-card" href="{{ url_for('free_play.quickplay_page') }}">
-        <span class="mode-icon"><i class="bi bi-lightning-charge"></i></span>
-        <span class="mode-title">Quickplay · 2 gegen 2</span>
-        <span class="mode-description">Ohne Registrierung direkt Punkte zählen. Nichts wird in die Datenbank übernommen.</span>
-        <span class="mode-foot">Ohne Rating <i class="bi bi-arrow-right"></i></span>
-    </a>
-    <a class="game-mode-card" href="{{ url_for('free_play.six_player_page') }}">
-        <span class="mode-icon"><i class="bi bi-people-fill"></i></span>
-        <span class="mode-title">6er-Kreuzjass · 3 gegen 3</span>
-        <span class="mode-description">Sechs Spieler, zwei Teams und die gewohnte Punkteerfassung – vorerst ohne Rangliste.</span>
-        <span class="mode-foot">Freizeitmodus <i class="bi bi-arrow-right"></i></span>
-    </a>
-</div>
+
+    <noscript>
+        <div class="mode-noscript">
+            <p>Ohne JavaScript kannst du den Modus direkt auswählen:</p>
+            <a href="{{ url_for('matches.player_selection_page') }}">Ranglistenspiel</a>
+            <a href="{{ url_for('free_play.quickplay_page') }}">Quickplay</a>
+            <a href="{{ url_for('free_play.six_player_page') }}">6er-Kreuzjass</a>
+        </div>
+    </noscript>
+</section>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ static_url('js/pages/home.js') }}"></script>
 {% endblock %}
