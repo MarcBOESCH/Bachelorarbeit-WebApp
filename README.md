@@ -198,18 +198,20 @@ Nach lokalem Flask-Start mit dem PIN anmelden. Von der neuen Startseite
 Quickplay bzw. 6er-Kreuzjass starten, Punkte eingeben, Undo und Spielende
 testen. Die Matchzahl in der Historie darf sich dabei nicht erhöhen.
 
-### Überarbeitete Match-Navigation und 6er-Auswahl
 
-Die Seitenleiste und die mobile Navigation bieten wieder nur **Match**
-statt drei einzelnen Modus-Links. Ein Klick auf **Match** zeigt zuerst
-die drei Spielmodi als Karten; kein großer grüner Begrüßungsbanner.
-Nach einem neuen Spiel kehrt die App zur Modusauswahl zurück.
+### Aktuelles Match, Spielerauswahl und Navigation
 
-Die **6er-Kreuzjass**-Auswahl entspricht optisch der bestehenden
-2-gegen-2-Spielerauswahl: Spieler wählen (drei pro Seite) oder
-Teams wählen (ein vorhandenes Zweierteam plus einen dritten Spieler),
-mit Match-Vorschau und 420-Schalter. Bereits registrierte Spieler und
-Zweierteams stehen zur Wahl. Neue Gastnamen können lokal eingegeben
-werden, ohne sie anzulegen. Ein Dreierteam wird nur für dieses Spiel
-in der Session zusammengestellt und **nicht** in der Datenbank erstellt.
-Alle sechs Namen müssen vorhanden und eindeutig sein.
+Der einzige Navigationseintrag **Match** führt zum laufenden Match, sofern
+ein Spiel gestartet wurde (auch nach dem Spielende). Die Startseite
+`/home` und direkte Besuche von Setup-Seiten leiten währenddessen zur
+Punkteerfassung `/match` weiter. Erst **Neues Spiel** setzt die Session
+zurück und öffnet die Modusauswahl. Es gibt keinen großen Willkommensbanner.
+
+Für den **6er-Kreuzjass** gibt es ausschließlich **Spieler wählen**:
+drei Spielerauswahlfelder je Team, mit derselben Tom-Select-Suche und
+Duplikatsperre wie im gewerteten 2v2-Modus. Die Auswahl enthält alle
+registrierten Spieler. Neue Spieler können wie im 2v2 über die Suche
+angelegt werden (diese Spieler werden in der Datenbank registriert),
+aber ein **6er-Match erzeugt weder Teamdatensätze noch gewertete Matches
+oder Ratings**. Die tatsächliche Punkteerfassung bleibt Session-only.
+Die Serverroute verlangt sechs unterschiedliche, existierende Spieler-IDs.
