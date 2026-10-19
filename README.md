@@ -162,3 +162,38 @@ mit anschliessendem Entfernen der Zeitzoneninformation. Die vorhandenen
 bestehende Daten und die Match-Sortierung ohne Migration konsistent bleiben.
 Für eine spätere Umstellung auf timezone-aware UTC wäre eine separate,
 geprüfte Datenmigration erforderlich.
+
+## Neue Startseite, Quickplay und 6er-Kreuzjass (Feature-Branch)
+
+Nach Anmeldung mit dem bestehenden PIN öffnet die App `/home`: drei
+klare Spielmöglichkeiten und eine Vorschau der öffentlichen Top 3 (nur
+Spieler mit abgeschlossenem Placement). Navigation über „Spielen“ auch
+auf mobilen Geräten.
+
+- **Ranglistenspiel** (`/player-selection`): unveränderte
+  2-gegen-2-Spielerauswahl mit registrierten Spielern und Teams.
+  Nur dieser Modus speichert Matches und aktualisiert Elo/Glicko-2.
+- **Quickplay** (`/quickplay`): freies 2 gegen 2 mit optionalen Team-
+  und Spielernamen. Direkt startbar, ohne Registrierung.
+- **6er-Kreuzjass** (`/six-player`): freies 3 gegen 3 mit optionalen
+  Namen, derzeit **ohne eigene Rangliste**.
+
+Die beiden freien Spielmodi nutzen die bekannte Punkteingabe (klassisch,
+Schlange, manuelle Punkte, 2x Punkte, 420-Modus, Undo und Neues Spiel).
+Beide Teams werden in der aktuellen Browser-Session verwaltet. Freie
+Spiele erzeugen **keine Datenbank-Matches** und haben keinerlei Einfluss
+auf Ratings, Placement, Ranglisten oder die gespeicherte Historie.
+Beim Zurücksetzen oder Ablauf der Session verschwinden die Punkte.
+Die Punkte- und Siegbedingungen bleiben vorerst dieselben wie beim
+bisherigen 2-gegen-2-Modus.
+
+### Lokale Prüfung
+
+```sh
+python -m pytest -q
+node --test tests/*.test.cjs
+```
+
+Nach lokalem Flask-Start mit dem PIN anmelden. Von der neuen Startseite
+Quickplay bzw. 6er-Kreuzjass starten, Punkte eingeben, Undo und Spielende
+testen. Die Matchzahl in der Historie darf sich dabei nicht erhöhen.
