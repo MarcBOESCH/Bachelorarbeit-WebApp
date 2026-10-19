@@ -1,147 +1,172 @@
-/* 6er-Kreuzjass: original player/team selection look, session-only 3v3. */
-const sixSelection = { mode: "players", players: [], teams: [], controls: {} };
+/* 6er-Kreuzjass uses the same player selection rules as ranked 2v2:
+   existing registered players, create-on-search, unique choices across teams. */
+const sixPlayerSelection = {
+    allPlayers: [],
+    selects: new Map(),
+    syncing: false
+};
 
-function sixSelectionInfo(side) {
-    const c = sixSelection.controls;
-    if (sixSelection.mode === "players") {
-        return {
-            name: document.getElementById(`team-${side}-custom-name`).value.trim() || `Team ${side.toUpperCase()}`,
-            names: [1, 2, 3].map(i => {
-                const instance = c[`team-${side}-player-${i}`];
-                return instance?.options[instance.getValue()]?.name || "";
-            })
-        };
-    }
-    const teamId = c[`team-${side}-select`]?.getValue() || "";
-    const selected = sixSelection.teams.find(team => String(team.id) === String(teamId));
-    const third = c[`team-${side}-third`];
-    const thirdName = third?.options[third.getValue()]?.name || "";
-    if (!selected) return { name: `Team ${side.toUpperCase()}`, names: ["", "", thirdName] };
-    const playerIds = [selected.player1_id, selected.player2_id];
-    const firstTwo = playerIds.map(id =>
-        sixSelection.players.find(p => String(p.id) === String(id))?.name || ""
+function sixSelectionKeys() {
+    return ["a", "b"].flatMap(side =>
+        [1, 2, 3].map(position => `team-${side}-player-${position}`)
     );
-    return { name: selected.name, names: [...firstTwo, thirdName] };
 }
 
-function refreshSixSelection() {
-    const a = sixSelectionInfo("a");
-    const b = sixSelectionInfo("b");
-    const all = [...a.names, ...b.names];
-    const valid = all.length === 6 && all.every(name => name.trim()) &&
-        new Set(all.map(name => name.trim().toLocaleLowerCase())).size === 6;
-    const any = all.some(name => name.trim());
+function sixSelectionValues() {
+    return sixSelectionKeys().map(key => ({
+        key,
+        id: sixPlayerSelection.selects.get(key)?.getValue() || ""
+    }));
+}
 
-    for (const [side, team] of [["a", a], ["b", b]]) {
-        document.getElementById(`chosen-team-${side}-name`).value = team.name;
-        team.names.forEach((name, index) => {
-            document.getElementById(`chosen-player-${side}-${index + 1}`).value = name;
-        });
-        document.getElementById(`preview-team-${side}-name`).textContent = team.name;
-        document.getElementById(`preview-team-${side}-players`).textContent =
-            team.names.filter(Boolean).join(" & ") || "–";
-        const info = document.getElementById(`team-${side}-players-info`);
-        if (info) {
-            const existing = sixSelection.teams.find(t =>
-                String(t.id) === String(sixSelection.controls[`team-${side}-select`]?.getValue())
-            );
-            info.classList.toggle("d-none", !existing);
-            if (existing) info.querySelector(".player-names").textContent = existing.player_names;
+function sixSelectedNames(side) {
+    return [1, 2, 3].map(position => {
+        const select = sixPlayerSelection.selects.get(`team-${side}-player-${position}`);
+        const player = sixPlayerSelection.allPlayers.find(p => String(p.id) === String(select?.getValue()));
+        return player?.name || "";
+    });
+}
+
+function sixPlayerSelectionReady() {
+    const ids = sixSelectionValues().map(item => item.id);
+    return ids.length === 6 && ids.every(Boolean) && new Set(ids).size === 6;
+}
+
+function refreshSixPlayerOptions() {
+    if (sixPlayerSelection.syncing) return;
+    sixPlayerSelection.syncing = true;
+    try {
+        const entries = sixSelectionValues();
+        const selections = entries.map(entry => entry.id).filter(Boolean);
+        for (const {key, id} of entries) {
+            const select = sixPlayerSelection.selects.get(key);
+            if (!select) continue;
+
+            // Mirror the ranked 2v2 lock: a selected player stays available
+            // in their own field, but disappears from the other five.
+            select.clearOptions();
+            for (const player of sixPlayerSelection.allPlayers) {
+                const value = String(player.id);
+                if (value === String(id) || !selections.includes(value)) {
+                    select.addOption(player);
+                }
+            }
+            select.refreshOptions(false);
+            if (id) select.setValue(id, true);
         }
-    }
-
-    const preview = document.getElementById("match-preview-card");
-    preview.classList.toggle("d-none", !any);
-    document.getElementById("start-match-btn").disabled = !valid;
-    const message = document.getElementById("six-player-error");
-    if (message) {
-        message.classList.toggle("d-none", valid || !any);
-        message.textContent = valid ? "" : "Bitte sechs unterschiedliche Spieler auswählen.";
+    } finally {
+        sixPlayerSelection.syncing = false;
     }
 }
 
-function initSixSelect(elementId, options, {teams = false} = {}) {
-    const config = {
-        valueField: "id",
-        labelField: "name",
-        searchField: teams ? ["name", "player_names"] : ["name"],
-        options,
-        placeholder: teams ? "Team suchen..." : "Spieler suchen oder eingeben...",
-        onChange: refreshSixSelection
-    };
-    if (teams) {
-        config.render = {
-            option(data, escape) {
-                return `<div><span class="fw-bold">${escape(data.name)}</span><br>
-                    <span class="small text-muted">${escape(data.player_names || "")}</span></div>`;
-            }
-        };
-    } else {
-        // Guest names are session-only; adding one never writes a Player row.
-        config.create = input => {
-            const name = String(input).trim().slice(0, 40);
-            if (!name) return false;
-            return { id: `guest:${name.toLocaleLowerCase()}`, name };
-        };
-        config.createOnBlur = false;
-        config.render = {
-            option_create(data, escape) {
-                return `<div class="create"><i class="bi bi-person-plus"></i>
-                    ${escape(data.input)} (nur für dieses Spiel)</div>`;
-            }
-        };
+function updateSixPlayerPreview() {
+    const selected = sixSelectionValues();
+    const allIds = selected.map(entry => entry.id).filter(Boolean);
+    const complete = sixPlayerSelectionReady();
+
+    for (const side of ["a", "b"]) {
+        const name = document.getElementById(`team-${side}-custom-name`).value.trim() ||
+            `Team ${side.toUpperCase()}`;
+        const names = sixSelectedNames(side);
+        document.getElementById(`preview-team-${side}-name`).textContent = name;
+        document.getElementById(`preview-team-${side}-players`).textContent =
+            names.filter(Boolean).join(" & ") || "–";
     }
-    return new TomSelect(`#${elementId}`, config);
+
+    for (const {key, id} of selected) {
+        const suffix = key.slice("team-".length).replace("-player-", "-");
+        document.getElementById(`chosen-player-${suffix}`).value = id;
+    }
+
+    document.getElementById("match-preview-card").classList.toggle("d-none", allIds.length === 0);
+    document.getElementById("start-match-btn").disabled = !complete;
+
+    const error = document.getElementById("six-player-error");
+    error.classList.toggle("d-none", allIds.length === 0 || complete);
+    error.textContent = !complete && allIds.length > 0
+        ? "Bitte sechs unterschiedliche Spieler auswählen."
+        : "";
 }
 
-function switchSixSelectionMode(mode) {
-    sixSelection.mode = mode;
-    document.getElementById("player-selection-view").classList.toggle("d-none", mode !== "players");
-    document.getElementById("team-selection-view").classList.toggle("d-none", mode !== "teams");
-    document.getElementById("btn-selection-mode-players").classList.toggle("active", mode === "players");
-    document.getElementById("btn-selection-mode-teams").classList.toggle("active", mode === "teams");
-    refreshSixSelection();
+async function createSixPlayer(input) {
+    const name = String(input).trim();
+    if (!name) return null;
+    try {
+        const response = await fetch("/api/players", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name})
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            showToast(data.error || "Spieler konnte nicht erstellt werden.", "error");
+            return null;
+        }
+        const created = data.player;
+        sixPlayerSelection.allPlayers.push(created);
+        for (const select of sixPlayerSelection.selects.values()) {
+            select.addOption(created);
+        }
+        return created;
+    } catch (error) {
+        console.error("Fehler beim Erstellen:", error);
+        showToast("Verbindung zum Server fehlgeschlagen.", "error");
+        return null;
+    }
 }
 
 async function initSixPlayerSelection() {
     try {
-        const [playerResponse, teamResponse] = await Promise.all([
-            fetch("/api/players"),
-            fetch("/api/teams")
-        ]);
-        if (!playerResponse.ok || !teamResponse.ok) throw new Error("API konnte nicht geladen werden");
-        sixSelection.players = await playerResponse.json();
-        sixSelection.teams = await teamResponse.json();
-        const options = sixSelection.players.map(p => ({ id: `player:${p.id}`, name: p.name }));
-        for (const side of ["a", "b"]) {
-            for (let i = 1; i <= 3; i++) {
-                const id = `team-${side}-player-${i}`;
-                sixSelection.controls[id] = initSixSelect(id, options);
-            }
-            const teamId = `team-${side}-select`;
-            sixSelection.controls[teamId] = initSixSelect(teamId, sixSelection.teams, {teams: true});
-            const thirdId = `team-${side}-third`;
-            sixSelection.controls[thirdId] = initSixSelect(thirdId, options);
-            document.getElementById(`team-${side}-custom-name`).addEventListener("input", refreshSixSelection);
+        const response = await fetch("/api/players");
+        if (!response.ok) throw new Error("Spielerliste konnte nicht geladen werden.");
+
+        sixPlayerSelection.allPlayers = await response.json();
+        for (const key of sixSelectionKeys()) {
+            const select = new TomSelect(`#${key}`, {
+                valueField: "id",
+                labelField: "name",
+                searchField: "name",
+                options: sixPlayerSelection.allPlayers,
+                placeholder: "Spieler suchen oder erstellen...",
+                render: {
+                    option_create(data, escape) {
+                        return `<div class="create text-success fw-bold">
+                            <i class="bi bi-person-plus-fill"></i> Spieler "${escape(data.input)}" anlegen...
+                        </div>`;
+                    }
+                },
+                create: async function (input, callback) {
+                    const player = await createSixPlayer(input);
+                    callback(player || false);
+                },
+                onChange() {
+                    if (!sixPlayerSelection.syncing) {
+                        refreshSixPlayerOptions();
+                        updateSixPlayerPreview();
+                    }
+                }
+            });
+            sixPlayerSelection.selects.set(key, select);
         }
-        document.getElementById("btn-selection-mode-players").addEventListener(
-            "click", () => switchSixSelectionMode("players")
-        );
-        document.getElementById("btn-selection-mode-teams").addEventListener(
-            "click", () => switchSixSelectionMode("teams")
-        );
+
+        for (const side of ["a", "b"]) {
+            document.getElementById(`team-${side}-custom-name`).addEventListener(
+                "input", updateSixPlayerPreview
+            );
+        }
+
         document.getElementById("six-player-selection-form").addEventListener("submit", event => {
-            const values = [...sixSelectionInfo("a").names, ...sixSelectionInfo("b").names];
-            if (values.length !== 6 || values.some(name => !name.trim()) ||
-                new Set(values.map(name => name.toLocaleLowerCase())).size !== 6) {
+            updateSixPlayerPreview();
+            if (!sixPlayerSelectionReady()) {
                 event.preventDefault();
                 showToast("Bitte sechs unterschiedliche Spieler auswählen.", "error");
             }
         });
-        refreshSixSelection();
+        refreshSixPlayerOptions();
+        updateSixPlayerPreview();
     } catch (error) {
         console.error(error);
-        showToast("Spieler und Teams konnten nicht geladen werden.", "error");
+        showToast("Spielerliste konnte nicht geladen werden.", "error");
     }
 }
 

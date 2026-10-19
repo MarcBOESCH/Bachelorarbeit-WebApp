@@ -22,21 +22,41 @@ def setup_free_game(mode, player_count):
                 abort(400, "Team- und Spielernamen dürfen höchstens 40 Zeichen haben.")
             return value or default
 
-        names_a = [
-            cleaned(f"player_a_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
-        ]
-        names_b = [
-            cleaned(f"player_b_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
-        ]
         if mode == "six_player":
-            # Each of the six places needs a distinct player. Only session data
-            # is created; the registered player/team tables remain untouched.
-            all_names = names_a + names_b
-            if any(not (request.form.get(f"player_{side}_{i}") or "").strip()
-                   for side in ("a", "b") for i in range(1, 4)):
-                abort(400, "Für 6er-Kreuzjass müssen sechs Spieler ausgewählt werden.")
-            if len({name.casefold() for name in all_names}) != 6:
+            # Use the same registered player IDs as the ranked 2v2 selection.
+            # Creating a player is handled by the existing player API; six-player
+            # game sessions never create teams, matches or rating entries.
+            from extensions import db
+            from models.player import Player
+
+            selected_ids = []
+            for side in ("a", "b"):
+                for position in range(1, 4):
+                    raw_id = (request.form.get(f"player_{side}_{position}_id") or "").strip()
+                    if not raw_id.isdecimal() or int(raw_id) < 1:
+                        abort(400, "Bitte sechs Spieler auswählen.")
+                    selected_ids.append(int(raw_id))
+
+            if len(set(selected_ids)) != 6:
                 abort(400, "Jeder Spieler darf nur einmal ausgewählt werden.")
+
+            registered = {
+                player.id: player
+                for player in Player.query.filter(Player.id.in_(selected_ids)).all()
+            }
+            if len(registered) != 6:
+                abort(400, "Mindestens ein ausgewählter Spieler existiert nicht.")
+
+            names_a = [registered[player_id].name for player_id in selected_ids[:3]]
+            names_b = [registered[player_id].name for player_id in selected_ids[3:]]
+        else:
+            # Quickplay remains open to guests and needs no registered players.
+            names_a = [
+                cleaned(f"player_a_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
+            ]
+            names_b = [
+                cleaned(f"player_b_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
+            ]
 
         start_free_game(
             mode=mode,
