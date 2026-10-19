@@ -60,6 +60,8 @@ def validate_selected_teams(team_a_id, team_b_id):
 
 @match_page_bp.route("/player-selection")
 def player_selection_page():
+    if has_active_match(get_game_state()):
+        return redirect(url_for("matches.match_page"))
     return render_template("player_selection.html")
 
 
@@ -75,6 +77,9 @@ def match_page():
 
 @match_page_bp.route("/api/match/start", methods=["POST"])
 def start_match_route():
+    if has_active_match(get_game_state()):
+        return jsonify({"error": "Ein Spiel läuft bereits. Starte erst ein neues Spiel."}), 409
+
     data = request.get_json()
 
     if not data:

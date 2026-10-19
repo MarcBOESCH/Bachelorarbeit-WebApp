@@ -36,7 +36,7 @@
 
             <nav class="sidebar-nav">
                 <a class="sidebar-link {% if endpoint in ['home', 'matches.player_selection_page', 'matches.match_page', 'free_play.quickplay_page', 'free_play.six_player_page'] %}active{% endif %}"
-                   href="{{ url_for('home') }}">
+                   href="{{ url_for('matches.match_page') }}">
                     <i class="bi bi-controller"></i>
                     <span>Match</span>
                 </a>
@@ -82,7 +82,7 @@
 
     <nav class="mobile-bottom-nav d-md-none">
         <a class="mobile-nav-link {% if endpoint in ['home', 'matches.player_selection_page', 'matches.match_page', 'free_play.quickplay_page', 'free_play.six_player_page'] %}active{% endif %}"
-           href="{{ url_for('home') }}">
+           href="{{ url_for('matches.match_page') }}">
             <i class="bi bi-controller"></i>
             <span>Match</span>
         </a>

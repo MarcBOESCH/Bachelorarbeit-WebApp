@@ -9,6 +9,7 @@ from sqlalchemy import func
 from config import config_by_name
 from extensions import db, migrate
 from routes import register_blueprints
+from services.game_service import get_game_state, has_active_match
 
 
 def build_static_url(app, filename):
@@ -100,7 +101,7 @@ def index():
     error = None
 
     if "role" in session:
-        return redirect(url_for("home"))
+        return redirect(url_for("matches.match_page") if has_active_match(get_game_state()) else url_for("home"))
 
     if request.method == "POST":
         pin = request.form.get("pin")
@@ -108,12 +109,12 @@ def index():
         if pin == USER_PIN:
             session["role"] = "user"
             session.permanent = True
-            return redirect(url_for("home"))
+            return redirect(url_for("matches.match_page") if has_active_match(get_game_state()) else url_for("home"))
 
         elif pin == ADMIN_PIN:
             session["role"] = "admin"
             session.permanent = True
-            return redirect(url_for("home"))
+            return redirect(url_for("matches.match_page") if has_active_match(get_game_state()) else url_for("home"))
 
         else:
             error = "Falscher PIN."
@@ -124,7 +125,10 @@ def index():
 
 @app.route("/home", methods=["GET"])
 def home():
-    """Dashboard and mode selection after PIN login."""
+    """Choose a mode only when no ongoing game exists."""
+    if has_active_match(get_game_state()):
+        return redirect(url_for("matches.match_page"))
+
     from models.player import Player
     from models.match import Match
     from models.rating import PlayerRating

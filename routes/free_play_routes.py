@@ -1,7 +1,7 @@
 """Non-rated modes: never write to player, team, match, or rating tables."""
 from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 
-from services.game_service import start_free_game
+from services.game_service import start_free_game, get_game_state, has_active_match
 
 
 free_play_bp = Blueprint("free_play", __name__)
@@ -11,6 +11,9 @@ def setup_free_game(mode, player_count):
     if "role" not in session:
         # POST must be protected as well as GET (handled by the app's guard).
         abort(401)
+
+    if has_active_match(get_game_state()):
+        return redirect(url_for("matches.match_page"))
 
     if request.method == "POST":
         def cleaned(field, default):
