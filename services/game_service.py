@@ -19,6 +19,7 @@ MATCH_POINTS = 257
 
 def create_new_game_state():
     return {
+        "mode": "ranked",
         "team_name_a": "Team A",
         "team_name_b": "Team B",
         "team_a_id": None,
@@ -128,10 +129,35 @@ def start_new_game(team_name_a, team_name_b, team_a_id, team_b_id, four_twenty_m
     return game
 
 
+def start_free_game(mode, team_name_a, team_name_b, player_names_a, player_names_b,
+                    four_twenty_mode=False):
+    """Create a session-only match with no registered teams or database writes."""
+    if mode not in {"quickplay", "six_player"}:
+        raise ValueError("Unbekannter freier Spielmodus.")
+    expected_size = 2 if mode == "quickplay" else 3
+    if len(player_names_a) != expected_size or len(player_names_b) != expected_size:
+        raise ValueError("Falsche Anzahl an Spielern im freien Spiel.")
+
+    game = create_new_game_state()
+    game["mode"] = mode
+    game["team_name_a"] = team_name_a
+    game["team_name_b"] = team_name_b
+    game["four_twenty_mode"] = bool(four_twenty_mode)
+    game["players"] = [
+        {"team": team, "team_slot": index, "player_name": name}
+        for team, names in (("A", player_names_a), ("B", player_names_b))
+        for index, name in enumerate(names, start=1)
+    ]
+    save_game_state(game)
+    return game
+
+
 def has_active_match(game):
     if not game:
         return False
 
+    if game.get("mode") in {"quickplay", "six_player"}:
+        return bool(game.get("team_name_a") and game.get("team_name_b"))
     return bool(game.get("team_a_id") and game.get("team_b_id"))
 
 

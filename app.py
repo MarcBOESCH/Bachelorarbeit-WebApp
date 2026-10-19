@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask, request, redirect, url_for, session, render_template, send_from_directory
+from sqlalchemy import func
 
 from config import config_by_name
 from extensions import db, migrate
@@ -99,7 +100,7 @@ def index():
     error = None
 
     if "role" in session:
-        return redirect(url_for("matches.player_selection_page"))
+        return redirect(url_for("home"))
 
     if request.method == "POST":
         pin = request.form.get("pin")
@@ -107,17 +108,50 @@ def index():
         if pin == USER_PIN:
             session["role"] = "user"
             session.permanent = True
-            return redirect(url_for("matches.player_selection_page"))
+            return redirect(url_for("home"))
 
         elif pin == ADMIN_PIN:
             session["role"] = "admin"
             session.permanent = True
-            return redirect(url_for("matches.player_selection_page"))
+            return redirect(url_for("home"))
 
         else:
             error = "Falscher PIN."
 
     return render_template("login.html", error=error)
+
+
+
+@app.route("/home", methods=["GET"])
+def home():
+    """Dashboard and mode selection after PIN login."""
+    from models.player import Player
+    from models.match import Match
+    from models.rating import PlayerRating
+    from services.ranking_service import public_rating_lookup
+
+    _, rating_ready = public_rating_lookup()
+    leaders = []
+    if rating_ready:
+        leaders = (
+            db.session.query(Player.name, PlayerRating.rating)
+            .join(PlayerRating, PlayerRating.player_id == Player.id)
+            .filter(
+                PlayerRating.system_name == "glicko2",
+                PlayerRating.matches_played >= app.config["RATING_PLACEMENT_MATCHES"],
+            )
+            .order_by(PlayerRating.rating.desc(), Player.id.asc())
+            .limit(3)
+            .all()
+        )
+
+    return render_template(
+        "home.html",
+        leaders=leaders,
+        rating_ready=rating_ready,
+        player_count=db.session.query(func.count(Player.id)).scalar() or 0,
+        match_count=db.session.query(func.count(Match.id)).scalar() or 0,
+    )
 
 
 @app.route("/logout")

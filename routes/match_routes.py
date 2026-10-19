@@ -68,7 +68,7 @@ def match_page():
     game = get_game_state()
 
     if not has_active_match(game):
-        return redirect(url_for("matches.player_selection_page"))
+        return redirect(url_for("home"))
 
     return render_template("match.html", game=game)
 
@@ -110,6 +110,16 @@ def create_match_route():
 
     if not has_active_match(game):
         return jsonify({"error": "Es ist aktuell kein aktives Match gestartet."}), 400
+
+    if game.get("mode") in {"quickplay", "six_player"}:
+        # Free games are session-only: never call create_match(), which writes to
+        # the rated match history and triggers Elo/Glicko-2 processing.
+        if game.get("match_saved"):
+            return jsonify({"error": "Dieses Spiel ist bereits beendet."}), 409
+        if not game.get("winner"):
+            return jsonify({"error": "Das Spiel ist noch nicht beendet."}), 400
+        lock_saved_match(game)
+        return jsonify({"message": "Freies Spiel beendet.", "saved": False}), 200
 
     data = request.get_json()
 
@@ -153,9 +163,10 @@ def action_route():
     double_points = bool(data.get("double_points"))
 
     if action == "new_game":
+        free_mode = game.get("mode") in {"quickplay", "six_player"}
         reset_game()
         return jsonify({
-            "redirect_url": url_for("matches.player_selection_page")
+            "redirect_url": url_for("home") if free_mode else url_for("matches.player_selection_page")
         }), 200
 
     if not has_active_match(game):
