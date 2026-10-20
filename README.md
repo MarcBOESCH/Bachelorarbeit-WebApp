@@ -257,3 +257,13 @@ synchronisieren sich mit der mittigen Karte. Am Desktop unterstützen
 Links-/Rechtspfeile, horizontales Trackpad-Scrollen, Mausrad,
 Tastaturpfeile und die drei Indikatorpunkte die Auswahl. Die Navigation
 zu einem laufenden Match und die drei Spielmodi bleiben unverändert.
+
+### Hohe Game-Mode-Cards und Reihenfolge
+
+Die horizontale Modusauswahl beginnt nun mit **Quickplay**, gefolgt von
+**2 vs 2 (Ranglistenspiel)** und **3 vs 3 (6er-Kreuzjass)**. Die
+Moduskarten sind im Desktop-Layout etwa 390 px hoch und mobil etwa
+340 px hoch. Eine großflächige, farbig gestaltete Motivfläche mit
+Jass-Symbolen und großen Modus-Icons steht oberhalb eines eigenen
+dunklen Titelstreifens. Der aktive Modus bleibt beim horizontalen
+Wischen, Klicken oder bei Tastaturauswahl mittig hervorgehoben.

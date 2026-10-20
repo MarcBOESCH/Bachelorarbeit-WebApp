@@ -7,7 +7,7 @@ const html = fs.readFileSync('templates/home.html', 'utf8');
 const css = fs.readFileSync('static/css/style.css', 'utf8');
 const source = fs.readFileSync('static/js/pages/home.js', 'utf8');
 
-test('horizontal carousel contains three long, individually selectable cards', () => {
+test('horizontal carousel shows tall illustration cards in Quickplay / 2v2 / 3v3 order', () => {
     assert.match(html, /id="mode-carousel"/);
     assert.match(html, /aria-orientation="horizontal"/);
     assert.match(html, /aria-activedescendant="mode-card-0"/);
@@ -19,8 +19,19 @@ test('horizontal carousel contains three long, individually selectable cards', (
     assert.match(css, /scroll-snap-align:\s*center/);
     assert.match(css, /overflow-x:\s*auto/);
     assert.match(css, /touch-action:\s*pan-x/);
-    assert.match(css, /\.mode-carousel-card\s*\{[^}]*min-height:\s*158px/);
+    assert.match(css, /\.mode-carousel-card\s*\{[^}]*height:\s*390px/);
     assert.match(css, /\.mode-carousel-card\.is-active/);
+    assert.match(css, /\.mode-card-art--quickplay/);
+    assert.match(css, /\.mode-card-art--ranked/);
+    assert.match(css, /\.mode-card-art--six/);
+    assert.match(html, /mode-card-art/);
+    assert.match(html, /mode-card-footer/);
+    const first = html.indexOf('class="mode-carousel-card mode-card--quickplay');
+    const second = html.indexOf('class="mode-carousel-card mode-card--ranked');
+    const third = html.indexOf('class="mode-carousel-card mode-card--six');
+    assert.ok(first >= 0 && first < second && second < third);
+    assert.match(html, /id="mode-card-0"[^>]*is-active/);
+    assert.match(html, /Weiter zu Quickplay/);
     assert.doesNotMatch(html, /mode-wheel|home-hero|Unsere Jassrunde|Top 3/);
     assert.doesNotMatch(css, /\.mode-wheel\s*\{/);
 
@@ -114,10 +125,10 @@ function fixture() {
 
 test('next/previous controls highlight the corresponding card and update Weiter', () => {
     const f=fixture();
-    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.selectedUrl(),'/quickplay');
     assert.equal(f.nodes['mode-previous'].disabled,true);
     f.nodes['mode-next'].fire('click');
-    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.selectedUrl(),'/player-selection');
     assert.equal(f.cards[1].attributes['aria-selected'],'true');
     assert.equal(f.carousel.attributes['aria-activedescendant'],'mode-card-1');
     assert.equal(f.carousel.scrollLeft,416);
@@ -125,7 +136,7 @@ test('next/previous controls highlight the corresponding card and update Weiter'
     assert.equal(f.selectedUrl(),'/six-player');
     assert.equal(f.nodes['mode-next'].disabled,true);
     f.nodes['mode-previous'].fire('click');
-    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.selectedUrl(),'/player-selection');
 });
 
 test('touch-like native horizontal scroll picks the card nearest the center', () => {
@@ -133,7 +144,7 @@ test('touch-like native horizontal scroll picks the card nearest the center', ()
     f.carousel.scrollLeft=416;
     f.carousel.fire('scroll');
     f.flush();
-    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.selectedUrl(),'/player-selection');
     assert.equal(f.dots[1].attributes['aria-current'],'true');
 
     f.carousel.scrollLeft=832;
@@ -149,7 +160,7 @@ test('click on a long card or pagination indicator centers it', () => {
     assert.equal(f.selectedUrl(),'/six-player');
     assert.equal(f.carousel.scrollLeft,832);
     f.dots[0].fire('click');
-    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.selectedUrl(),'/quickplay');
     assert.equal(f.carousel.scrollLeft,0);
 });
 
@@ -157,11 +168,11 @@ test('horizontal keyboard navigation, Enter and mouse wheel support desktop user
     const f=fixture();
     const key=code=>f.carousel.fire('keydown',{key:code});
     assert.equal(key('ArrowRight').defaultPrevented,true);
-    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.selectedUrl(),'/player-selection');
     key('End');
     assert.equal(f.selectedUrl(),'/six-player');
     key('Home');
-    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.selectedUrl(),'/quickplay');
 
     // Native horizontal trackpad gestures must remain available.
     const native=f.carousel.fire('wheel',{deltaX:120,deltaY:0});
@@ -169,8 +180,8 @@ test('horizontal keyboard navigation, Enter and mouse wheel support desktop user
 
     const mouse=f.carousel.fire('wheel',{deltaX:0,deltaY:120});
     assert.equal(mouse.defaultPrevented,true);
-    assert.equal(f.selectedUrl(),'/quickplay');
+    assert.equal(f.selectedUrl(),'/player-selection');
 
     key('Enter');
-    assert.equal(f.navigatedTo(),'/quickplay');
+    assert.equal(f.navigatedTo(),'/player-selection');
 });
