@@ -26,10 +26,13 @@ test('horizontal carousel shows tall illustration cards in Quickplay / 2v2 / 3v3
     assert.match(css, /\.mode-card-art--six/);
     assert.match(html, /mode-card-art/);
     assert.match(html, /mode-card-footer/);
-    assert.match(html, /mode-carousel-controls/);
+    assert.doesNotMatch(html, /mode-carousel-controls/);
+    assert.match(html, /Karte antippen zum Öffnen/);
+    assert.ok(html.indexOf('id="mode-previous"') < html.indexOf('id="mode-carousel"'));
+    assert.ok(html.indexOf('id="mode-next"') > html.indexOf('id="mode-card-2"'));
     assert.match(html, /Karte antippen/);
     assert.match(css, /container-type:\s*inline-size/);
-    assert.match(css, /mode-carousel-controls/);
+    assert.match(css, /grid-template-columns:\s*46px minmax\(0, 1fr\) 46px/);
     assert.match(css, /mode-art-players/);
     const sixCard = html.split('id="mode-card-2"')[1].split('</div>')[0];
     const sixIllustration = html.split('mode-card-art--six')[1].split('</span>')[1];
@@ -162,20 +165,42 @@ test('touch-like native horizontal scroll picks the card nearest the center', ()
     assert.equal(f.cards[2].classList.contains('is-active'),true);
 });
 
-test('tap or click on any card selects it without navigating until Weiter', () => {
+test('tap on card starts its game mode immediately, no Weiter click required', () => {
+    for (const [index, target] of [[0, '/quickplay'], [1, '/player-selection'], [2, '/six-player']]) {
+        const f=fixture();
+        f.cards[index].fire('click', {detail: 1});
+        assert.equal(f.selectedUrl(),target);
+        assert.equal(f.cards[index].attributes['aria-selected'],'true');
+        assert.equal(f.navigatedTo(),target);
+    }
+
     const f=fixture();
-    f.cards[1].fire('click');
-    assert.equal(f.selectedUrl(),'/player-selection');
-    assert.equal(f.cards[1].attributes['aria-selected'],'true');
-    assert.equal(f.carousel.scrollLeft,416);
-    assert.equal(f.navigatedTo(),'');
-    f.cards[2].fire('click');
+    f.dots[2].fire('click');
     assert.equal(f.selectedUrl(),'/six-player');
-    assert.equal(f.carousel.scrollLeft,832);
     assert.equal(f.navigatedTo(),'');
-    f.dots[0].fire('click');
-    assert.equal(f.selectedUrl(),'/quickplay');
-    assert.equal(f.carousel.scrollLeft,0);
+});
+
+test('swiping horizontally does not accidentally open a match from synthetic click', () => {
+    const f=fixture();
+    const track = f.carousel;
+    track.fire('pointerdown', {pointerId: 1, clientX: 160, clientY: 100});
+    track.fire('pointermove', {pointerId: 1, clientX: 95, clientY: 102});
+    track.fire('pointerup', {pointerId: 1, clientX: 90, clientY: 102});
+    f.cards[1].fire('click', {detail: 1});
+    assert.equal(f.navigatedTo(),'');
+
+    // Keyboard-generated clicks may still activate their card.
+    f.cards[1].fire('click', {detail: 0});
+    assert.equal(f.navigatedTo(),'/player-selection');
+});
+
+test('short finger tap still opens a card directly', () => {
+    const f=fixture();
+    const track = f.carousel;
+    track.fire('pointerdown', {pointerId: 1, clientX: 160, clientY: 100});
+    track.fire('pointerup', {pointerId: 1, clientX: 159, clientY: 101});
+    f.cards[2].fire('click', {detail: 1});
+    assert.equal(f.navigatedTo(),'/six-player');
 });
 
 test('horizontal keyboard navigation, Enter and mouse wheel support desktop users', () => {

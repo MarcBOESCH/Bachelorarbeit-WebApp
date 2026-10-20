@@ -276,3 +276,12 @@ Navigationstasten stehen mit Abstand unterhalb der Cards neben den
 Indikatorpunkten, auch auf Smartphones. Die 3-vs.-3-Karte enthält nun
 drei einzelne Spieler-Silhouetten. Ein Tipp/Klick auf jede Card wählt
 den Modus aus, ohne ihn schon zu starten; nur „Weiter“ öffnet ihn.
+
+### Direktstart per Kartentipp und seitliche Pfeile
+
+Links und rechts neben den Moduskarten sind wieder Pfeiltasten platziert.
+Die Punkteleiste bleibt darunter. Ein Klick oder Fingertipp auf eine
+beliebige Spielmodus-Card öffnet den entsprechenden Modus sofort.
+Horizontalbewegungen beim Wischen werden als Navigation erkannt und
+lösen keinen versehentlichen Direktstart aus. Der Weiter-Button
+bleibt als Alternative für Tastatur und andere Eingabegeräte erhalten.

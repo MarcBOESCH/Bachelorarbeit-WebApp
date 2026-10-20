@@ -1281,16 +1281,12 @@ canvas {
 }
 
 .mode-carousel-layout {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+    align-items: center;
+    column-gap: clamp(12px, 2vw, 22px);
     width: min(100%, 900px);
     margin: 0 auto;
-}
-
-.mode-carousel-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 32px;
-    margin: 20px auto 0;
 }
 
 .mode-carousel-arrow {
@@ -1311,7 +1307,7 @@ canvas {
 .mode-carousel-arrow:disabled { opacity: .3; cursor: default; }
 
 .mode-carousel-track {
-    --mode-card-width: clamp(164px, calc((100cqw - 68px) / 3), 235px);
+    --mode-card-width: min(235px, calc(100% - 8px));
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -1488,7 +1484,7 @@ canvas {
     justify-content: center;
     align-items: center;
     gap: 9px;
-    margin: 0;
+    margin: 18px auto 0;
 }
 
 .mode-carousel-dot {
@@ -1546,9 +1542,15 @@ canvas {
 }
 
 @media (max-width: 575px) {
-    .mode-carousel-track { --mode-card-width: min(69vw, 250px); gap: 12px; }
-    .mode-carousel-controls { gap: 24px; }
-    .mode-carousel-arrow { width: 44px; height: 44px; }
+    .mode-carousel-layout {
+        grid-template-columns: 38px minmax(0, 1fr) 38px;
+        column-gap: 8px;
+    }
+    .mode-carousel-track {
+        --mode-card-width: min(69vw, calc(100% - 8px));
+        gap: 12px;
+    }
+    .mode-carousel-arrow { width: 38px; height: 44px; }
     .mode-carousel-card { height: 340px; }
     .mode-card-footer { flex-basis: 85px; }
     .mode-card-footer strong { font-size: 1.25rem; }

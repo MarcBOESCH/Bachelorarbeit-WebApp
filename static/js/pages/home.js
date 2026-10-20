@@ -35,6 +35,9 @@ function initModePicker() {
     let selected = 0;
     let scrollTimer = null;
     let lastWheelAt = 0;
+    let gestureStart = null;
+    let gestureMoved = false;
+    let ignoreClicksUntil = 0;
 
     function centerCard(index, behavior = "smooth") {
         const card = cards[index];
@@ -100,11 +103,40 @@ function initModePicker() {
     previous.addEventListener("click", () => updateSelection(selected - 1, true));
     next.addEventListener("click", () => updateSelection(selected + 1, true));
 
-    // A tap or click selects the card; entering the chosen mode is a separate
-    // action via "Weiter". Browser-native swipes scroll the carousel instead.
-    cards.forEach((card, index) => card.addEventListener("click", () => {
-        updateSelection(index, true);
-        carousel.focus({preventScroll: true});
+    // A tap opens that card directly. Horizontal swipes must never start a
+    // match accidentally when the browser dispatches a synthetic click.
+    carousel.addEventListener("pointerdown", event => {
+        gestureStart = {pointerId: event.pointerId, x: event.clientX, y: event.clientY};
+        gestureMoved = false;
+    });
+
+    carousel.addEventListener("pointermove", event => {
+        if (!gestureStart || event.pointerId !== gestureStart.pointerId) return;
+        if (Math.hypot(event.clientX - gestureStart.x, event.clientY - gestureStart.y) > 12) {
+            gestureMoved = true;
+            ignoreClicksUntil = Date.now() + 450;
+        }
+    });
+
+    carousel.addEventListener("pointerup", event => {
+        if (!gestureStart || event.pointerId !== gestureStart.pointerId) return;
+        if (gestureMoved || Math.hypot(event.clientX - gestureStart.x, event.clientY - gestureStart.y) > 12) {
+            ignoreClicksUntil = Date.now() + 450;
+        }
+        gestureStart = null;
+        gestureMoved = false;
+    });
+
+    carousel.addEventListener("pointercancel", () => {
+        if (gestureMoved) ignoreClicksUntil = Date.now() + 450;
+        gestureStart = null;
+        gestureMoved = false;
+    });
+
+    cards.forEach((card, index) => card.addEventListener("click", event => {
+        if (event.detail !== 0 && Date.now() < ignoreClicksUntil) return;
+        updateSelection(index);
+        window.location.assign(modes[index].url);
     }));
 
     dots.forEach((dot, index) => dot.addEventListener("click", () => updateSelection(index, true)));
