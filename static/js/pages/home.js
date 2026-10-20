@@ -100,6 +100,8 @@ function initModePicker() {
     previous.addEventListener("click", () => updateSelection(selected - 1, true));
     next.addEventListener("click", () => updateSelection(selected + 1, true));
 
+    // A tap or click selects the card; entering the chosen mode is a separate
+    // action via "Weiter". Browser-native swipes scroll the carousel instead.
     cards.forEach((card, index) => card.addEventListener("click", () => {
         updateSelection(index, true);
         carousel.focus({preventScroll: true});

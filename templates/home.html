@@ -10,11 +10,6 @@
     <h2 id="mode-chooser-heading" class="mode-chooser-heading">Spielmodus</h2>
 
     <div class="mode-carousel-layout">
-        <button id="mode-previous" type="button" class="mode-carousel-arrow"
-                aria-label="Vorheriger Spielmodus" aria-controls="mode-carousel" disabled>
-            <i class="bi bi-chevron-left" aria-hidden="true"></i>
-        </button>
-
         <div id="mode-carousel" class="mode-carousel-track" role="listbox" tabindex="0"
              aria-label="Spielmodus auswählen"
              aria-orientation="horizontal"
@@ -55,13 +50,33 @@
                 <div class="mode-card-art mode-card-art--six" aria-hidden="true">
                     <span class="mode-art-pip mode-art-pip--top">♠</span>
                     <span class="mode-art-pip mode-art-pip--bottom">♣</span>
-                    <span class="mode-art-symbol"><i class="bi bi-people-fill"></i></span>
+                    <span class="mode-art-symbol mode-art-players">
+                        <i class="bi bi-person-fill"></i>
+                        <i class="bi bi-person-fill"></i>
+                        <i class="bi bi-person-fill"></i>
+                    </span>
                 </div>
                 <div class="mode-card-footer">
                     <strong>3 vs 3</strong>
                     <span>6er-Kreuzjass · Freizeit</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="mode-carousel-controls">
+        <button id="mode-previous" type="button" class="mode-carousel-arrow"
+                aria-label="Vorheriger Spielmodus" aria-controls="mode-carousel" disabled>
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+
+        <div class="mode-carousel-pagination" role="group" aria-label="Spielmodus auswählen">
+            <button type="button" class="mode-carousel-dot is-active" data-mode-target="0"
+                    aria-label="Quickplay auswählen" aria-current="true"></button>
+            <button type="button" class="mode-carousel-dot" data-mode-target="1"
+                    aria-label="Ranglistenspiel auswählen"></button>
+            <button type="button" class="mode-carousel-dot" data-mode-target="2"
+                    aria-label="6er-Kreuzjass auswählen"></button>
         </div>
 
         <button id="mode-next" type="button" class="mode-carousel-arrow"
@@ -70,17 +85,8 @@
         </button>
     </div>
 
-    <div class="mode-carousel-pagination" role="group" aria-label="Spielmodus auswählen">
-        <button type="button" class="mode-carousel-dot is-active" data-mode-target="0"
-                aria-label="Quickplay auswählen" aria-current="true"></button>
-        <button type="button" class="mode-carousel-dot" data-mode-target="1"
-                aria-label="Ranglistenspiel auswählen"></button>
-        <button type="button" class="mode-carousel-dot" data-mode-target="2"
-                aria-label="6er-Kreuzjass auswählen"></button>
-    </div>
-
     <p id="mode-carousel-hint" class="mode-carousel-hint">
-        Auf der Karte nach links oder rechts wischen
+        Karte antippen oder nach links/rechts wischen
     </p>
 
     <div class="mode-selection-details" aria-live="polite" aria-atomic="true">

@@ -26,6 +26,14 @@ test('horizontal carousel shows tall illustration cards in Quickplay / 2v2 / 3v3
     assert.match(css, /\.mode-card-art--six/);
     assert.match(html, /mode-card-art/);
     assert.match(html, /mode-card-footer/);
+    assert.match(html, /mode-carousel-controls/);
+    assert.match(html, /Karte antippen/);
+    assert.match(css, /container-type:\s*inline-size/);
+    assert.match(css, /mode-carousel-controls/);
+    assert.match(css, /mode-art-players/);
+    const sixCard = html.split('id="mode-card-2"')[1].split('</div>')[0];
+    const sixIllustration = html.split('mode-card-art--six')[1].split('</span>')[1];
+    assert.equal((sixIllustration.match(/bi-person-fill/g) || []).length, 3);
     const first = html.indexOf('class="mode-carousel-card mode-card--quickplay');
     const second = html.indexOf('class="mode-carousel-card mode-card--ranked');
     const third = html.indexOf('class="mode-carousel-card mode-card--six');
@@ -154,11 +162,17 @@ test('touch-like native horizontal scroll picks the card nearest the center', ()
     assert.equal(f.cards[2].classList.contains('is-active'),true);
 });
 
-test('click on a long card or pagination indicator centers it', () => {
+test('tap or click on any card selects it without navigating until Weiter', () => {
     const f=fixture();
+    f.cards[1].fire('click');
+    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.cards[1].attributes['aria-selected'],'true');
+    assert.equal(f.carousel.scrollLeft,416);
+    assert.equal(f.navigatedTo(),'');
     f.cards[2].fire('click');
     assert.equal(f.selectedUrl(),'/six-player');
     assert.equal(f.carousel.scrollLeft,832);
+    assert.equal(f.navigatedTo(),'');
     f.dots[0].fire('click');
     assert.equal(f.selectedUrl(),'/quickplay');
     assert.equal(f.carousel.scrollLeft,0);

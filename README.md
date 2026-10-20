@@ -267,3 +267,12 @@ Moduskarten sind im Desktop-Layout etwa 390 px hoch und mobil etwa
 Jass-Symbolen und großen Modus-Icons steht oberhalb eines eigenen
 dunklen Titelstreifens. Der aktive Modus bleibt beim horizontalen
 Wischen, Klicken oder bei Tastaturauswahl mittig hervorgehoben.
+
+### Vollständig sichtbare Cards, getrennte Navigation und 3er-Motiv
+
+Die Moduskarten sind auf breiten Viewports schmaler (max. 235px), damit
+beide Nachbarkarten beim mittleren Modus vollständig ins Karussell passen.
+Navigationstasten stehen mit Abstand unterhalb der Cards neben den
+Indikatorpunkten, auch auf Smartphones. Die 3-vs.-3-Karte enthält nun
+drei einzelne Spieler-Silhouetten. Ein Tipp/Klick auf jede Card wählt
+den Modus aus, ohne ihn schon zu starten; nur „Weiter“ öffnet ihn.
