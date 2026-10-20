@@ -24,34 +24,43 @@
              data-quickplay-url="{{ url_for('free_play.quickplay_page') }}"
              data-six-player-url="{{ url_for('free_play.six_player_page') }}">
 
-            <div id="mode-card-0" class="mode-carousel-card is-active"
+            <div id="mode-card-0" class="mode-carousel-card mode-card--quickplay is-active"
                  role="option" aria-selected="true" tabindex="-1" data-mode-index="0">
-                <span class="mode-card-symbol"><i class="bi bi-trophy" aria-hidden="true"></i></span>
-                <span class="mode-card-copy">
-                    <strong>Ranglistenspiel</strong>
-                    <span>2 gegen 2</span>
-                    <small>Mit Rating und Historie</small>
-                </span>
-            </div>
-
-            <div id="mode-card-1" class="mode-carousel-card"
-                 role="option" aria-selected="false" tabindex="-1" data-mode-index="1">
-                <span class="mode-card-symbol"><i class="bi bi-lightning-charge" aria-hidden="true"></i></span>
-                <span class="mode-card-copy">
+                <div class="mode-card-art mode-card-art--quickplay" aria-hidden="true">
+                    <span class="mode-art-pip mode-art-pip--top">♠</span>
+                    <span class="mode-art-pip mode-art-pip--bottom">♥</span>
+                    <span class="mode-art-symbol"><i class="bi bi-lightning-charge-fill"></i></span>
+                </div>
+                <div class="mode-card-footer">
                     <strong>Quickplay</strong>
-                    <span>2 gegen 2</span>
-                    <small>Ohne Rating</small>
-                </span>
+                    <span>2 gegen 2 · Freies Spiel</span>
+                </div>
             </div>
 
-            <div id="mode-card-2" class="mode-carousel-card"
+            <div id="mode-card-1" class="mode-carousel-card mode-card--ranked"
+                 role="option" aria-selected="false" tabindex="-1" data-mode-index="1">
+                <div class="mode-card-art mode-card-art--ranked" aria-hidden="true">
+                    <span class="mode-art-pip mode-art-pip--top">♣</span>
+                    <span class="mode-art-pip mode-art-pip--bottom">♦</span>
+                    <span class="mode-art-symbol"><i class="bi bi-trophy-fill"></i></span>
+                </div>
+                <div class="mode-card-footer">
+                    <strong>2 vs 2</strong>
+                    <span>Ranglistenspiel · Glicko-2</span>
+                </div>
+            </div>
+
+            <div id="mode-card-2" class="mode-carousel-card mode-card--six"
                  role="option" aria-selected="false" tabindex="-1" data-mode-index="2">
-                <span class="mode-card-symbol"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
-                <span class="mode-card-copy">
-                    <strong>6er-Kreuzjass</strong>
-                    <span>3 gegen 3</span>
-                    <small>Freizeitmodus</small>
-                </span>
+                <div class="mode-card-art mode-card-art--six" aria-hidden="true">
+                    <span class="mode-art-pip mode-art-pip--top">♠</span>
+                    <span class="mode-art-pip mode-art-pip--bottom">♣</span>
+                    <span class="mode-art-symbol"><i class="bi bi-people-fill"></i></span>
+                </div>
+                <div class="mode-card-footer">
+                    <strong>3 vs 3</strong>
+                    <span>6er-Kreuzjass · Freizeit</span>
+                </div>
             </div>
         </div>
 
@@ -63,9 +72,9 @@
 
     <div class="mode-carousel-pagination" role="group" aria-label="Spielmodus auswählen">
         <button type="button" class="mode-carousel-dot is-active" data-mode-target="0"
-                aria-label="Ranglistenspiel auswählen" aria-current="true"></button>
+                aria-label="Quickplay auswählen" aria-current="true"></button>
         <button type="button" class="mode-carousel-dot" data-mode-target="1"
-                aria-label="Quickplay auswählen"></button>
+                aria-label="Ranglistenspiel auswählen"></button>
         <button type="button" class="mode-carousel-dot" data-mode-target="2"
                 aria-label="6er-Kreuzjass auswählen"></button>
     </div>
@@ -75,12 +84,12 @@
     </p>
 
     <div class="mode-selection-details" aria-live="polite" aria-atomic="true">
-        <p id="mode-details-description">Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.</p>
+        <p id="mode-details-description">Direkt Punkte erfassen, ohne Spieler oder Teams anzulegen. Das Spiel wird nicht gespeichert.</p>
     </div>
 
     <a id="mode-start" class="btn btn-dark mode-start-btn"
-       href="{{ url_for('matches.player_selection_page') }}">
-        Weiter zum Ranglistenspiel <i class="bi bi-arrow-right" aria-hidden="true"></i>
+       href="{{ url_for('free_play.quickplay_page') }}">
+        Weiter zu Quickplay <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </a>
 
     <noscript>

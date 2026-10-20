@@ -1266,62 +1266,57 @@ canvas {
    Home / mode selection
 ========================= */
 
-/* Swipeable horizontal game-mode cards; the centered card is selected. */
+/* Tall illustrated mode cards in a horizontally swipeable carousel */
 .mode-chooser {
-    width: min(100%, 900px);
+    width: min(100%, 740px);
     margin: 0 auto;
     text-align: center;
 }
 
 .mode-chooser-heading {
-    margin: 0 0 18px;
+    margin: 0 0 20px;
     font-size: 1.1rem;
     font-weight: 800;
 }
 
 .mode-carousel-layout {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
+    width: min(100%, 690px);
+    margin: 0 auto;
 }
 
 .mode-carousel-arrow {
     display: grid;
     place-items: center;
-    width: 44px;
+    width: 38px;
     height: 48px;
     padding: 0;
     border: 0;
-    border-radius: 16px;
+    border-radius: 14px;
     background: #e7eee9;
     color: var(--color-brand);
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     cursor: pointer;
 }
 
-.mode-carousel-arrow:hover:not(:disabled) {
-    background: var(--color-brand-soft);
-}
-
-.mode-carousel-arrow:disabled {
-    color: var(--color-text-muted);
-    opacity: .35;
-    cursor: default;
-}
+.mode-carousel-arrow:hover:not(:disabled) { background: var(--color-brand-soft); }
+.mode-carousel-arrow:disabled { opacity: .3; cursor: default; }
 
 .mode-carousel-track {
-    --mode-card-width: min(72vw, 400px);
+    --mode-card-width: min(62vw, 255px);
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    gap: 16px;
+    gap: 14px;
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 16px max(0px, calc(50% - min(36vw, 200px)));
+    padding: 14px max(0px, calc((100% - var(--mode-card-width)) / 2));
     scroll-snap-type: x mandatory;
-    scroll-padding-inline: max(0px, calc(50% - min(36vw, 200px)));
+    scroll-padding-inline: max(0px, calc((100% - var(--mode-card-width)) / 2));
     scrollbar-width: none;
     -ms-overflow-style: none;
     overscroll-behavior-x: contain;
@@ -1334,75 +1329,124 @@ canvas {
 
 .mode-carousel-card {
     display: flex;
+    flex-direction: column;
     flex: 0 0 var(--mode-card-width);
-    align-items: center;
-    text-align: left;
+    height: 390px;
     min-width: 0;
-    min-height: 158px;
-    gap: 18px;
-    padding: 24px 20px;
-    border: 1px solid var(--color-border);
+    padding: 0;
+    overflow: hidden;
+    border: 2px solid transparent;
     border-radius: var(--radius-lg);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-sm);
-    color: var(--color-text);
+    background: #173b39;
+    box-shadow: 0 8px 20px rgba(15, 32, 28, .1);
     cursor: pointer;
     scroll-snap-align: center;
     scroll-snap-stop: always;
     transform: scale(.95);
     opacity: .63;
     transition: transform 180ms ease, opacity 180ms ease,
-        background-color 180ms ease, border-color 180ms ease;
+        border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .mode-carousel-card:hover { opacity: .9; }
 
 .mode-carousel-card.is-active {
-    background: #e9f6ed;
-    border-color: #78bd96;
-    color: var(--color-brand-dark);
-    opacity: 1;
+    border-color: #e6c26a;
     transform: scale(1);
-    box-shadow: 0 8px 24px rgba(15, 81, 50, .11);
+    opacity: 1;
+    box-shadow: 0 12px 28px rgba(15, 61, 44, .19);
 }
 
-.mode-card-symbol {
+.mode-card-art {
+    position: relative;
     display: grid;
     place-items: center;
-    flex: 0 0 58px;
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
-    background: var(--color-brand-soft);
-    color: var(--color-brand);
-    font-size: 1.55rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    isolation: isolate;
 }
 
-.mode-card-copy {
+.mode-card-art--quickplay {
+    background: radial-gradient(circle at 55% 45%, #64e2b0 0%, #21a879 41%, #075b45 100%);
+}
+.mode-card-art--ranked {
+    background: radial-gradient(circle at 57% 40%, #efcd80 0%, #ae865a 36%, #593d6b 100%);
+}
+.mode-card-art--six {
+    background: radial-gradient(circle at 46% 36%, #9f8be8 0%, #6373b6 42%, #283a68 100%);
+}
+
+.mode-card-art::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 66%;
+    height: 77%;
+    border: 4px solid rgba(255, 255, 255, .22);
+    border-radius: 19px;
+    box-shadow: 16px 12px 0 -1px rgba(255, 255, 255, .13), -20px -15px 0 -1px rgba(255, 255, 255, .1);
+    transform: rotate(-14deg);
+}
+
+.mode-card-art::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 76%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .11);
+    filter: blur(16px);
+}
+
+.mode-art-symbol {
+    display: grid;
+    place-items: center;
+    width: 72%;
+    aspect-ratio: 1;
+    color: rgba(255, 255, 255, .96);
+    font-size: clamp(5rem, 13vw, 8rem);
+    filter: drop-shadow(0 15px 8px rgba(13, 40, 38, .25));
+    transform: rotate(-8deg);
+}
+
+.mode-art-pip {
+    position: absolute;
+    color: rgba(255, 255, 255, .75);
+    font-size: 2rem;
+}
+.mode-art-pip--top { top: 14px; left: 16px; }
+.mode-art-pip--bottom { bottom: 12px; right: 17px; transform: rotate(180deg); }
+
+.mode-card-footer {
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 97px;
     gap: 7px;
+    padding: 13px 10px;
+    color: #fff;
+    background: #154f39;
 }
 
-.mode-card-copy strong {
+.mode-card--ranked .mode-card-footer { background: #49345f; }
+.mode-card--six .mode-card-footer { background: #2d416b; }
+
+.mode-card-footer strong {
     color: inherit;
-    font-size: clamp(1.12rem, 2.5vw, 1.4rem);
-    font-weight: 800;
+    font-size: clamp(1.3rem, 2.9vw, 1.6rem);
     line-height: 1.15;
-    overflow-wrap: anywhere;
+    font-weight: 800;
+    text-align: center;
 }
 
-.mode-card-copy > span {
-    color: var(--color-text-muted);
-    font-weight: 600;
-    font-size: .94rem;
-}
-
-.mode-card-copy small {
-    color: var(--color-brand);
-    font-weight: 650;
+.mode-card-footer span {
+    color: rgba(255, 255, 255, .84);
     font-size: .83rem;
+    font-weight: 650;
+    text-align: center;
 }
 
 .mode-carousel-track:focus-visible,
@@ -1418,7 +1462,7 @@ canvas {
     justify-content: center;
     align-items: center;
     gap: 9px;
-    margin: 10px auto 0;
+    margin: 12px auto 0;
 }
 
 .mode-carousel-dot {
@@ -1438,14 +1482,14 @@ canvas {
 }
 
 .mode-carousel-hint {
-    margin: 14px 0 20px;
+    margin: 12px 0 18px;
     color: var(--color-text-muted);
     font-size: .84rem;
 }
 
 .mode-selection-details {
-    max-width: 540px;
-    min-height: 90px;
+    max-width: 520px;
+    min-height: 84px;
     margin: 0 auto;
     padding: 16px 10px 0;
     border-top: 1px solid var(--color-border);
@@ -1454,7 +1498,7 @@ canvas {
 .mode-selection-details p {
     color: var(--color-text-muted);
     font-size: .95rem;
-    line-height: 1.6;
+    line-height: 1.55;
 }
 
 .mode-start-btn {
@@ -1479,31 +1523,13 @@ canvas {
     .mode-carousel-layout {
         grid-template-columns: minmax(0, 1fr);
     }
-
-    .mode-carousel-arrow {
-        display: none;
-    }
-
-    .mode-carousel-track {
-        gap: 12px;
-    }
-
-    .mode-carousel-card {
-        min-height: 152px;
-        padding: 18px 16px;
-        gap: 12px;
-    }
-
-    .mode-card-symbol {
-        flex-basis: 48px;
-        width: 48px;
-        height: 48px;
-        font-size: 1.35rem;
-    }
-
-    .mode-card-copy strong { font-size: 1.12rem; }
-    .mode-card-copy > span { font-size: .88rem; }
-    .mode-card-copy small { font-size: .78rem; }
+    .mode-carousel-arrow { display: none; }
+    .mode-carousel-track { --mode-card-width: min(69vw, 250px); gap: 12px; }
+    .mode-carousel-card { height: 340px; }
+    .mode-card-footer { flex-basis: 85px; }
+    .mode-card-footer strong { font-size: 1.25rem; }
+    .mode-card-footer span { font-size: .72rem; }
+    .mode-art-symbol { font-size: 5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

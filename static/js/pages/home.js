@@ -2,14 +2,14 @@
 function createGameModes(carousel) {
     return [
         {
-            name: "Ranglistenspiel",
-            description: "Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.",
-            url: carousel.dataset.rankedUrl
-        },
-        {
             name: "Quickplay",
             description: "Direkt Punkte erfassen, ohne Spieler oder Teams anzulegen. Das Spiel wird nicht gespeichert.",
             url: carousel.dataset.quickplayUrl
+        },
+        {
+            name: "Ranglistenspiel",
+            description: "Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.",
+            url: carousel.dataset.rankedUrl
         },
         {
             name: "6er-Kreuzjass",
