@@ -95,6 +95,13 @@ function updateUI(game) {
     const teamNameA = game.team_name_a ?? "Team A";
     const teamNameB = game.team_name_b ?? "Team B";
 
+    for (const [side, name] of [["a", teamNameA], ["b", teamNameB]]) {
+        const nameElement = document.getElementById(`team-name-${side}`);
+        if (nameElement) nameElement.textContent = name;
+        const scoreInput = document.getElementById(`manual-score-${side}`);
+        if (scoreInput) scoreInput.placeholder = `Punkte ${name}`;
+    }
+
     document.getElementById("score-a").textContent = scoreA;
     document.getElementById("score-b").textContent = scoreB;
     document.getElementById("point-diff").textContent = diff;
@@ -157,6 +164,10 @@ function setMatchInputsDisabled(disabled) {
     if (undoBtn) {
         undoBtn.disabled = disabled;
     }
+
+    document.querySelectorAll(".team-name-edit-btn").forEach(button => {
+        button.disabled = disabled;
+    });
 
     ["manual-score-a", "manual-score-b", "manual-submit-btn", "double-points-toggle"].forEach(id => {
         const element = document.getElementById(id);
@@ -392,40 +403,131 @@ function initUndoButton() {
     });
 }
 
-// Verknüpft den Reset-Button mit dem Modal.
+// Neues Spiel öffnet die Modusauswahl; Rematch beginnt mit denselben Teams.
 function initNewGameButton() {
     const resetBtn = document.getElementById("reset-btn");
+    const rematchBtn = document.getElementById("rematch-btn");
     const confirmBtn = document.getElementById("confirm-new-game-btn");
     const modalElement = document.getElementById("confirmNewGameModal");
+    const title = document.getElementById("confirmNewGameModalLabel");
+    const message = document.getElementById("confirm-game-action-message");
 
-    if (!resetBtn || !modalElement || !confirmBtn) {
-        return;
-    }
+    if (!resetBtn || !rematchBtn || !modalElement || !confirmBtn) return;
 
     newGameModalInstance = new bootstrap.Modal(modalElement);
+    let pendingAction = "new_game";
+    let submitting = false;
 
-    resetBtn.addEventListener("click", async () => {
-        if (matchFinished) {
-            const result = await sendAction({ action: "new_game" });
-
+    async function performAction(action) {
+        if (submitting) return;
+        submitting = true;
+        resetBtn.disabled = true;
+        rematchBtn.disabled = true;
+        confirmBtn.disabled = true;
+        try {
+            const result = await sendAction({action});
             if (result?.redirect_url) {
                 window.location.href = result.redirect_url;
+                return;
             }
+        } finally {
+            submitting = false;
+            resetBtn.disabled = false;
+            rematchBtn.disabled = false;
+            confirmBtn.disabled = false;
+        }
+    }
 
+    function requestAction(action) {
+        pendingAction = action;
+        if (matchFinished) {
+            void performAction(action);
             return;
         }
-
+        const rematch = action === "rematch";
+        title.textContent = rematch ? "Rematch starten" : "Neues Spiel starten";
+        message.textContent = rematch
+            ? "Ein neues Match mit denselben Teams und Einstellungen starten? Der aktuelle Punktestand geht verloren."
+            : "Ein anderes Spiel starten? Der aktuelle Punktestand geht verloren.";
+        confirmBtn.textContent = rematch ? "Rematch starten" : "Neues Spiel";
         newGameModalInstance.show();
-    });
+    }
 
-    confirmBtn.addEventListener("click", async () => {
+    resetBtn.addEventListener("click", () => requestAction("new_game"));
+    rematchBtn.addEventListener("click", () => requestAction("rematch"));
+    confirmBtn.addEventListener("click", () => {
         newGameModalInstance.hide();
+        void performAction(pendingAction);
+    });
+}
 
-        const result = await sendAction({ action: "new_game" });
+// Teamnamen freier Spiele lassen sich direkt in der Punkteansicht umbenennen.
+function initEditableTeamNames() {
+    document.querySelectorAll(".team-name-editor").forEach(editor => {
+        const team = editor.dataset.team;
+        const side = team.toLowerCase();
+        const label = document.getElementById(`team-name-${side}`);
+        const input = document.getElementById(`team-name-input-${side}`);
+        const button = editor.querySelector(".team-name-edit-btn");
+        if (!label || !input || !button) return;
 
-        if (result?.redirect_url) {
-            window.location.href = result.redirect_url;
+        let saving = false;
+        function closeEditor() {
+            input.classList.add("d-none");
+            label.classList.remove("d-none");
+            button.classList.remove("d-none");
         }
+
+        button.addEventListener("click", () => {
+            if (button.disabled) return;
+            input.value = label.textContent;
+            label.classList.add("d-none");
+            button.classList.add("d-none");
+            input.classList.remove("d-none");
+            input.focus();
+            input.select();
+        });
+
+        async function saveName() {
+            if (saving || input.classList.contains("d-none")) return;
+            const name = input.value.trim();
+            if (name === label.textContent.trim()) {
+                closeEditor();
+                return;
+            }
+            if (!name || name.length > 40) {
+                showToast("Bitte einen Teamnamen mit 1 bis 40 Zeichen eingeben.", "error");
+                input.focus();
+                return;
+            }
+            saving = true;
+            input.disabled = true;
+            try {
+                const result = await sendAction({action: "rename_team", team, name});
+                if (result) {
+                    label.textContent = result[`team_name_${side}`];
+                    closeEditor();
+                } else {
+                    input.value = label.textContent;
+                    closeEditor();
+                }
+            } finally {
+                saving = false;
+                input.disabled = false;
+            }
+        }
+
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                void saveName();
+            } else if (event.key === "Escape") {
+                input.value = label.textContent;
+                closeEditor();
+                button.focus();
+            }
+        });
+        input.addEventListener("blur", () => { void saveName(); });
     });
 }
 
@@ -676,6 +778,7 @@ function initMatchPage() {
     initManualEnterKey();
     initUndoButton();
     initNewGameButton();
+    initEditableTeamNames();
     initModeToggle();
     initQuickplay420Toggle();
     initSnakeScoresOnLoad();
