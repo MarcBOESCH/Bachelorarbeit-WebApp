@@ -3,13 +3,14 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-test('match home presents exactly three modes without hero', () => {
+test('match home offers Quickplay and ranked only; 3v3 remains hidden', () => {
     const home = fs.readFileSync('templates/home.html', 'utf8');
     for (const target of [
         "matches.player_selection_page",
-        "free_play.quickplay_page",
-        "free_play.six_player_page"
+        "free_play.quickplay_page"
     ]) assert.ok(home.includes(target));
+    assert.doesNotMatch(home, /mode-card--six|id="mode-card-2"|data-mode-target="2"/);
+    assert.doesNotMatch(home, /data-six-player-url/);
     assert.doesNotMatch(home, /home-hero|Bereit für die nächste Runde/);
     assert.doesNotMatch(home, /Unsere Jassrunde|Registrierte Spieler|Gespeicherte Matches|Top 3|Zur Rangliste/);
     assert.match(home, /<h1>Match<\/h1>/);
