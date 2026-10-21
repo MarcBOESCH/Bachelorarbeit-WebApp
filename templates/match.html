@@ -32,7 +32,7 @@
                     <div class="form-check form-switch score-entry-switch">
                         <input id="quickplay-420-toggle" class="form-check-input" type="checkbox" role="switch"
                                {% if game.four_twenty_mode %}checked{% endif %}
-                               {% if game.score_a or game.score_b or game.match_saved %}disabled{% endif %}>
+                               {% if game.score_a or game.score_b or game.history or game.match_saved %}disabled{% endif %}>
                         <label class="form-check-label" for="quickplay-420-toggle">
                             420-Modus
                         </label>
@@ -43,7 +43,21 @@
                 <div class="score-teams-wrapper" style="margin-bottom: 0;">
                     <div class="team-column">
                         <div class="score-team-header score-team-header-top mb-0">
+                            {% if game.get('mode') in ['quickplay', 'six_player'] %}
+                            <div class="team-name-editor" data-team="A">
+                                <h2 class="mb-0" id="team-name-a">{{ game.team_name_a }}</h2>
+                                <button type="button" class="btn team-name-edit-btn" data-team="A"
+                                        aria-label="Team A umbenennen" title="Teamnamen ändern"
+                                        {% if game.match_saved or game.winner %}disabled{% endif %}>
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                </button>
+                                <input type="text" id="team-name-input-a" class="form-control team-name-input d-none"
+                                       maxlength="40" aria-label="Neuer Name für Team A"
+                                       value="{{ game.team_name_a }}" autocomplete="off">
+                            </div>
+                            {% else %}
                             <h2 class="mb-0">{{ game.team_name_a }}</h2>
+                            {% endif %>
 
                             {% if game.players %}
                             <div class="score-team-players text-muted small fw-semibold">
@@ -61,7 +75,21 @@
 
                     <div class="team-column">
                         <div class="score-team-header score-team-header-top mb-0">
+                            {% if game.get('mode') in ['quickplay', 'six_player'] %}
+                            <div class="team-name-editor" data-team="B">
+                                <h2 class="mb-0" id="team-name-b">{{ game.team_name_b }}</h2>
+                                <button type="button" class="btn team-name-edit-btn" data-team="B"
+                                        aria-label="Team B umbenennen" title="Teamnamen ändern"
+                                        {% if game.match_saved or game.winner %}disabled{% endif %}>
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                </button>
+                                <input type="text" id="team-name-input-b" class="form-control team-name-input d-none"
+                                       maxlength="40" aria-label="Neuer Name für Team B"
+                                       value="{{ game.team_name_b }}" autocomplete="off">
+                            </div>
+                            {% else %}
                             <h2 class="mb-0">{{ game.team_name_b }}</h2>
+                            {% endif %>
 
                             {% if game.players %}
                             <div class="score-team-players text-muted small fw-semibold">
@@ -221,6 +249,9 @@
             </div>
 
             <div class="match-summary-actions mt-2">
+                <button id="rematch-btn" type="button" class="btn btn-outline-success fw-semibold">
+                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Rematch
+                </button>
                 <button id="reset-btn" type="button" class="btn btn-dark fw-semibold">
                     Neues Spiel
                 </button>
@@ -238,7 +269,7 @@
                     <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
 
-                <div class="modal-body text-muted">
+                <div id="confirm-game-action-message" class="modal-body text-muted">
                     Willst du wirklich ein neues Spiel starten?<br>
                     Der aktuelle Match-Fortschritt geht dabei verloren.
                 </div>

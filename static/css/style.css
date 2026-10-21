@@ -552,7 +552,10 @@ canvas {
 
 .score-entry-options {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    gap: 8px;
     margin: 0 0 1.25rem;
 }
 
@@ -565,6 +568,8 @@ canvas {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface-soft);
+    width: 185px;
+    justify-content: flex-start;
 }
 
 .score-entry-switch .form-check-input {
@@ -821,8 +826,45 @@ canvas {
 .match-summary-actions {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
     margin-top: 8px;
 }
+
+.team-name-editor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+}
+
+.team-name-editor h2 {
+    width: auto;
+    max-width: calc(100% - 38px);
+}
+
+.team-name-edit-btn {
+    flex: 0 0 auto;
+    padding: 6px;
+    line-height: 1;
+    border: 0;
+    color: var(--color-brand);
+}
+
+.team-name-edit-btn:hover:not(:disabled) {
+    color: var(--color-brand-dark);
+    background: var(--color-brand-soft);
+}
+
+.team-name-input {
+    width: min(100%, 220px);
+    text-align: center;
+    font-weight: 700;
+}
+
 
 .match-summary-actions .btn {
     width: auto;
