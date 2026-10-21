@@ -230,3 +230,173 @@ def test_only_quickplay_420_can_be_toggled(client):
             "action": "set_four_twenty_mode", "enabled": True
         }).status_code == 403
         assert_no_rated_records(players=6)
+
+
+def test_quickplay_rename_team_names_in_session_and_keep_scores(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        assert client.post("/action", json={"action": "rename_team", "team": "A",
+                                            "name": "  Freunde  "}).status_code == 200
+        assert client.post("/action", json={"action": "score_150", "team": "A"}).status_code == 200
+        response = client.post("/action", json={
+            "action": "rename_team", "team": "B", "name": "Gegner"
+        })
+        assert response.status_code == 200
+        assert response.json["team_name_a"] == "Freunde"
+        assert response.json["team_name_b"] == "Gegner"
+        assert response.json["score_a"] == 150
+        assert "Freunde" in client.get("/match").data.decode("utf-8")
+        with client.session_transaction() as s:
+            assert s["game"]["team_name_a"] == "Freunde"
+            assert s["game"]["team_name_b"] == "Gegner"
+        assert_no_rated_records()
+
+
+def test_quickplay_rejects_invalid_or_duplicate_names(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        for data in (
+            {"team": "A", "name": ""},
+            {"team": "A", "name": "x" * 41},
+            {"team": "A", "name": "team b"},
+            {"team": "X", "name": "Test"},
+            {"team": "A", "name": 123},
+        ):
+            result = client.post("/action", json={"action": "rename_team", **data})
+            assert result.status_code == 400
+        with client.session_transaction() as s:
+            assert s["game"]["team_name_a"] == "Team A"
+            assert s["game"]["team_name_b"] == "Team B"
+        assert_no_rated_records()
+
+
+def test_quickplay_rematch_preserves_settings_but_resets_every_score(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        client.post("/action", json={"action": "rename_team", "team": "A", "name": "Nord"})
+        client.post("/action", json={"action": "rename_team", "team": "B", "name": "Süd"})
+        client.post("/action", json={"action": "set_four_twenty_mode", "enabled": True})
+        score = client.post("/action", json={"action": "score_50", "team": "A"})
+        assert score.json["score_a"] == 50
+        again = client.post("/action", json={"action": "rematch"})
+        assert again.status_code == 200
+        assert again.json["redirect_url"] == "/match"
+        game = again.json["game"]
+        assert game["mode"] == "quickplay"
+        assert game["team_name_a"] == "Nord"
+        assert game["team_name_b"] == "Süd"
+        assert game["four_twenty_mode"] is True
+        assert game["players"] == []
+        assert game["score_a"] == game["score_b"] == 0
+        assert game["history"] == game["undo_a"] == game["undo_b"] == []
+        assert game["winner"] is None and game["match_saved"] is False
+        assert client.get("/match").status_code == 200
+        assert_no_rated_records()
+
+
+def test_rematch_requires_current_game_and_finalized_win(client):
+    with client.application.app_context():
+        assert client.post("/action", json={"action": "rematch"}).status_code == 400
+        client.get("/quickplay")
+        for _ in range(4):
+            client.post("/action", json={"action": "score_257", "team": "A"})
+        # Winner exists; server rejects rematch until the current result is finalized.
+        assert client.post("/action", json={"action": "rematch"}).status_code == 409
+        assert client.post("/api/matches", json={}).json["saved"] is False
+        again = client.post("/action", json={"action": "rematch"})
+        assert again.status_code == 200
+        assert again.json["game"]["score_a"] == 0
+        assert_no_rated_records()
+
+
+def test_renaming_finished_free_match_is_blocked(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        for _ in range(4):
+            client.post("/action", json={"action": "score_257", "team": "A"})
+        assert client.post("/action", json={
+            "action": "rename_team", "team": "A", "name": "Winners"
+        }).status_code == 400
+        client.post("/api/matches", json={})
+        assert client.post("/action", json={
+            "action": "rename_team", "team": "B", "name": "Losers"
+        }).status_code == 400
+        assert_no_rated_records()
+
+
+def test_hidden_six_player_rematch_retains_roster_and_420_mode(client):
+    with client.application.app_context():
+        add_six_players()
+        initial = client.post("/six-player", data={
+            **six_ids(), "team_a_name": "Trio Nord", "team_b_name": "Trio Süd",
+            "four_twenty_mode": "on",
+        })
+        assert initial.status_code == 302
+        with client.session_transaction() as s:
+            players = s["game"]["players"]
+        client.post("/action", json={"action": "score_100", "team": "B"})
+        rematch = client.post("/action", json={"action": "rematch"})
+        assert rematch.status_code == 200
+        game = rematch.json["game"]
+        assert game["mode"] == "six_player"
+        assert game["players"] == players
+        assert game["team_name_a"] == "Trio Nord"
+        assert game["team_name_b"] == "Trio Süd"
+        assert game["four_twenty_mode"] is True
+        assert game["score_a"] == game["score_b"] == 0
+        assert_no_rated_records(players=6)
+
+
+def test_ranked_rematch_reuses_registered_teams_without_new_ratings(client):
+    with client.application.app_context():
+        add_six_players()
+        first = Team(name="Team Rot", player1_id=1, player2_id=2)
+        second = Team(name="Team Blau", player1_id=3, player2_id=4)
+        db.session.add_all([first, second])
+        db.session.commit()
+        begin = client.post("/api/match/start", json={
+            "team_a_id": first.id, "team_b_id": second.id, "four_twenty_mode": True
+        })
+        assert begin.status_code == 201
+        original = begin.json["game"]
+        client.post("/action", json={"action": "score_100", "team": "B"})
+
+        rematch = client.post("/action", json={"action": "rematch"})
+        assert rematch.status_code == 200
+        again = rematch.json["game"]
+        assert again["mode"] == "ranked"
+        assert again["team_a_id"] == first.id and again["team_b_id"] == second.id
+        assert again["players"] == original["players"]
+        assert again["team_name_a"] == original["team_name_a"]
+        assert again["team_name_b"] == original["team_name_b"]
+        assert again["four_twenty_mode"] is True
+        assert again["score_a"] == again["score_b"] == 0
+        assert again["history"] == []
+        assert client.post("/action", json={
+            "action": "rename_team", "team": "A", "name": "Neue"
+        }).status_code == 400
+        assert_no_rated_records(players=6, teams=2)
+
+
+def test_rename_and_rematch_controls_present_only_where_expected(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        html = client.get("/match").data.decode("utf-8")
+        assert 'id="rematch-btn"' in html and 'id="reset-btn"' in html
+        assert 'id="team-name-a"' in html and 'id="team-name-b"' in html
+        assert 'id="team-name-input-a"' in html and 'id="team-name-input-b"' in html
+        assert 'id="quickplay-420-toggle"' in html
+        css = open("static/css/style.css", encoding="utf-8").read()
+        assert "flex-direction: column" in css
+
+        client.post("/action", json={"action": "new_game"})
+        add_six_players()
+        first = Team(name="A-Team", player1_id=1, player2_id=2)
+        second = Team(name="B-Team", player1_id=3, player2_id=4)
+        db.session.add_all([first, second])
+        db.session.commit()
+        client.post("/api/match/start", json={"team_a_id": first.id, "team_b_id": second.id})
+        ranked = client.get("/match").data.decode("utf-8")
+        assert 'id="rematch-btn"' in ranked
+        assert 'id="team-name-a"' not in ranked
+        assert_no_rated_records(players=6, teams=2)
