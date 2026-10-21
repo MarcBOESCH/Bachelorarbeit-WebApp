@@ -135,7 +135,10 @@ def start_free_game(mode, team_name_a, team_name_b, player_names_a, player_names
     if mode not in {"quickplay", "six_player"}:
         raise ValueError("Unbekannter freier Spielmodus.")
     expected_size = 2 if mode == "quickplay" else 3
-    if len(player_names_a) != expected_size or len(player_names_b) != expected_size:
+    if mode == "quickplay":
+        if player_names_a or player_names_b:
+            raise ValueError("Quickplay benötigt keine Spielerauswahl.")
+    elif len(player_names_a) != expected_size or len(player_names_b) != expected_size:
         raise ValueError("Falsche Anzahl an Spielern im freien Spiel.")
 
     game = create_new_game_state()

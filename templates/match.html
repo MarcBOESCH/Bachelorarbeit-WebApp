@@ -6,7 +6,7 @@
     <section class="page-header">
         <h1>{% if game.get('mode') == 'quickplay' %}Quickplay{% elif game.get('mode') == 'six_player' %}6er-Kreuzjass{% else %}Ranglistenspiel{% endif %}</h1>
         {% if game.get('mode') in ['quickplay', 'six_player'] %}
-            <p>Freies Spiel · keine Speicherung in der Rangliste</p>
+            <p>Freies Spiel · keine Speicherung in der Rangliste{% if game.get('mode') == 'quickplay' %} · für 2 vs 2, 3 vs 3 oder andere Teamgrößen{% endif %}</p>
         {% endif %}
     </section>
 
@@ -28,6 +28,16 @@
                             2x Punkte
                         </label>
                     </div>
+                    {% if game.get('mode') == 'quickplay' %}
+                    <div class="form-check form-switch score-entry-switch">
+                        <input id="quickplay-420-toggle" class="form-check-input" type="checkbox" role="switch"
+                               {% if game.four_twenty_mode %}checked{% endif %}
+                               {% if game.score_a or game.score_b or game.match_saved %}disabled{% endif %}>
+                        <label class="form-check-label" for="quickplay-420-toggle">
+                            420-Modus
+                        </label>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div class="score-teams-wrapper" style="margin-bottom: 0;">
