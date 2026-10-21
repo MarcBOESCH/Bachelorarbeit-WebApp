@@ -16,6 +16,10 @@ test('score toggles stack, and rematch appears beside new game in all modes', ()
     assert.match(template, /id="reset-btn"/);
     assert.match(template, /id="confirm-game-action-message"/);
     assert.match(template, /id="team-name-input-a"/);
+    assert.match(template, /class="team-name-trigger" id="team-name-a"/);
+    assert.match(template, /class="team-name-trigger" id="team-name-b"/);
+    assert.doesNotMatch(template, /bi-pencil|bi-arrow-repeat|team-name-edit-btn/);
+    assert.match(styles, /\\.team-name-trigger:focus-visible/);
     assert.match(template, /id="team-name-input-b"/);
     assert.match(template, /data-team="A"/);
     assert.match(template, /data-team="B"/);
@@ -54,8 +58,9 @@ function uiFixture() {
     const editors = ['A','B'].map(team=>{
         const editor = makeElement('editor-'+team);
         editor.dataset.team=team;
-        editor.button=makeElement('edit-'+team);
-        editor.querySelector=()=>editor.button;
+        const label = nodes[`team-name-${team.toLowerCase()}`];
+        label.parentElement = makeElement('heading-'+team);
+        label.parentElement.classList.remove('d-none');
         return editor;
     });
     const document = {
@@ -124,19 +129,44 @@ test('finished match rematches immediately, new game goes to mode selection', as
     assert.equal(second.window.location.href,'/home');
 });
 
-test('clicking pencil and Enter persists Quickplay name in the current session', async () => {
+test('clicking team name and Enter persists Quickplay name in the current session', async () => {
     const f=uiFixture();
     vm.runInContext('initEditableTeamNames()',f.ctx);
     const name=f.nodes['team-name-a'],input=f.nodes['team-name-input-a'];
-    f.editors[0].button.fire('click');
+    name.fire('click');
     assert.equal(input.value,'Team A');
     assert.equal(input.focused,true);
-    assert.equal(name.classList.contains('d-none'),true);
+    assert.equal(name.parentElement.classList.contains('d-none'),true);
     input.value='Meine Freunde';
     input.fire('keydown',{key:'Enter'});
     await Promise.resolve();
     await Promise.resolve();
     assert.deepEqual(f.calls[0],{action:'rename_team',team:'A',name:'Meine Freunde'});
     assert.equal(name.textContent,'Meine Freunde');
-    assert.equal(name.classList.contains('d-none'),false);
+    assert.equal(name.parentElement.classList.contains('d-none'),false);
+});
+
+test('Escape cancels name change and restores the clickable title', () => {
+    const f = uiFixture();
+    vm.runInContext('initEditableTeamNames()', f.ctx);
+    const label = f.nodes['team-name-b'];
+    const input = f.nodes['team-name-input-b'];
+    label.fire('click');
+    input.value = 'Nicht speichern';
+    input.fire('keydown', {key:'Escape'});
+    assert.equal(f.calls.length, 0);
+    assert.equal(label.parentElement.classList.contains('d-none'), false);
+    assert.equal(input.classList.contains('d-none'), true);
+    assert.equal(input.value, 'Team B');
+    assert.equal(label.focused, true);
+});
+
+test('finished free-game name is not editable when the trigger is disabled', () => {
+    const f = uiFixture();
+    vm.runInContext('initEditableTeamNames()', f.ctx);
+    const label = f.nodes['team-name-a'];
+    label.disabled = true;
+    label.fire('click');
+    assert.equal(f.nodes['team-name-input-a'].classList.contains('d-none'), true);
+    assert.equal(f.calls.length, 0);
 });

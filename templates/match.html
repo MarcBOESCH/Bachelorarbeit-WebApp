@@ -45,12 +45,9 @@
                         <div class="score-team-header score-team-header-top mb-0">
                             {% if game.get('mode') in ['quickplay', 'six_player'] %}
                             <div class="team-name-editor" data-team="A">
-                                <h2 class="mb-0" id="team-name-a">{{ game.team_name_a }}</h2>
-                                <button type="button" class="btn team-name-edit-btn" data-team="A"
-                                        aria-label="Team A umbenennen" title="Teamnamen ändern"
-                                        {% if game.match_saved or game.winner %}disabled{% endif %}>
-                                    <i class="bi bi-pencil" aria-hidden="true"></i>
-                                </button>
+                                <h2 class="mb-0"><button type="button" class="team-name-trigger" id="team-name-a"
+                                        aria-label="Team A umbenennen" title="Zum Umbenennen antippen"
+                                        {% if game.match_saved or game.winner %}disabled{% endif %}>{{ game.team_name_a }}</button></h2>
                                 <input type="text" id="team-name-input-a" class="form-control team-name-input d-none"
                                        maxlength="40" aria-label="Neuer Name für Team A"
                                        value="{{ game.team_name_a }}" autocomplete="off">
@@ -77,12 +74,9 @@
                         <div class="score-team-header score-team-header-top mb-0">
                             {% if game.get('mode') in ['quickplay', 'six_player'] %}
                             <div class="team-name-editor" data-team="B">
-                                <h2 class="mb-0" id="team-name-b">{{ game.team_name_b }}</h2>
-                                <button type="button" class="btn team-name-edit-btn" data-team="B"
-                                        aria-label="Team B umbenennen" title="Teamnamen ändern"
-                                        {% if game.match_saved or game.winner %}disabled{% endif %}>
-                                    <i class="bi bi-pencil" aria-hidden="true"></i>
-                                </button>
+                                <h2 class="mb-0"><button type="button" class="team-name-trigger" id="team-name-b"
+                                        aria-label="Team B umbenennen" title="Zum Umbenennen antippen"
+                                        {% if game.match_saved or game.winner %}disabled{% endif %}>{{ game.team_name_b }}</button></h2>
                                 <input type="text" id="team-name-input-b" class="form-control team-name-input d-none"
                                        maxlength="40" aria-label="Neuer Name für Team B"
                                        value="{{ game.team_name_b }}" autocomplete="off">
@@ -250,7 +244,7 @@
 
             <div class="match-summary-actions mt-2">
                 <button id="rematch-btn" type="button" class="btn btn-outline-success fw-semibold">
-                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Rematch
+                    Rematch
                 </button>
                 <button id="reset-btn" type="button" class="btn btn-dark fw-semibold">
                     Neues Spiel

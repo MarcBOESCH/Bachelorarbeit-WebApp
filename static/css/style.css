@@ -836,27 +836,45 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
     width: 100%;
     min-width: 0;
 }
 
 .team-name-editor h2 {
+    width: 100%;
+    min-width: 0;
+}
+
+.team-name-trigger {
+    display: inline-block;
     width: auto;
-    max-width: calc(100% - 38px);
-}
-
-.team-name-edit-btn {
-    flex: 0 0 auto;
-    padding: 6px;
-    line-height: 1;
+    max-width: 100%;
+    padding: 0;
     border: 0;
-    color: var(--color-brand);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: center;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    touch-action: manipulation;
 }
 
-.team-name-edit-btn:hover:not(:disabled) {
-    color: var(--color-brand-dark);
-    background: var(--color-brand-soft);
+.team-name-trigger:hover:not(:disabled) {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 4px;
+}
+
+.team-name-trigger:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 4px;
+    border-radius: 3px;
+}
+
+.team-name-trigger:disabled {
+    cursor: default;
 }
 
 .team-name-input {

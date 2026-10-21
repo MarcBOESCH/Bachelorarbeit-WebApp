@@ -384,6 +384,8 @@ def test_rename_and_rematch_controls_present_only_where_expected(client):
         html = client.get("/match").data.decode("utf-8")
         assert 'id="rematch-btn"' in html and 'id="reset-btn"' in html
         assert 'id="team-name-a"' in html and 'id="team-name-b"' in html
+        assert html.count('class="team-name-trigger"') == 2
+        assert 'bi-pencil' not in html and 'bi-arrow-repeat' not in html
         assert 'id="team-name-input-a"' in html and 'id="team-name-input-b"' in html
         assert 'id="quickplay-420-toggle"' in html
         css = open("static/css/style.css", encoding="utf-8").read()

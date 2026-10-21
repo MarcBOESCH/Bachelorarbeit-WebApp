@@ -165,7 +165,7 @@ function setMatchInputsDisabled(disabled) {
         undoBtn.disabled = disabled;
     }
 
-    document.querySelectorAll(".team-name-edit-btn").forEach(button => {
+    document.querySelectorAll(".team-name-trigger").forEach(button => {
         button.disabled = disabled;
     });
 
@@ -468,21 +468,18 @@ function initEditableTeamNames() {
         const side = team.toLowerCase();
         const label = document.getElementById(`team-name-${side}`);
         const input = document.getElementById(`team-name-input-${side}`);
-        const button = editor.querySelector(".team-name-edit-btn");
-        if (!label || !input || !button) return;
+        if (!label || !input) return;
 
         let saving = false;
         function closeEditor() {
             input.classList.add("d-none");
-            label.classList.remove("d-none");
-            button.classList.remove("d-none");
+            label.parentElement.classList.remove("d-none");
         }
 
-        button.addEventListener("click", () => {
-            if (button.disabled) return;
+        label.addEventListener("click", () => {
+            if (label.disabled) return;
             input.value = label.textContent;
-            label.classList.add("d-none");
-            button.classList.add("d-none");
+            label.parentElement.classList.add("d-none");
             input.classList.remove("d-none");
             input.focus();
             input.select();
@@ -524,7 +521,7 @@ function initEditableTeamNames() {
             } else if (event.key === "Escape") {
                 input.value = label.textContent;
                 closeEditor();
-                button.focus();
+                label.focus();
             }
         });
         input.addEventListener("blur", () => { void saveName(); });
