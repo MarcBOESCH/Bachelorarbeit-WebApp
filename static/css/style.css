@@ -1484,7 +1484,7 @@ canvas {
     justify-content: center;
     align-items: center;
     gap: 9px;
-    margin: 18px auto 0;
+    margin: 18px auto;
 }
 
 .mode-carousel-dot {
