@@ -6,7 +6,7 @@
     <section class="page-header">
         <h1>{% if game.get('mode') == 'quickplay' %}Quickplay{% elif game.get('mode') == 'six_player' %}6er-Kreuzjass{% else %}Ranglistenspiel{% endif %}</h1>
         {% if game.get('mode') in ['quickplay', 'six_player'] %}
-            <p>Freies Spiel · keine Speicherung in der Rangliste{% if game.get('mode') == 'quickplay' %} · für 2 vs 2, 3 vs 3 oder andere Teamgrößen{% endif %}</p>
+            <p>Freies Spiel · keine Speicherung in der Rangliste</p>
         {% endif %}
     </section>
 
