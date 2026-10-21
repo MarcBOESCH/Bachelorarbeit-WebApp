@@ -9,6 +9,8 @@ from services.game_service import (
     get_game_state,
     has_active_match,
     lock_saved_match,
+    rematch_game,
+    rename_free_team,
     reset_game,
     start_new_game,
     undo_last_action,
@@ -173,6 +175,29 @@ def action_route():
 
     if not has_active_match(game):
         return jsonify({"error": "Es ist aktuell kein aktives Match gestartet."}), 400
+
+    if action == "rematch":
+        # A victory must be finalized before resetting; otherwise a failed
+        # network/database save could silently erase an unrecorded rated match.
+        if game.get("winner") and not game.get("match_saved"):
+            return jsonify({"error": "Das abgeschlossene Match muss zuerst gespeichert werden."}), 409
+
+        if game.get("mode", "ranked") == "ranked":
+            _, _, error, status = validate_selected_teams(
+                game.get("team_a_id"), game.get("team_b_id")
+            )
+            if error is not None:
+                return error, status
+
+        new_game = rematch_game(game)
+        return jsonify({"redirect_url": url_for("matches.match_page"),
+                        "game": new_game}), 200
+
+    if action == "rename_team":
+        success, error = rename_free_team(game, team, data.get("name"))
+        if not success:
+            return jsonify({"error": error}), 400
+        return jsonify(game), 200
 
     if action == "set_four_twenty_mode":
         # 420 mode can be enabled on the scoring page before points are entered.

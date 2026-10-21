@@ -1,3 +1,4 @@
+from copy import deepcopy
 from flask import session
 from extensions import db
 from models.team import Team
@@ -153,6 +154,47 @@ def start_free_game(mode, team_name_a, team_name_b, player_names_a, player_names
     ]
     save_game_state(game)
     return game
+
+
+def rematch_game(previous):
+    """Start a fresh round with the same teams, players and game settings.
+
+    No Match, Player, Team or Rating records are created or changed.
+    """
+    if not has_active_match(previous):
+        raise ValueError("Es ist kein Match für eine Revanche vorhanden.")
+
+    game = create_new_game_state()
+    game["mode"] = previous.get("mode", "ranked")
+    for field in ("team_name_a", "team_name_b", "team_a_id", "team_b_id",
+                  "four_twenty_mode", "max_points"):
+        if field in previous:
+            game[field] = previous[field]
+    game["players"] = deepcopy(previous.get("players", []))
+    save_game_state(game)
+    return game
+
+
+def rename_free_team(game, team, name):
+    """Change a display name only inside an unfinished free-play session."""
+    if game.get("mode") not in {"quickplay", "six_player"}:
+        return False, "Teamnamen von Ranglistenspielen können nicht geändert werden."
+    if game.get("match_saved") or game.get("winner"):
+        return False, "Ein beendetes Spiel kann nicht umbenannt werden."
+    if team not in VALID_TEAMS or not isinstance(name, str):
+        return False, "Ungültiger Teamname."
+
+    cleaned = name.strip()
+    if not cleaned or len(cleaned) > 40:
+        return False, "Bitte einen Teamnamen mit 1 bis 40 Zeichen eingeben."
+
+    other_team = "B" if team == "A" else "A"
+    if cleaned.casefold() == game[f"team_name_{other_team.lower()}"].casefold():
+        return False, "Die beiden Teams benötigen unterschiedliche Namen."
+
+    game[f"team_name_{team.lower()}"] = cleaned
+    save_game_state(game)
+    return True, None
 
 
 def has_active_match(game):
