@@ -1339,14 +1339,13 @@ canvas {
     border: 2px solid transparent;
     border-radius: var(--radius-lg);
     background: #173b39;
-    box-shadow: 0 8px 20px rgba(15, 32, 28, .1);
     cursor: pointer;
     scroll-snap-align: center;
     scroll-snap-stop: always;
     transform: scale(.97);
     opacity: .78;
     transition: transform 180ms ease, opacity 180ms ease,
-        border-color 180ms ease, box-shadow 180ms ease;
+        border-color 180ms ease;
 }
 
 .mode-carousel-card:hover { opacity: .9; }
@@ -1355,7 +1354,6 @@ canvas {
     border-color: #e6c26a;
     transform: scale(1);
     opacity: 1;
-    box-shadow: 0 12px 28px rgba(15, 61, 44, .19);
 }
 
 .mode-card-art {

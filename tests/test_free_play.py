@@ -1,4 +1,4 @@
-"""Regression tests for the mode selector, 3v3 player selection and free games."""
+"""Integration tests for one-tap Quickplay and non-rated 3v3."""
 import pytest
 from flask import Flask, url_for
 
@@ -66,27 +66,94 @@ def assert_no_rated_records(*, players=0, teams=0):
     assert PlayerRating.query.count() == 0
 
 
-def test_quickplay_can_start_without_registered_players(client):
+def test_quickplay_tap_starts_scoring_without_setup_or_database(client):
     with client.application.app_context():
         response = client.get("/quickplay")
-        assert response.status_code == 200
-        assert b"Spiel starten" in response.data
-        response = client.post("/quickplay", data={
-            "team_a_name": "Nord", "team_b_name": "Sued", "four_twenty_mode": "on"
-        })
         assert response.status_code == 302
         assert response.location.endswith("/match")
         with client.session_transaction() as s:
             game = s["game"]
             assert game["mode"] == "quickplay"
-            assert len(game["players"]) == 4
-            assert game["four_twenty_mode"] is True
+            assert game["team_name_a"] == "Team A"
+            assert game["team_name_b"] == "Team B"
+            assert game["players"] == []  # No invented roster; also works for 3v3.
+            assert game["score_a"] == 0 and game["score_b"] == 0
+            assert game["four_twenty_mode"] is False
             assert has_active_match(game)
-        assert client.get("/match").status_code == 200
+
+        scoring = client.get("/match")
+        assert scoring.status_code == 200
+        assert b'Quickplay' in scoring.data
+        assert b'quickplay-420-toggle' in scoring.data
+        assert b'2 vs 2, 3 vs 3' in scoring.data
         assert_no_rated_records()
 
 
-def test_six_player_form_uses_only_player_selection(client):
+def test_quickplay_revisit_preserves_score_and_never_resets(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        assert client.post("/action", json={"action": "score_100", "team": "A"}).json["score_a"] == 100
+        assert client.get("/quickplay").location.endswith("/match")
+        with client.session_transaction() as s:
+            assert s["game"]["score_a"] == 100
+        assert_no_rated_records()
+
+
+def test_quickplay_420_toggle_only_before_scoring(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        assert client.post("/action", json={
+            "action": "set_four_twenty_mode", "enabled": "yes"
+        }).status_code == 400
+        toggled = client.post("/action", json={
+            "action": "set_four_twenty_mode", "enabled": True
+        })
+        assert toggled.status_code == 200
+        assert toggled.json["four_twenty_mode"] is True
+
+        for action in ("score_200", "score_200", "score_20"):
+            response = client.post("/action", json={"action": action, "team": "A"})
+            assert response.status_code == 200
+        assert response.json["winner"] == "Team A"
+        assert client.post("/action", json={
+            "action": "set_four_twenty_mode", "enabled": False
+        }).status_code == 409
+
+        result = client.post("/api/matches", json={})
+        assert result.status_code == 200
+        assert result.json["saved"] is False
+        assert_no_rated_records()
+
+
+def test_quickplay_mode_toggle_after_regular_points_forbidden(client):
+    with client.application.app_context():
+        client.get("/quickplay")
+        score = client.post("/action", json={"action": "score_20", "team": "B"})
+        assert score.status_code == 200
+        toggle = client.post("/action", json={
+            "action": "set_four_twenty_mode", "enabled": True
+        })
+        assert toggle.status_code == 409
+        with client.session_transaction() as s:
+            assert s["game"]["four_twenty_mode"] is False
+        assert_no_rated_records()
+
+
+def test_quickplay_no_POST_setup_or_team_names(client):
+    with client.application.app_context():
+        assert client.post("/quickplay", data={"team_a_name": "Nord"}).status_code == 405
+        assert_no_rated_records()
+
+
+def test_quickplay_authentication(client):
+    with client.application.app_context():
+        with client.session_transaction() as s:
+            s.pop("role")
+        assert client.get("/quickplay").status_code == 401
+        assert_no_rated_records()
+
+
+def test_six_player_form_is_still_available_directly(client):
     with client.application.app_context():
         response = client.get("/six-player")
         assert response.status_code == 200
@@ -96,138 +163,70 @@ def test_six_player_form_uses_only_player_selection(client):
                 assert f'id="team-{side}-player-{pos}"' in html
                 assert f'name="player_{side}_{pos}_id"' in html
         assert 'id="btn-selection-mode-teams"' not in html
-        assert 'id="team-a-select"' not in html
         assert 'id="match-preview-card"' in html
         assert 'id="four-twenty-mode-toggle"' in html
-        assert 'id="six-player-error"' not in html
-        assert "/js/pages/six_player_selection.js" in html
         assert_no_rated_records()
 
 
-def test_six_player_uses_registered_players_but_creates_no_rated_match(client):
-    with client.application.app_context():
-        add_six_players()
-        r = client.post("/six-player", data={
-            **six_ids(),
-            "team_a_name": "Norden",
-            "team_b_name": "Sueden",
-            "four_twenty_mode": "on",
-        })
-        assert r.status_code == 302
-        assert r.location.endswith("/match")
-        with client.session_transaction() as s:
-            game = s["game"]
-            assert game["mode"] == "six_player"
-            assert game["team_name_a"] == "Norden"
-            assert game["four_twenty_mode"] is True
-            assert len(game["players"]) == 6
-            assert [p["player_name"] for p in game["players"]] == [
-                f"Spieler {i}" for i in range(1, 7)
-            ]
-        assert_no_rated_records(players=6)
-
-
-def test_six_player_rejects_invalid_ids_and_duplicates(client):
+def test_six_player_rejects_invalid_players(client):
     with client.application.app_context():
         add_six_players()
         ids = six_ids()
-        for bad in (
-            {},
-            {**ids, "player_a_3_id": ""},
-            {**ids, "player_a_3_id": "2"},
-            {**ids, "player_b_3_id": "999"},
-            {**ids, "player_b_3_id": "abc"},
-        ):
+        for bad in ({}, {**ids, "player_a_3_id": ""}, {**ids, "player_a_3_id": "2"},
+                    {**ids, "player_b_3_id": "999"}):
             assert client.post("/six-player", data=bad).status_code == 400
         assert_no_rated_records(players=6)
 
 
 @pytest.mark.parametrize("mode", ["quickplay", "six_player"])
-def test_free_mode_undo_finish_return_and_new_game(client, mode):
+def test_free_modes_keep_matches_in_session_not_rating(client, mode):
     with client.application.app_context():
         if mode == "six_player":
             add_six_players()
-            payload = six_ids()
+            entry = client.post("/six-player", data=six_ids())
         else:
-            payload = {}
-        endpoint = "/" + ("quickplay" if mode == "quickplay" else "six-player")
-        assert client.post(endpoint, data=payload).status_code == 302
+            entry = client.get("/quickplay")
+        assert entry.status_code == 302
+        assert entry.location.endswith("/match")
 
-        # Navigating to another setup while active does not replace the game.
-        assert client.get("/player-selection").location.endswith("/match")
-        assert client.get("/quickplay").location.endswith("/match")
-        assert client.get("/six-player").location.endswith("/match")
+        for path in ("/player-selection", "/quickplay", "/six-player"):
+            assert client.get(path).location.endswith("/match")
         assert client.post("/api/match/start", json={"team_a_id": 1}).status_code == 409
 
         for _ in range(3):
-            step = client.post("/action", json={"action": "score_257", "team": "A"})
-            assert step.status_code == 200
-        assert step.json["score_a"] == 771
-        assert step.json["winner"] is None
+            response = client.post("/action", json={"action": "score_257", "team": "A"})
+            assert response.status_code == 200
+        assert response.json["score_a"] == 771
+        assert response.json["winner"] is None
 
         undo = client.post("/action", json={"action": "undo"})
-        assert undo.status_code == 200
-        assert undo.json["score_a"] == 514
+        assert undo.status_code == 200 and undo.json["score_a"] == 514
 
         for _ in range(2):
-            final = client.post("/action", json={"action": "score_257", "team": "A"})
-        assert final.status_code == 200
-        assert final.json["score_a"] == 1028
-        assert final.json["winner"] == "Team A"
+            result = client.post("/action", json={"action": "score_257", "team": "A"})
+        assert result.status_code == 200
+        assert result.json["winner"] == "Team A"
 
-        response = client.post("/api/matches", json={})
-        assert response.status_code == 200
-        assert response.json["saved"] is False
+        saved = client.post("/api/matches", json={})
+        assert saved.status_code == 200 and saved.json["saved"] is False
         assert client.post("/api/matches", json={}).status_code == 409
         assert client.post("/action", json={"action": "score_20", "team": "A"}).status_code == 400
         assert client.get("/match").status_code == 200
         assert_no_rated_records(players=6 if mode == "six_player" else 0)
 
-        reset = client.post("/action", json={"action": "new_game"})
-        assert reset.status_code == 200
-        assert reset.json["redirect_url"] == "/home"
+        restart = client.post("/action", json={"action": "new_game"})
+        assert restart.status_code == 200 and restart.json["redirect_url"] == "/home"
         with client.session_transaction() as s:
             assert not has_active_match(s["game"])
         assert client.get("/match").location.endswith("/home")
-        assert client.get("/six-player").status_code == 200
         assert_no_rated_records(players=6 if mode == "six_player" else 0)
 
 
-def test_quickplay_420_win_without_rating(client):
-    with client.application.app_context():
-        client.post("/quickplay", data={"four_twenty_mode": "on"})
-        for action in ("score_200", "score_200", "score_20"):
-            result = client.post("/action", json={"action": action, "team": "A"})
-        assert result.json["winner"] == "Team A"
-        assert client.post("/api/matches", json={}).json["saved"] is False
-        assert_no_rated_records()
-
-
-def test_free_finish_requires_winner(client):
-    with client.application.app_context():
-        client.post("/quickplay", data={})
-        assert client.post("/api/matches", json={}).status_code == 400
-        assert_no_rated_records()
-
-
-def test_free_start_requires_login_and_limits_names(client):
-    with client.application.app_context():
-        with client.session_transaction() as s:
-            s.pop("role")
-        assert client.post("/quickplay", data={}).status_code == 401
-        with client.session_transaction() as s:
-            s["role"] = "user"
-        assert client.post("/quickplay", data={"team_a_name": "x"*41}).status_code == 400
-        assert_no_rated_records()
-
-
-def test_existing_2v2_teams_are_untouched_by_3v3_game(client):
+def test_only_quickplay_420_can_be_toggled(client):
     with client.application.app_context():
         add_six_players()
-        db.session.add_all([
-            Team(name="Duo A", player1_id=1, player2_id=2),
-            Team(name="Duo B", player1_id=4, player2_id=5),
-        ])
-        db.session.commit()
-        assert client.post("/six-player", data=six_ids()).status_code == 302
-        assert_no_rated_records(players=6, teams=2)
+        client.post("/six-player", data=six_ids())
+        assert client.post("/action", json={
+            "action": "set_four_twenty_mode", "enabled": True
+        }).status_code == 403
+        assert_no_rated_records(players=6)

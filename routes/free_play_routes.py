@@ -50,13 +50,7 @@ def setup_free_game(mode, player_count):
             names_a = [registered[player_id].name for player_id in selected_ids[:3]]
             names_b = [registered[player_id].name for player_id in selected_ids[3:]]
         else:
-            # Quickplay remains open to guests and needs no registered players.
-            names_a = [
-                cleaned(f"player_a_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
-            ]
-            names_b = [
-                cleaned(f"player_b_{i}", f"Spieler {i}") for i in range(1, player_count + 1)
-            ]
+            abort(400, "Unbekannter Spielmodus.")
 
         start_free_game(
             mode=mode,
@@ -68,14 +62,28 @@ def setup_free_game(mode, player_count):
         )
         return redirect(url_for("matches.match_page"))
 
-    if mode == "six_player":
-        return render_template("six_player_selection.html")
-    return render_template("free_play_setup.html", mode=mode, player_count=player_count)
+    return render_template("six_player_selection.html")
 
 
-@free_play_bp.route("/quickplay", methods=["GET", "POST"])
+@free_play_bp.route("/quickplay", methods=["GET"])
 def quickplay_page():
-    return setup_free_game("quickplay", 2)
+    """Enter scorekeeping immediately, with no roster or team setup."""
+    if "role" not in session:
+        abort(401)
+
+    if has_active_match(get_game_state()):
+        return redirect(url_for("matches.match_page"))
+
+    # No saved player/team records. Scores work for 2v2, 3v3, or any
+    # two-team game because Quickplay doesn't require a roster.
+    start_free_game(
+        mode="quickplay",
+        team_name_a="Team A",
+        team_name_b="Team B",
+        player_names_a=[],
+        player_names_b=[],
+    )
+    return redirect(url_for("matches.match_page"))
 
 
 @free_play_bp.route("/six-player", methods=["GET", "POST"])

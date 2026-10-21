@@ -174,6 +174,21 @@ def action_route():
     if not has_active_match(game):
         return jsonify({"error": "Es ist aktuell kein aktives Match gestartet."}), 400
 
+    if action == "set_four_twenty_mode":
+        # 420 mode can be enabled on the scoring page before points are entered.
+        # Rated matches keep their selection-time rule, and completed games lock it.
+        if game.get("mode") != "quickplay":
+            return jsonify({"error": "420-Modus kann nur im Quickplay geändert werden."}), 403
+        if game.get("match_saved") or game["history"] or game["score_a"] or game["score_b"]:
+            return jsonify({"error": "420-Modus kann nur vor der ersten Punkteingabe geändert werden."}), 409
+        enabled = data.get("enabled")
+        if not isinstance(enabled, bool):
+            return jsonify({"error": "Ungültiger Wert für den 420-Modus."}), 400
+        game["four_twenty_mode"] = enabled
+        from services.game_service import save_game_state
+        save_game_state(game)
+        return jsonify(game), 200
+
     if action == "undo":
         success, error = undo_last_action(game)
         if not success:

@@ -285,3 +285,17 @@ beliebige Spielmodus-Card öffnet den entsprechenden Modus sofort.
 Horizontalbewegungen beim Wischen werden als Navigation erkannt und
 lösen keinen versehentlichen Direktstart aus. Der Weiter-Button
 bleibt als Alternative für Tastatur und andere Eingabegeräte erhalten.
+
+
+### Quickplay ohne Zwischenansicht
+
+Der Quickplay-Einstieg führt sofort zur Punkteerfassung `/match`; keine
+Team- oder Spielernamen müssen eingegeben werden. Team A und Team B
+werden lokal in der Session verwaltet. Auch ein 3-vs.-3-Spiel lässt sich
+so ohne angelegte Spieler mitschreiben, weil nur Teamstände erfasst
+werden. Quickplay bleibt ohne Matchhistorie und Rating. Der bisherige
+420-Modus kann vor dem ersten Punkt auf der Punkteseite eingeschaltet
+werden; nach Spielbeginn ist der Schalter gesperrt. Die gesonderte
+3-vs.-3-Card ist aus der Startseite ausgeblendet, die 6er-Route bleibt
+für eine spätere Freischaltung bestehen. Schatten von den Moduskarten
+und der aktiven Card entfernt.
