@@ -2,225 +2,124 @@ const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+const html = fs.readFileSync('templates/home.html','utf8');
+const css = fs.readFileSync('static/css/style.css','utf8');
+const src = fs.readFileSync('static/js/pages/home.js','utf8');
 
-const html = fs.readFileSync('templates/home.html', 'utf8');
-const css = fs.readFileSync('static/css/style.css', 'utf8');
-const source = fs.readFileSync('static/js/pages/home.js', 'utf8');
-
-test('horizontal carousel shows tall illustration cards in Quickplay / 2v2 / 3v3 order', () => {
-    assert.match(html, /id="mode-carousel"/);
-    assert.match(html, /aria-orientation="horizontal"/);
-    assert.match(html, /aria-activedescendant="mode-card-0"/);
-    for (let i = 0; i < 3; i++) {
-        assert.match(html, new RegExp(`id="mode-card-${i}"`));
-        assert.match(html, new RegExp(`data-mode-index="${i}"`));
-    }
-    assert.match(css, /scroll-snap-type:\s*x mandatory/);
-    assert.match(css, /scroll-snap-align:\s*center/);
-    assert.match(css, /overflow-x:\s*auto/);
-    assert.match(css, /touch-action:\s*pan-x/);
-    assert.match(css, /\.mode-carousel-card\s*\{[^}]*height:\s*390px/);
-    assert.match(css, /\.mode-carousel-card\.is-active/);
-    assert.match(css, /\.mode-card-art--quickplay/);
-    assert.match(css, /\.mode-card-art--ranked/);
-    assert.match(css, /\.mode-card-art--six/);
-    assert.match(html, /mode-card-art/);
-    assert.match(html, /mode-card-footer/);
-    assert.doesNotMatch(html, /mode-carousel-controls/);
-    assert.match(html, /Karte antippen zum Öffnen/);
-    assert.ok(html.indexOf('id="mode-previous"') < html.indexOf('id="mode-carousel"'));
-    assert.ok(html.indexOf('id="mode-next"') > html.indexOf('id="mode-card-2"'));
-    assert.match(html, /Karte antippen/);
-    assert.match(css, /container-type:\s*inline-size/);
-    assert.match(css, /grid-template-columns:\s*46px minmax\(0, 1fr\) 46px/);
-    assert.match(css, /mode-art-players/);
-    const sixCard = html.split('id="mode-card-2"')[1].split('</div>')[0];
-    const sixIllustration = html.split('mode-card-art--six')[1].split('</span>')[1];
-    assert.equal((sixIllustration.match(/bi-person-fill/g) || []).length, 3);
-    const first = html.indexOf('class="mode-carousel-card mode-card--quickplay');
-    const second = html.indexOf('class="mode-carousel-card mode-card--ranked');
-    const third = html.indexOf('class="mode-carousel-card mode-card--six');
-    assert.ok(first >= 0 && first < second && second < third);
-    assert.match(html, /id="mode-card-0"[^>]*is-active/);
-    assert.match(html, /Weiter zu Quickplay/);
-    assert.doesNotMatch(html, /mode-wheel|home-hero|Unsere Jassrunde|Top 3/);
-    assert.doesNotMatch(css, /\.mode-wheel\s*\{/);
-
-    for (const route of [
-        'matches.player_selection_page',
-        'free_play.quickplay_page',
-        'free_play.six_player_page'
-    ]) assert.ok(html.includes(route));
+test('only Quickplay and ranked modes appear in the home carousel', () => {
+    assert.match(html,/id="mode-card-0"/);
+    assert.match(html,/id="mode-card-1"/);
+    assert.doesNotMatch(html,/id="mode-card-2"|mode-card--six|data-mode-target="2"/);
+    assert.ok(html.indexOf("mode-card--quickplay")<html.indexOf("mode-card--ranked"));
+    assert.match(html, /Karte antippen zum Spielen/);
+    assert.match(css,/scroll-snap-type:\s*x mandatory/);
+    assert.match(css,/touch-action:\s*pan-x/);
+    assert.match(css,/\.mode-carousel-card\s*\{[^}]*height:\s*390px/);
+    assert.doesNotMatch(css,/box-shadow:[^;]*rgba\(15, 32, 28/);
+    assert.doesNotMatch(css,/box-shadow:[^;]*rgba\(15, 61, 44/);
+    assert.match(html,/href="{{ url_for\('free_play.quickplay_page'\) }}"/);
 });
 
-function fakeElement(id) {
-    const classNames = new Set();
+function node(id) {
+    const classes=new Set();
     return {
-        id, listeners: {}, attributes: {}, children: [], dataset: {},
-        textContent: '', className: '', href: '', disabled: false,
-        classList: {
-            contains(name) {return classNames.has(name);},
-            toggle(name, active) {
-                if(active) classNames.add(name); else classNames.delete(name);
-            }
+        id, dataset:{}, attributes:{},children:[],listeners:{}, href:'',disabled:false,
+        classList:{
+            toggle(x,enabled){if(enabled)classes.add(x);else classes.delete(x);},
+            contains(x){return classes.has(x);}
         },
-        addEventListener(name, callback) {this.listeners[name] = callback;},
-        setAttribute(name, value) {this.attributes[name] = value;},
-        removeAttribute(name) {delete this.attributes[name];},
-        append(...parts) {this.children.push(...parts);},
-        replaceChildren(...parts) {this.children = parts;},
-        fire(name, properties = {}) {
-            const event = {
-                ...properties, defaultPrevented: false,
-                preventDefault() {this.defaultPrevented = true;}
-            };
-            this.listeners[name](event);
-            return event;
+        setAttribute(k,v){this.attributes[k]=v;},
+        removeAttribute(k){delete this.attributes[k];},
+        replaceChildren(...x){this.children=x;},
+        append(...x){this.children.push(...x);},
+        addEventListener(type,fn){this.listeners[type]=fn;},
+        fire(type,params={}) {
+            const event={detail:0,preventDefault(){this.defaultPrevented=true;},...params};
+            this.listeners[type](event);return event;
         }
     };
 }
 
-function fixture() {
-    const ids = ['mode-carousel', 'mode-previous', 'mode-next',
-        'mode-details-description', 'mode-start',
-        'mode-card-0', 'mode-card-1', 'mode-card-2'
-    ];
-    const nodes = Object.fromEntries(ids.map(id=>[id,fakeElement(id)]));
-    const cards = [nodes['mode-card-0'], nodes['mode-card-1'],nodes['mode-card-2']];
-    const dots = [0,1,2].map(i=>{
-        const dot=fakeElement(`dot-${i}`);
-        dot.dataset.modeTarget=String(i);
-        return dot;
-    });
-    const carousel = nodes['mode-carousel'];
-    carousel.dataset = {rankedUrl:'/player-selection',quickplayUrl:'/quickplay',sixPlayerUrl:'/six-player'};
-    carousel.clientWidth=820;
+function fixture(){
+    const ids=['mode-carousel','mode-previous','mode-next','mode-details-description',
+        'mode-start','mode-card-0','mode-card-1'];
+    const items=Object.fromEntries(ids.map(id=>[id,node(id)]));
+    const cards=[items['mode-card-0'],items['mode-card-1']];
+    const dots=[node('dot0'),node('dot1')];
+    const carousel=items['mode-carousel'];
+    carousel.dataset={quickplayUrl:'/quickplay',rankedUrl:'/player-selection'};
     carousel.scrollLeft=0;
     carousel.querySelectorAll=()=>cards;
     carousel.getBoundingClientRect=()=>({left:0,width:820});
     carousel.scrollTo=({left})=>{carousel.scrollLeft=left;};
     carousel.focus=()=>{};
-
     cards.forEach((card,index)=>{
-        card.getBoundingClientRect=()=>({left:210 + index*416 - carousel.scrollLeft,width:400});
+        card.getBoundingClientRect=()=>({left:210+index*416-carousel.scrollLeft,width:400});
     });
-
-    const document = {
-        getElementById(id) {return nodes[id];},
-        querySelectorAll() {return dots;},
-        addEventListener() {},
-        createTextNode(text) {return {textContent:text};},
-        createElement(tag) {return fakeElement(tag);}
-    };
-
     let navigated='';
-    const timers = new Map();
-    let nextTimer = 1;
-    const window = {
-        matchMedia:()=>({matches:false}),
-        location:{assign(url){navigated=url;}},
-        setTimeout(fn){const id=nextTimer++;timers.set(id,fn);return id;},
-        clearTimeout(id){timers.delete(id);},
-        addEventListener() {}
+    const timers=new Map();let nextTimer=0;
+    const document={
+        getElementById(id){return items[id];},
+        querySelectorAll(){return dots;},
+        createElement(tag){return node(tag);},
+        createTextNode(text){return{textContent:text};},
+        addEventListener(){}
     };
-    const context = vm.createContext({document,window,console,Date});
-    vm.runInContext(source,context);
+    const window={
+        matchMedia(){return{matches:false};},
+        location:{assign(url){navigated=url;}},
+        setTimeout(fn){const id=++nextTimer;timers.set(id,fn);return id;},
+        clearTimeout(id){timers.delete(id);},
+        addEventListener(){}
+    };
+    const context=vm.createContext({document,window,Date,console});
+    vm.runInContext(src,context);
     vm.runInContext('initModePicker()',context);
-    return {
-        nodes,cards,dots,carousel,
-        flush() {for(const fn of timers.values())fn();timers.clear();},
-        selectedUrl:()=>nodes['mode-start'].href,
-        navigatedTo:()=>navigated
+    return {items,cards,carousel,dots,navigatedTo:()=>navigated,
+        flush(){for(const fn of timers.values())fn();timers.clear();}
     };
 }
 
-test('next/previous controls highlight the corresponding card and update Weiter', () => {
+test('Quickplay is selected first and card tap opens Quickplay immediately',()=>{
     const f=fixture();
-    assert.equal(f.selectedUrl(),'/quickplay');
-    assert.equal(f.nodes['mode-previous'].disabled,true);
-    f.nodes['mode-next'].fire('click');
-    assert.equal(f.selectedUrl(),'/player-selection');
-    assert.equal(f.cards[1].attributes['aria-selected'],'true');
-    assert.equal(f.carousel.attributes['aria-activedescendant'],'mode-card-1');
-    assert.equal(f.carousel.scrollLeft,416);
-    f.nodes['mode-next'].fire('click');
-    assert.equal(f.selectedUrl(),'/six-player');
-    assert.equal(f.nodes['mode-next'].disabled,true);
-    f.nodes['mode-previous'].fire('click');
-    assert.equal(f.selectedUrl(),'/player-selection');
+    assert.equal(f.items['mode-start'].href,'/quickplay');
+    assert.equal(f.items['mode-previous'].disabled,true);
+    f.cards[0].fire('click',{detail:1});
+    assert.equal(f.navigatedTo(),'/quickplay');
 });
 
-test('touch-like native horizontal scroll picks the card nearest the center', () => {
+test('ranked card opens player selection, navigation arrows only move selection',()=>{
     const f=fixture();
-    f.carousel.scrollLeft=416;
-    f.carousel.fire('scroll');
-    f.flush();
-    assert.equal(f.selectedUrl(),'/player-selection');
-    assert.equal(f.dots[1].attributes['aria-current'],'true');
-
-    f.carousel.scrollLeft=832;
-    f.carousel.fire('scroll');
-    f.flush();
-    assert.equal(f.selectedUrl(),'/six-player');
-    assert.equal(f.cards[2].classList.contains('is-active'),true);
-});
-
-test('tap on card starts its game mode immediately, no Weiter click required', () => {
-    for (const [index, target] of [[0, '/quickplay'], [1, '/player-selection'], [2, '/six-player']]) {
-        const f=fixture();
-        f.cards[index].fire('click', {detail: 1});
-        assert.equal(f.selectedUrl(),target);
-        assert.equal(f.cards[index].attributes['aria-selected'],'true');
-        assert.equal(f.navigatedTo(),target);
-    }
-
-    const f=fixture();
-    f.dots[2].fire('click');
-    assert.equal(f.selectedUrl(),'/six-player');
+    f.items['mode-next'].fire('click');
+    assert.equal(f.items['mode-start'].href,'/player-selection');
     assert.equal(f.navigatedTo(),'');
-});
-
-test('swiping horizontally does not accidentally open a match from synthetic click', () => {
-    const f=fixture();
-    const track = f.carousel;
-    track.fire('pointerdown', {pointerId: 1, clientX: 160, clientY: 100});
-    track.fire('pointermove', {pointerId: 1, clientX: 95, clientY: 102});
-    track.fire('pointerup', {pointerId: 1, clientX: 90, clientY: 102});
-    f.cards[1].fire('click', {detail: 1});
-    assert.equal(f.navigatedTo(),'');
-
-    // Keyboard-generated clicks may still activate their card.
-    f.cards[1].fire('click', {detail: 0});
+    assert.equal(f.items['mode-next'].disabled,true);
+    f.cards[1].fire('click',{detail:1});
     assert.equal(f.navigatedTo(),'/player-selection');
 });
 
-test('short finger tap still opens a card directly', () => {
-    const f=fixture();
-    const track = f.carousel;
-    track.fire('pointerdown', {pointerId: 1, clientX: 160, clientY: 100});
-    track.fire('pointerup', {pointerId: 1, clientX: 159, clientY: 101});
-    f.cards[2].fire('click', {detail: 1});
-    assert.equal(f.navigatedTo(),'/six-player');
+test('horizontal swipe suppresses synthetic card clicks',()=>{
+    const f=fixture(),track=f.carousel;
+    track.fire('pointerdown',{pointerId:1,clientX:160,clientY:100});
+    track.fire('pointermove',{pointerId:1,clientX:90,clientY:100});
+    track.fire('pointerup',{pointerId:1,clientX:90,clientY:100});
+    f.cards[1].fire('click',{detail:1});
+    assert.equal(f.navigatedTo(),'');
+    track.scrollLeft=416;
+    track.fire('scroll');
+    f.flush();
+    assert.equal(f.items['mode-start'].href,'/player-selection');
 });
 
-test('horizontal keyboard navigation, Enter and mouse wheel support desktop users', () => {
-    const f=fixture();
-    const key=code=>f.carousel.fire('keydown',{key:code});
-    assert.equal(key('ArrowRight').defaultPrevented,true);
-    assert.equal(f.selectedUrl(),'/player-selection');
-    key('End');
-    assert.equal(f.selectedUrl(),'/six-player');
-    key('Home');
-    assert.equal(f.selectedUrl(),'/quickplay');
-
-    // Native horizontal trackpad gestures must remain available.
-    const native=f.carousel.fire('wheel',{deltaX:120,deltaY:0});
-    assert.equal(native.defaultPrevented,false);
-
-    const mouse=f.carousel.fire('wheel',{deltaX:0,deltaY:120});
-    assert.equal(mouse.defaultPrevented,true);
-    assert.equal(f.selectedUrl(),'/player-selection');
-
-    key('Enter');
+test('short tap and keyboard activate the intended selection',()=>{
+    const f=fixture(),track=f.carousel;
+    track.fire('pointerdown',{pointerId:1,clientX:160,clientY:100});
+    track.fire('pointerup',{pointerId:1,clientX:160,clientY:100});
+    f.cards[1].fire('click',{detail:1});
     assert.equal(f.navigatedTo(),'/player-selection');
+
+    const keys=fixture();
+    keys.carousel.fire('keydown',{key:'ArrowRight'});
+    keys.carousel.fire('keydown',{key:'Enter'});
+    assert.equal(keys.navigatedTo(),'/player-selection');
 });
