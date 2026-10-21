@@ -18,8 +18,10 @@ test('score toggles stack, and rematch appears beside new game in all modes', ()
     assert.match(template, /id="team-name-input-a"/);
     assert.match(template, /class="team-name-trigger" id="team-name-a"/);
     assert.match(template, /class="team-name-trigger" id="team-name-b"/);
-    assert.doesNotMatch(template, /bi-pencil|bi-arrow-repeat|team-name-edit-btn/);
-    assert.match(styles, /\\.team-name-trigger:focus-visible/);
+    assert.doesNotMatch(template, /team-name-edit-btn/);
+    const rematchButton = template.match(/<button id="rematch-btn"[\s\S]*?<\/button>/)?.[0] || "";
+    assert.doesNotMatch(rematchButton, /bi-arrow-repeat|<i\b/);
+    assert.match(styles, /\.team-name-trigger:focus-visible/);
     assert.match(template, /id="team-name-input-b"/);
     assert.match(template, /data-team="A"/);
     assert.match(template, /data-team="B"/);
@@ -43,6 +45,12 @@ function makeElement(name) {
         focus() {this.focused = true;},
         select() {this.selected = true;}
     };
+}
+
+// Async handlers cross a VM boundary; a full event-loop turn is more
+// reliable than awaiting an arbitrary number of Promise microtasks.
+async function flushUiActions() {
+    await new Promise(resolve => setImmediate(resolve));
 }
 
 function uiFixture() {
@@ -103,8 +111,7 @@ test('unfinished rematch asks for confirmation, then returns to scoring', async 
     assert.match(f.nodes['confirm-game-action-message'].textContent,/denselben Teams/);
     assert.equal(f.calls.length,0);
     f.nodes['confirm-new-game-btn'].fire('click');
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushUiActions();
     assert.equal(f.hidden(),1);
     assert.equal(f.calls[0].action,'rematch');
     assert.equal(f.window.location.href,'/match');
@@ -114,8 +121,7 @@ test('finished match rematches immediately, new game goes to mode selection', as
     const first=uiFixture();
     vm.runInContext('matchFinished = true; initNewGameButton()',first.ctx);
     first.nodes['rematch-btn'].fire('click');
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushUiActions();
     assert.equal(first.shown(),0);
     assert.equal(first.calls[0].action,'rematch');
     assert.equal(first.window.location.href,'/match');
@@ -123,8 +129,7 @@ test('finished match rematches immediately, new game goes to mode selection', as
     const second=uiFixture();
     vm.runInContext('matchFinished = true; initNewGameButton()',second.ctx);
     second.nodes['reset-btn'].fire('click');
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushUiActions();
     assert.equal(second.calls[0].action,'new_game');
     assert.equal(second.window.location.href,'/home');
 });
@@ -139,9 +144,10 @@ test('clicking team name and Enter persists Quickplay name in the current sessio
     assert.equal(name.parentElement.classList.contains('d-none'),true);
     input.value='Meine Freunde';
     input.fire('keydown',{key:'Enter'});
-    await Promise.resolve();
-    await Promise.resolve();
-    assert.deepEqual(f.calls[0],{action:'rename_team',team:'A',name:'Meine Freunde'});
+    await flushUiActions();
+    // VM-realm objects have different prototypes; compare their public values.
+    assert.deepEqual(JSON.parse(JSON.stringify(f.calls[0])),
+        {action:'rename_team',team:'A',name:'Meine Freunde'});
     assert.equal(name.textContent,'Meine Freunde');
     assert.equal(name.parentElement.classList.contains('d-none'),false);
 });

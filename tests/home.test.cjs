@@ -11,7 +11,7 @@ test('only Quickplay and ranked modes appear in the home carousel', () => {
     assert.match(html,/id="mode-card-1"/);
     assert.doesNotMatch(html,/id="mode-card-2"|mode-card--six|data-mode-target="2"/);
     assert.ok(html.indexOf("mode-card--quickplay")<html.indexOf("mode-card--ranked"));
-    assert.match(html, /Karte antippen zum Spielen/);
+    assert.match(src, /window\.location\.assign\(modes\[index\]\.url\)/);
     assert.match(css,/scroll-snap-type:\s*x mandatory/);
     assert.match(css,/touch-action:\s*pan-x/);
     assert.match(css,/\.mode-carousel-card\s*\{[^}]*height:\s*390px/);

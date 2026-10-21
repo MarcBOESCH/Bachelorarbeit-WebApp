@@ -85,7 +85,7 @@ def test_quickplay_tap_starts_scoring_without_setup_or_database(client):
         assert scoring.status_code == 200
         assert b'Quickplay' in scoring.data
         assert b'quickplay-420-toggle' in scoring.data
-        assert b'2 vs 2, 3 vs 3' in scoring.data
+        assert b'Freies Spiel' in scoring.data
         assert_no_rated_records()
 
 
@@ -385,7 +385,9 @@ def test_rename_and_rematch_controls_present_only_where_expected(client):
         assert 'id="rematch-btn"' in html and 'id="reset-btn"' in html
         assert 'id="team-name-a"' in html and 'id="team-name-b"' in html
         assert html.count('class="team-name-trigger"') == 2
-        assert 'bi-pencil' not in html and 'bi-arrow-repeat' not in html
+        assert 'team-name-edit-btn' not in html
+        rematch_button = html.split('id="rematch-btn"', 1)[1].split('</button>', 1)[0]
+        assert 'bi-arrow-repeat' not in rematch_button
         assert 'id="team-name-input-a"' in html and 'id="team-name-input-b"' in html
         assert 'id="quickplay-420-toggle"' in html
         css = open("static/css/style.css", encoding="utf-8").read()
