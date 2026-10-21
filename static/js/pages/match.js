@@ -99,6 +99,12 @@ function updateUI(game) {
     document.getElementById("score-b").textContent = scoreB;
     document.getElementById("point-diff").textContent = diff;
 
+    const quickplay420 = document.getElementById("quickplay-420-toggle");
+    if (quickplay420) {
+        quickplay420.checked = Boolean(game.four_twenty_mode);
+        quickplay420.disabled = Boolean(scoreA || scoreB || game.match_saved || game.history?.length);
+    }
+
     const leaderElement = document.getElementById("leader");
     const pointsWinElement = document.getElementById("points-win");
 

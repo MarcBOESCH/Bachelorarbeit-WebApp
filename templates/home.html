@@ -33,7 +33,7 @@
                 </div>
                 <div class="mode-card-footer">
                     <strong>Quickplay</strong>
-                    <span>2 gegen 2 · Freies Spiel</span>
+                    <span>Freies Spiel · ohne Rating</span>
                 </div>
             </div>
 
@@ -50,22 +50,6 @@
                 </div>
             </div>
 
-            <div id="mode-card-2" class="mode-carousel-card mode-card--six"
-                 role="option" aria-selected="false" tabindex="-1" data-mode-index="2">
-                <div class="mode-card-art mode-card-art--six" aria-hidden="true">
-                    <span class="mode-art-pip mode-art-pip--top">♠</span>
-                    <span class="mode-art-pip mode-art-pip--bottom">♣</span>
-                    <span class="mode-art-symbol mode-art-players">
-                        <i class="bi bi-person-fill"></i>
-                        <i class="bi bi-person-fill"></i>
-                        <i class="bi bi-person-fill"></i>
-                    </span>
-                </div>
-                <div class="mode-card-footer">
-                    <strong>3 vs 3</strong>
-                    <span>6er-Kreuzjass · Freizeit</span>
-                </div>
-            </div>
         </div>
 
         <button id="mode-next" type="button" class="mode-carousel-arrow"
@@ -79,12 +63,10 @@
                     aria-label="Quickplay auswählen" aria-current="true"></button>
             <button type="button" class="mode-carousel-dot" data-mode-target="1"
                     aria-label="Ranglistenspiel auswählen"></button>
-            <button type="button" class="mode-carousel-dot" data-mode-target="2"
-                    aria-label="6er-Kreuzjass auswählen"></button>
     </div>
 
     <p id="mode-carousel-hint" class="mode-carousel-hint">
-        Karte antippen zum Öffnen · links/rechts wischen zum Wechseln
+        Karte antippen zum Spielen · links/rechts wischen zum Wechseln
     </p>
 
     <div class="mode-selection-details" aria-live="polite" aria-atomic="true">
@@ -101,7 +83,6 @@
             <p>Ohne JavaScript kannst du direkt wählen:</p>
             <a href="{{ url_for('matches.player_selection_page') }}">Ranglistenspiel</a>
             <a href="{{ url_for('free_play.quickplay_page') }}">Quickplay</a>
-            <a href="{{ url_for('free_play.six_player_page') }}">6er-Kreuzjass</a>
         </div>
     </noscript>
 </section>

@@ -10,11 +10,6 @@ function createGameModes(carousel) {
             name: "Ranglistenspiel",
             description: "Spiele mit registrierten Spielern um Glicko-2-Ratingpunkte und einen Platz in der Rangliste.",
             url: carousel.dataset.rankedUrl
-        },
-        {
-            name: "6er-Kreuzjass",
-            description: "Sechs Spieler in zwei Dreierteams – mit der gewohnten Punkteerfassung und ohne Rangliste.",
-            url: carousel.dataset.sixPlayerUrl
         }
     ];
 }
