@@ -299,3 +299,22 @@ werden; nach Spielbeginn ist der Schalter gesperrt. Die gesonderte
 3-vs.-3-Card ist aus der Startseite ausgeblendet, die 6er-Route bleibt
 für eine spätere Freischaltung bestehen. Schatten von den Moduskarten
 und der aktiven Card entfernt.
+
+### Teamnamen, Schalter und Rematch auf der Punkteseite
+
+- Die **2x Punkte**- und **420-Modus**-Schalter auf der Quickplay-Punkteseite
+  werden untereinander angezeigt.
+- Im Quickplay (und im noch vorhandenen freien 3v3-Modus) lassen sich die
+  Teamnamen direkt bei der Punkteerfassung über das Stiftsymbol ändern.
+  Die Namen werden ausschließlich in der aktuellen Session gespeichert,
+  nicht in den gespeicherten Teams. Namen müssen 1–40 Zeichen lang und
+  verschieden sein; nach einem Spielabschluss kann nicht umbenannt werden.
+- **Rematch** ist auf der Punkteseite aller Spielmodi verfügbar. Ein neues
+  Spiel startet sofort mit derselben Spielart, den bisherigen Teams,
+  Spielern und dem 420-Modus. Punktestand, Sieg, Undo-Historie und
+  Match-Speicherstatus werden zurückgesetzt. Unvollendete Spiele
+  erfordern eine Bestätigung vor dem Verwerfen des Punktestands.
+- **Neues Spiel** öffnet weiterhin die Modusauswahl. Abgeschlossene
+  Ranglistenspiele müssen zuvor regulär gespeichert sein; ein Rematch
+  selbst erstellt keinerlei Match- oder Ratingdatensätze. Das nächste
+  gewonnene Ranglistenspiel wird wie gewohnt separat gespeichert.
