@@ -1345,7 +1345,7 @@ canvas {
     transform: scale(.97);
     opacity: .78;
     transition: transform 180ms ease, opacity 180ms ease,
-        border-color 180ms ease, box-shadow 180ms ease;
+        border-color 180ms ease;
 }
 
 .mode-carousel-card:hover { opacity: .9; }
