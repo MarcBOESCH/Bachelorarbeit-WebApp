@@ -39,6 +39,30 @@ def calculate_elo_expected_score(team_a_rating, team_b_rating):
     return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
 
 
+def calculate_glicko2_win_probability(team_a_state, team_b_state):
+    """Symmetric pre-match forecast, integrating both teams' uncertainty.
+
+    Glickman, The Glicko system, 'Expected outcome of a game', p. 5:
+    logistic(g(hypot(phi_a, phi_b)) * (mu_a - mu_b)).
+    Unlike the conditional expectation inside a player's rating update,
+    a match forecast must include BOTH RDs; swapping teams complements p.
+    Team states use this project's independent-player approximation.
+    """
+    for state in (team_a_state, team_b_state):
+        if (not math.isfinite(state["rating"])
+                or not math.isfinite(state["rd"]) or state["rd"] < 0):
+            raise ValueError("Forecasts require finite ratings and nonnegative RD.")
+    scale = 173.7178
+    uncertainty_factor = math.sqrt(3) / math.pi
+    denominator = math.hypot(scale, uncertainty_factor * team_a_state["rd"],
+                             uncertainty_factor * team_b_state["rd"])
+    x = (team_a_state["rating"] - team_b_state["rating"]) / denominator
+    if x >= 0:
+        return 1 / (1 + math.exp(-x))
+    ex = math.exp(x)
+    return ex / (1 + ex)
+
+
 def calculate_elo_update(team_a_rating, team_b_rating, winner_team, k_factor=32):
     expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
     expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
@@ -98,17 +122,22 @@ def calculate_elo_margin_update(
 
 
 def aggregate_glicko2_team_state(team_entries):
+    if not team_entries:
+        raise ValueError("A Glicko-2 team must not be empty.")
     ratings = [entry["rating_entry"].rating for entry in team_entries]
     rds = [entry["rating_entry"].rating_deviation for entry in team_entries]
     vols = [entry["rating_entry"].volatility for entry in team_entries]
+    if (not all(math.isfinite(r) for r in ratings)
+            or not all(math.isfinite(x) and x > 0 for x in rds + vols)):
+        raise ValueError("Glicko-2 states require finite ratings and positive RD/volatility.")
 
     team_rating = sum(ratings) / len(ratings)
 
     # Teamleistung basiert auf dem Mittelwert der Einzelstärken.
     # Deshalb wird auch die Unsicherheit des Teammittels approximiert:
     # sqrt(sum(variance)) / n
-    team_rd = math.sqrt(sum(rd ** 2 for rd in rds)) / len(rds)
-    team_vol = math.sqrt(sum(vol ** 2 for vol in vols)) / len(vols)
+    team_rd = math.hypot(*rds) / len(rds)
+    team_vol = math.hypot(*vols) / len(vols)
 
     return {
         "rating": team_rating,
@@ -129,6 +158,8 @@ def calculate_rd_based_weights(team_entries):
 
 
 def calculate_glicko2_team_update(team_a_state, team_b_state, winner_team):
+    if winner_team not in {"A", "B"}:
+        raise ValueError("Glicko-2 winner must be A or B.")
     team_a_player = Glicko2Player(
         rating=team_a_state["rating"],
         rd=team_a_state["rd"],
@@ -185,6 +216,20 @@ def calculate_glicko2_team_update(team_a_state, team_b_state, winner_team):
 
 
 def distribute_team_delta_by_rd(team_entries, team_delta):
+    """Preserve the team mean and both quadratic aggregates on reconstruction.
+
+    Rating allocation keeps the existing RD-weighted heuristic. RD and
+    volatility instead keep their respective within-team ratios: x_i' =
+    x_i * x_team' / x_team. This is an aggregate-consistent projection,
+    not a Bayesian individual posterior (teammate covariance is not stored).
+    """
+    before = aggregate_glicko2_team_state(team_entries)
+    if not all(math.isfinite(team_delta[key]) for key in ("rating", "rd", "vol")):
+        raise ValueError("Glicko-2 deltas must be finite.")
+    after = {key: before[key] + team_delta[key] for key in before}
+    if (not all(math.isfinite(x) for x in after.values())
+            or after["rd"] <= 0 or after["vol"] <= 0):
+        raise ValueError("Glicko-2 target RD and volatility must be positive and finite.")
     weights = calculate_rd_based_weights(team_entries)
     team_size = len(team_entries)
 
@@ -194,8 +239,8 @@ def distribute_team_delta_by_rd(team_entries, team_delta):
             "player_id": entry["player_id"],
             "weight": weight,
             "rating": team_delta["rating"] * team_size * weight,
-            "rd": team_delta["rd"] * team_size * weight,
-            "vol": team_delta["vol"] * team_size * weight,
+            "rd": entry["rating_entry"].rating_deviation * (team_delta["rd"] / before["rd"]),
+            "vol": entry["rating_entry"].volatility * (team_delta["vol"] / before["vol"]),
         })
 
     return distributed
@@ -223,7 +268,9 @@ def calculate_trueskill_win_probability(team_a_state, team_b_state):
 
     denominator = math.sqrt(sum_sigma_sq + 2 * performance_variance)
 
-    return TRUESKILL_ENV.cdf(delta_mu / denominator)
+    # Standard-library normal CDF: exact symmetry at zero, unlike the
+    # library's approximate CDF which can make a 50:50 game favor team A.
+    return 0.5 * math.erfc(-delta_mu / (denominator * math.sqrt(2)))
 
 
 def calculate_trueskill_exposed_rating(mu, sigma, k=3.0):

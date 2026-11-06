@@ -13,6 +13,7 @@ from services.rating_utils import (
     calculate_elo_margin_update,
     aggregate_glicko2_team_state,
     calculate_glicko2_team_update,
+    calculate_glicko2_win_probability,
     distribute_team_delta_by_rd,
     aggregate_trueskill_team_state,
     calculate_trueskill_team_update,
@@ -148,6 +149,7 @@ def evaluate_elo_predictions():
             "match_id": match.id,
             "predicted_winner": predicted_winner,
             "actual_winner": actual_winner,
+            "probability_a": expected_a,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
@@ -226,6 +228,7 @@ def evaluate_elo_margin_predictions():
             "match_id": match.id,
             "predicted_winner": predicted_winner,
             "actual_winner": actual_winner,
+            "probability_a": expected_a,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
@@ -293,8 +296,8 @@ def evaluate_glicko2_predictions():
         team_a_state = aggregate_glicko2_team_state(team_a_proxy)
         team_b_state = aggregate_glicko2_team_state(team_b_proxy)
 
-        expected_a = calculate_elo_expected_score(team_a_state["rating"], team_b_state["rating"])
-        expected_b = calculate_elo_expected_score(team_b_state["rating"], team_a_state["rating"])
+        expected_a = calculate_glicko2_win_probability(team_a_state, team_b_state)
+        expected_b = 1.0 - expected_a
 
         predicted_winner = "A" if expected_a >= expected_b else "B"
         actual_winner = match.winner_team
@@ -315,6 +318,7 @@ def evaluate_glicko2_predictions():
             "match_id": match.id,
             "predicted_winner": predicted_winner,
             "actual_winner": actual_winner,
+            "probability_a": expected_a,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),
@@ -333,13 +337,13 @@ def evaluate_glicko2_predictions():
 
         for entry, delta in zip(team_a_entries, distributed_a):
             player_states[entry.player_id]["rating"] += delta["rating"]
-            player_states[entry.player_id]["rd"] = max(1e-6, player_states[entry.player_id]["rd"] + delta["rd"])
-            player_states[entry.player_id]["vol"] = max(1e-6, player_states[entry.player_id]["vol"] + delta["vol"])
+            player_states[entry.player_id]["rd"] = player_states[entry.player_id]["rd"] + delta["rd"]
+            player_states[entry.player_id]["vol"] = player_states[entry.player_id]["vol"] + delta["vol"]
 
         for entry, delta in zip(team_b_entries, distributed_b):
             player_states[entry.player_id]["rating"] += delta["rating"]
-            player_states[entry.player_id]["rd"] = max(1e-6, player_states[entry.player_id]["rd"] + delta["rd"])
-            player_states[entry.player_id]["vol"] = max(1e-6, player_states[entry.player_id]["vol"] + delta["vol"])
+            player_states[entry.player_id]["rd"] = player_states[entry.player_id]["rd"] + delta["rd"]
+            player_states[entry.player_id]["vol"] = player_states[entry.player_id]["vol"] + delta["vol"]
 
     return build_result_payload(
         "glicko2",
@@ -402,6 +406,7 @@ def evaluate_trueskill_predictions():
             "match_id": match.id,
             "predicted_winner": predicted_winner,
             "actual_winner": actual_winner,
+            "probability_a": expected_a,
             "confidence_a": round(expected_a, 4),
             "confidence_b": round(expected_b, 4),
             "brier_score": round(brier_score, 6),

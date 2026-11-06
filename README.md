@@ -36,9 +36,16 @@ Admin-Ratingvergleiche enthalten weiterhin alle Spieler und alle Systeme.
 
 ## Rating-Verfahren
 
+Für einen rein lokalen Vergleich der Siegprognosen aus CSV-Exporten:
+`python compare_rating_models.py /pfad/zum/export > comparison.json`.
+Methodik und Grenzen: [Modellvergleich](docs/rating-model-comparison.md).
+
 Die vorhandene Teamlogik in `services/rating_utils.py` wird weiterverwendet:
 Startwerte 1500 / RD 350 / Volatilität 0,06, tau 0,5; Teammittelwert,
-aggregierte Unsicherheit und RD-gewichtete Verteilung der Teamänderungen.
+aggregierte Unsicherheit und RD-gewichtete Verteilung der Ratingänderungen.
+RD und Volatilität werden jeweils proportional skaliert, sodass ihre erneute
+Teamaggregation das berechnete Team-Update reproduziert. Herleitung,
+Modellgrenzen und sichere Vergleichsrechnung: [Teammodell](docs/glicko2-team-model.md).
 Beide Teams werden aus demselben Zustand vor dem Match aktualisiert.
 Ein gewertetes Match bildet einen Verarbeitungsschritt. Es gibt wie bisher
 keine kalenderbasierte Erhöhung der RD bei Inaktivität.
