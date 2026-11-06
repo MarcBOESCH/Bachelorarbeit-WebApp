@@ -98,17 +98,22 @@ def calculate_elo_margin_update(
 
 
 def aggregate_glicko2_team_state(team_entries):
+    if not team_entries:
+        raise ValueError("A Glicko-2 team must not be empty.")
     ratings = [entry["rating_entry"].rating for entry in team_entries]
     rds = [entry["rating_entry"].rating_deviation for entry in team_entries]
     vols = [entry["rating_entry"].volatility for entry in team_entries]
+    if (not all(math.isfinite(r) for r in ratings)
+            or not all(math.isfinite(x) and x > 0 for x in rds + vols)):
+        raise ValueError("Glicko-2 states require finite ratings and positive RD/volatility.")
 
     team_rating = sum(ratings) / len(ratings)
 
     # Teamleistung basiert auf dem Mittelwert der Einzelstärken.
     # Deshalb wird auch die Unsicherheit des Teammittels approximiert:
     # sqrt(sum(variance)) / n
-    team_rd = math.sqrt(sum(rd ** 2 for rd in rds)) / len(rds)
-    team_vol = math.sqrt(sum(vol ** 2 for vol in vols)) / len(vols)
+    team_rd = math.hypot(*rds) / len(rds)
+    team_vol = math.hypot(*vols) / len(vols)
 
     return {
         "rating": team_rating,
@@ -129,6 +134,8 @@ def calculate_rd_based_weights(team_entries):
 
 
 def calculate_glicko2_team_update(team_a_state, team_b_state, winner_team):
+    if winner_team not in {"A", "B"}:
+        raise ValueError("Glicko-2 winner must be A or B.")
     team_a_player = Glicko2Player(
         rating=team_a_state["rating"],
         rd=team_a_state["rd"],
@@ -185,6 +192,20 @@ def calculate_glicko2_team_update(team_a_state, team_b_state, winner_team):
 
 
 def distribute_team_delta_by_rd(team_entries, team_delta):
+    """Preserve the team mean and both quadratic aggregates on reconstruction.
+
+    Rating allocation keeps the existing RD-weighted heuristic. RD and
+    volatility instead keep their respective within-team ratios: x_i' =
+    x_i * x_team' / x_team. This is an aggregate-consistent projection,
+    not a Bayesian individual posterior (teammate covariance is not stored).
+    """
+    before = aggregate_glicko2_team_state(team_entries)
+    if not all(math.isfinite(team_delta[key]) for key in ("rating", "rd", "vol")):
+        raise ValueError("Glicko-2 deltas must be finite.")
+    after = {key: before[key] + team_delta[key] for key in before}
+    if (not all(math.isfinite(x) for x in after.values())
+            or after["rd"] <= 0 or after["vol"] <= 0):
+        raise ValueError("Glicko-2 target RD and volatility must be positive and finite.")
     weights = calculate_rd_based_weights(team_entries)
     team_size = len(team_entries)
 
@@ -194,8 +215,8 @@ def distribute_team_delta_by_rd(team_entries, team_delta):
             "player_id": entry["player_id"],
             "weight": weight,
             "rating": team_delta["rating"] * team_size * weight,
-            "rd": team_delta["rd"] * team_size * weight,
-            "vol": team_delta["vol"] * team_size * weight,
+            "rd": entry["rating_entry"].rating_deviation * (team_delta["rd"] / before["rd"]),
+            "vol": entry["rating_entry"].volatility * (team_delta["vol"] / before["vol"]),
         })
 
     return distributed

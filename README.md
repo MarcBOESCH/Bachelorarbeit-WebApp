@@ -38,7 +38,10 @@ Admin-Ratingvergleiche enthalten weiterhin alle Spieler und alle Systeme.
 
 Die vorhandene Teamlogik in `services/rating_utils.py` wird weiterverwendet:
 Startwerte 1500 / RD 350 / Volatilität 0,06, tau 0,5; Teammittelwert,
-aggregierte Unsicherheit und RD-gewichtete Verteilung der Teamänderungen.
+aggregierte Unsicherheit und RD-gewichtete Verteilung der Ratingänderungen.
+RD und Volatilität werden jeweils proportional skaliert, sodass ihre erneute
+Teamaggregation das berechnete Team-Update reproduziert. Herleitung,
+Modellgrenzen und sichere Vergleichsrechnung: [Teammodell](docs/glicko2-team-model.md).
 Beide Teams werden aus demselben Zustand vor dem Match aktualisiert.
 Ein gewertetes Match bildet einen Verarbeitungsschritt. Es gibt wie bisher
 keine kalenderbasierte Erhöhung der RD bei Inaktivität.
@@ -318,3 +321,4 @@ und der aktiven Card entfernt.
   Ranglistenspiele müssen zuvor regulär gespeichert sein; ein Rematch
   selbst erstellt keinerlei Match- oder Ratingdatensätze. Das nächste
   gewonnene Ranglistenspiel wird wie gewohnt separat gespeichert.
+

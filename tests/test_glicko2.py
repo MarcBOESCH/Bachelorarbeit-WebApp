@@ -356,3 +356,110 @@ def test_demo_commands_reject_nonlocal_or_non_demo_database(app):
     assert result.exit_code != 0
     assert 'lokale PostgreSQL-Testdatenbank' in result.output
     assert Match.query.count() == 0
+
+
+def test_persisted_team_states_equal_calculated_targets(app):
+    from services.rating_utils import aggregate_glicko2_team_state
+    m = match(1)
+    a, b = ratings.split_match_ratings_by_team(m, 'glicko2')
+    a[0]['rating_entry'].rating_deviation = 45
+    a[0]['rating_entry'].volatility = .02
+    a[1]['rating_entry'].volatility = .09
+    expected = ratings.calculate_glicko2_team_update(
+        aggregate_glicko2_team_state(a), aggregate_glicko2_team_state(b), 'A')
+    ratings._apply_glicko2_match(m)
+    db.session.commit()
+    db.session.expire_all()
+    for entries, key in zip(ratings.split_match_ratings_by_team(m, 'glicko2'),
+                            ('team_a_after', 'team_b_after')):
+        assert aggregate_glicko2_team_state(entries) == pytest.approx(expected[key], abs=1e-10)
+
+
+def test_comparison_is_read_only_and_matches_real_replay(app):
+    import json
+    from sqlalchemy import event
+    from services.glicko2_comparison import compare_glicko2_history
+    for i in range(1, 13):
+        match(i, day=i // 2, winner='B' if i % 3 == 0 else 'A', team_b=3 if i > 10 else 2)
+    match(20, mode=True, four_twenty_win=True)
+    ratings.rebuild_glicko2_ratings()
+    before = snapshot()
+    statuses = [(s.id, s.match_id, s.processed, s.processed_at)
+                for s in MatchRatingStatus.query.order_by(MatchRatingStatus.id)]
+    statements = []
+    def record(conn, cursor, statement, parameters, context, executemany):
+        statements.append(statement)
+    event.listen(db.engine, 'before_cursor_execute', record)
+    try:
+        result = app.test_cli_runner().invoke(args=['compare-glicko2'])
+        assert result.exit_code == 0, result.output
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', record)
+    assert statements and all(s.lstrip().upper().startswith('SELECT') for s in statements)
+    report = json.loads(result.output)
+    assert report['rated_matches'] == 12 and report['excluded_matches'] == 1
+    assert snapshot() == before
+    assert statuses == [(s.id, s.match_id, s.processed, s.processed_at)
+                        for s in MatchRatingStatus.query.order_by(MatchRatingStatus.id)]
+    assert report == compare_glicko2_history(list(reversed(Match.query.all())))
+    public = {p['id']: p for p in get_player_stats()}
+    for p in report['players']:
+        saved = next(s for s in before if s[0] == p['player_id'])
+        assert [p['after'][k] for k in ('rating', 'rd', 'vol', 'rated_matches')] == pytest.approx(saved[1:])
+        assert p['after']['rank'] == public[p['player_id']]['rating_rank']
+        assert p['before']['rated_matches'] == p['after']['rated_matches']
+    assert any(abs(p['delta']['rating']) > 1 for p in report['players'])
+
+
+def test_comparison_rejects_invalid_history_and_handles_empty(app):
+    from services.glicko2_comparison import compare_glicko2_history
+    assert compare_glicko2_history([])['players'] == []
+    m = match(1)
+    with pytest.raises(ValueError, match='Duplicate'):
+        compare_glicko2_history([m, m])
+    m.winner_team = 'X'
+    with pytest.raises(ValueError):
+        compare_glicko2_history([m])
+    assert snapshot() == []
+
+
+def test_simulation_evaluation_and_database_replay_agree(app):
+    from types import SimpleNamespace
+    from services.simulation_pipeline_service import evaluate_glicko2_on_simulation
+    from services.evaluation_service import evaluate_glicko2_predictions
+    for i in range(1, 16):
+        match(i, winner='B' if i % 3 == 0 else 'A', team_b=3 if i % 4 == 0 else 2)
+    match(20, mode=True, four_twenty_win=True)
+    history = Match.query.filter(Match.rating_eligible).order_by(Match.played_at, Match.id).all()
+    simulated = [SimpleNamespace(
+        match_index=m.id, played_at=m.played_at,
+        team_a_player1_id=m.team_a.player1_id, team_a_player2_id=m.team_a.player2_id,
+        team_b_player1_id=m.team_b.player1_id, team_b_player2_id=m.team_b.player2_id,
+        winner_team=m.winner_team, point_diff=m.point_diff) for m in history]
+    simulation = evaluate_glicko2_on_simulation(
+        simulated, [SimpleNamespace(player_id=i) for i in range(1, 7)])
+    evaluation = evaluate_glicko2_predictions()
+    for key in ('total_predictions', 'correct_predictions', 'accuracy', 'brier_score', 'log_loss'):
+        assert simulation[key] == evaluation[key]
+    ratings.rebuild_glicko2_ratings()
+    for pid, rating, rd, vol, count in snapshot():
+        assert simulation['final_states'][pid] == pytest.approx(dict(rating=rating, rd=rd, vol=vol))
+
+
+def test_offline_comparison_needs_no_database(app, tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+    rows = [dict(id=1, played_at='2026-01-01T12:00:00', team_a=[1, 2], team_b=[3, 4],
+                 score_team_a=1000, score_team_b=700, winner_team='A', four_twenty_mode=False)]
+    source = tmp_path / 'history.json'
+    source.write_text(json.dumps(rows))
+    env = dict(os.environ, DATABASE_URL='invalid://must-not-connect', NEON_DATABASE_URL='invalid://must-not-connect')
+    result = subprocess.run([sys.executable, 'compare_glicko2.py', str(source)],
+                            cwd=Path(__file__).resolve().parents[1], env=env,
+                            capture_output=True, text=True, check=True)
+    report = json.loads(result.stdout)
+    assert report['rated_matches'] == 1
+    assert all(p['after']['rank'] is None for p in report['players'])
+
