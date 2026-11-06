@@ -28,4 +28,3 @@ def register_rating_commands(app):
         results = rebuild_glicko2_ratings(dry_run=dry_run)
         click.echo(f"Glicko-2: {len(results)} Matches; "
                    + ("Probelauf zurückgerollt." if dry_run else "atomar gespeichert."))
-

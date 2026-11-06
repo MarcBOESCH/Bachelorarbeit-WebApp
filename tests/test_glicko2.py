@@ -441,6 +441,15 @@ def test_simulation_evaluation_and_database_replay_agree(app):
     evaluation = evaluate_glicko2_predictions()
     for key in ('total_predictions', 'correct_predictions', 'accuracy', 'brier_score', 'log_loss'):
         assert simulation[key] == evaluation[key]
+    assert [d['probability_a'] for d in simulation['details']] == [
+        d['probability_a'] for d in evaluation['details']]
+    from services.rating_utils import calculate_elo_expected_score
+    initial = dict(rating=1500, rd=350 / 2**.5, vol=.06 / 2**.5)
+    first = ratings.calculate_glicko2_team_update(initial, initial, 'A')
+    bare_elo = calculate_elo_expected_score(
+        first['team_a_after']['rating'], first['team_b_after']['rating'])
+    # Both matches have the same teams. Uncertainty softens the second forecast.
+    assert .5 < simulation['details'][1]['probability_a'] < bare_elo
     ratings.rebuild_glicko2_ratings()
     for pid, rating, rd, vol, count in snapshot():
         assert simulation['final_states'][pid] == pytest.approx(dict(rating=rating, rd=rd, vol=vol))
@@ -462,4 +471,3 @@ def test_offline_comparison_needs_no_database(app, tmp_path):
     report = json.loads(result.stdout)
     assert report['rated_matches'] == 1
     assert all(p['after']['rank'] is None for p in report['players'])
-

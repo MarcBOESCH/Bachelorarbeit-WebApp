@@ -494,4 +494,3 @@ def process_glicko2_match(match):
     match_id = match.id
     results = rebuild_glicko2_ratings()
     return next(result for result in results if result["match_id"] == match_id)
-

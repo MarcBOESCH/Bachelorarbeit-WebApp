@@ -39,6 +39,30 @@ def calculate_elo_expected_score(team_a_rating, team_b_rating):
     return 1 / (1 + 10 ** ((team_b_rating - team_a_rating) / 400))
 
 
+def calculate_glicko2_win_probability(team_a_state, team_b_state):
+    """Symmetric pre-match forecast, integrating both teams' uncertainty.
+
+    Glickman, The Glicko system, 'Expected outcome of a game', p. 5:
+    logistic(g(hypot(phi_a, phi_b)) * (mu_a - mu_b)).
+    Unlike the conditional expectation inside a player's rating update,
+    a match forecast must include BOTH RDs; swapping teams complements p.
+    Team states use this project's independent-player approximation.
+    """
+    for state in (team_a_state, team_b_state):
+        if (not math.isfinite(state["rating"])
+                or not math.isfinite(state["rd"]) or state["rd"] < 0):
+            raise ValueError("Forecasts require finite ratings and nonnegative RD.")
+    scale = 173.7178
+    uncertainty_factor = math.sqrt(3) / math.pi
+    denominator = math.hypot(scale, uncertainty_factor * team_a_state["rd"],
+                             uncertainty_factor * team_b_state["rd"])
+    x = (team_a_state["rating"] - team_b_state["rating"]) / denominator
+    if x >= 0:
+        return 1 / (1 + math.exp(-x))
+    ex = math.exp(x)
+    return ex / (1 + ex)
+
+
 def calculate_elo_update(team_a_rating, team_b_rating, winner_team, k_factor=32):
     expected_a = calculate_elo_expected_score(team_a_rating, team_b_rating)
     expected_b = calculate_elo_expected_score(team_b_rating, team_a_rating)
@@ -244,7 +268,9 @@ def calculate_trueskill_win_probability(team_a_state, team_b_state):
 
     denominator = math.sqrt(sum_sigma_sq + 2 * performance_variance)
 
-    return TRUESKILL_ENV.cdf(delta_mu / denominator)
+    # Standard-library normal CDF: exact symmetry at zero, unlike the
+    # library's approximate CDF which can make a 50:50 game favor team A.
+    return 0.5 * math.erfc(-delta_mu / (denominator * math.sqrt(2)))
 
 
 def calculate_trueskill_exposed_rating(mu, sigma, k=3.0):
